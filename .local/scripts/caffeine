@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+if pidof systemd-inhibit >/dev/null; then
+	killall systemd-inhibit
+else
+	systemd-inhibit --what=idle --why="Caffeine Modus" --who="User" sleep infinity &
+fi

@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+if ! git stash; then
+	eho "Fehler beim Stashen der Änderungen!" >&2
+	exit 1
+fi
+
+if ! git pull; then
+	echo "Fehler beim Updaten der Dateien!" >&2
+	exit 1
+fi
+
+if ! git stash pop; then
+	echo "Konflikt beim Stash Pop. Bitte manuell auflösen." >&2
+	exit 1
+fi
+
+message=""
+
+if [[ $# -eq 1 ]]; then
+	message="$1"
+else
+	message="Update $(date +%Y-%m-%d_%H-%M)"
+fi
+
+git add --all
+git commit -m "$message"
+git push

@@ -1,0 +1,160 @@
+{
+  "layer": "top",
+  "position": "top",
+  "margin-bottom": -2,
+  "spacing": 0,
+  "modules-left": [
+    "sway/workspaces",
+    "custom/uptime",
+    "cpu",
+    "memory",
+    "temperature"
+  ],
+
+  "modules-center": ["clock"],
+
+  "modules-right": [
+    "custom/music",
+    "bluetooth",
+    "custom/caffeine",
+    "network",
+    "pulseaudio",
+    "backlight",
+    "custom/notification",
+    "battery"
+  ],
+
+  "sway/workspaces": {
+    "format": "{name}:{icon}",
+    "format-icons": {
+      "focused": "",
+      "default": ""
+    }
+  },
+
+  "bluetooth": {
+    "format": "󰂲",
+    "format-on": "{icon}",
+    "format-off": "{icon}",
+    "format-connected": "{icon}",
+    "format-icons": {
+      "on": "󰂯",
+      "off": "󰂲",
+      "connected": "󰂱"
+    },
+    "on-click": "blueman-manager",
+    "tooltip-format-connected": "{device_enumerate}"
+  },
+
+  "custom/music": {
+    "format": "  {}",
+    "escape": true,
+    "interval": 3,
+    "tooltip": true,
+    "tooltip-format": "{}",
+    "exec": "playerctl metadata --format='{{ artist }} - {{ title }}'",
+    "on-click": "playerctl play-pause",
+    "max-length": 50
+  },
+
+  "custom/notification": {
+    "tooltip": true,
+    "format": "{icon}",
+    "format-icons": {
+      "notification": "󱅫",
+      "none": "󰂜",
+      "dnd-notification": "󰂠",
+      "dnd-none": "󰪓",
+      "inhibited-notification": "󰂛",
+      "inhibited-none": "󰪑",
+      "dnd-inhibited-notification": "󰂛",
+      "dnd-inhibited-none": "󰪑"
+    },
+    "return-type": "json",
+    "exec-if": "which swaync-client",
+    "exec": "swaync-client -swb",
+    "on-click": "swaync-client -t -sw",
+    "on-click-right": "swaync-client -d -sw",
+    "escape": true
+  },
+
+  "custom/caffeine": {
+    "exec": "~/.config/waybar/scripts/caffeine-status.sh",
+    "return-type": "json",
+    "interval": 2,
+    "on-click": "~/.local/scripts/caffeine"
+  },
+
+  "clock": {
+    "timezone": "Europe/Berlin",
+    "tooltip": false,
+    "format": "{:%H:%M - %d.%m.%Y}",
+    "interval": 1
+  },
+
+  "network": {
+    "format-wifi": "󰤢",
+    "format-ethernet": "󰈀",
+    "format-disconnected": "󰤠",
+    "interval": 5,
+    "tooltip-format": "{essid} ({signalStrength}%)",
+    "on-click": "nm-connection-editor"
+  },
+
+  "cpu": {
+    "interval": 1,
+    "format": " {icon0}{icon1}{icon2}{icon3} {usage:>2}%",
+    "format-icons": ["▁", "▂", "▃", "▄", "▅", "▆", "▇", "█"],
+    "on-click": "ghostty -e htop"
+  },
+
+  "memory": {
+    "interval": 5,
+    "format": "  {used:0.1f}G/{total:0.1f}G",
+    "tooltip-format": "Memory",
+    "on-click": "ghostty -e htop"
+  },
+
+  "backlight": {
+    "format": "{icon} {percent}%",
+    "format-icons": ["", "󰃜", "󰃛", "󰃞", "󰃝", "󰃟", "󰃠"],
+    "tooltip": false
+  },
+
+  "pulseaudio": {
+    "format": "{icon} {volume}%",
+    "format-muted": "",
+    "format-icons": {
+      "default": ["", "", ""]
+    },
+    "on-click": "pavucontrol"
+  },
+
+  "battery": {
+    "interval": 5,
+    "states": {
+      "warning": 30,
+      "critical": 15
+    },
+    "format": "{icon} {capacity}%",
+    "format-full": "{icon} {capacity}%",
+    "format-charging": " {capacity}%",
+    "format-plugged": " {capacity}%",
+    "format-alt": "{icon} {time}",
+    "format-icons": [" ", " ", " ", " ", " "]
+  },
+
+  "temperature": {
+    "critical-threshold": 80,
+    "interval": 5,
+    "format": "{icon} {temperatureC}°C",
+    "format-icons": [
+      "", // Icon: temperature-empty
+      "", // Icon: temperature-quarter
+      "", // Icon: temperature-half
+      "", // Icon: temperature-three-quarters
+      "" // Icon: temperature-full
+    ],
+    "tooltip": false
+  }
+}

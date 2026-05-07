@@ -1,0 +1,21 @@
+[options]
+suppress_default_binds = true
+
+[binds]
+q = quit
+
+j = pan 0 -30
+k = pan 0 30
+h = pan 30 0
+l = pan -30 0
+
+f = fullscreen
+a = zoom actual
+c = center
+
+y = exec wl-copy < "$imv_current_file"
+
+<Shift+H> = prev
+<Shift+J> = zoom -2
+<Shift+K> = zoom 2
+<Shift+L> = next

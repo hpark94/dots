@@ -1,0 +1,46 @@
+map r reload
+map R reload
+map i recolor
+map b toggle_statusbar
+
+set font "Maple Mono NF 15"
+set pages-per-row 1
+set zoom-min 10
+set window-title-basename true
+set window-title-page true
+set scroll-page-aware true
+set scroll-full-overlap 0.01
+set scroll-step 100
+set scroll-hstep 100
+set selection-clipboard clipboard
+set search-hadjust true
+set render-loading true
+
+set default-bg              "#1a1b26"
+set default-fg              "#c0caf5"
+set statusbar-bg            "#1a1b26"
+set statusbar-fg            "#c0caf5"
+
+set inputbar-bg             "#1a1b26"
+set inputbar-fg             "#c0caf5"
+
+set highlight-color         "rgba(255, 255, 0, 0.2)"
+set highlight-active-color  "rgba(255, 0, 0, 0.2)"
+
+set notification-error-bg   "#fb6f92"
+set notification-error-fg   "#1a1b26"
+set notification-warning-bg "#fb6f92"
+set notification-warning-fg "#1a1b26"
+
+set completion-highlight-fg "#23B0A3"
+set completion-highlight-bg "#1a1b26"
+set completion-bg           "#1a1b26"
+set completion-fg           "#c0caf5"
+set notification-bg         "#c0caf5"
+set notification-fg         "#1a1b26"
+set highlight-fg            "#007acc"
+
+set recolor                 false
+set recolor-lightcolor      "#1a1b26"
+set recolor-darkcolor       "#c0caf5"
+set recolor-keephue         true

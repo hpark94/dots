@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+extensions=(
+	"*.aux" "*.lof" "*.lot" "*.log" "*.toc" "*.out" "*.xdv"
+	"*.bbl*" "*.bcf*" "*.blg*" "*.loa" "*.fls" "*.fdb_latexmk"
+	"*.synctex" "*.synctex.gz" "*.nav" "*.snm" "*.vrb"
+)
+
+for ext in "${extensions[@]}"; do
+	if [[ "$ext" == "*.out" ]]; then
+		find . -name "*.out" ! -name "slurm*.out" -type f -delete
+	else
+		find . -name "$ext" -type f -delete
+	fi
+done
+
+find . -type d -name "_minted" -exec rm -rf {} +

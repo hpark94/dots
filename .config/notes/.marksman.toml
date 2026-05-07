@@ -1,0 +1,37 @@
+[core]
+markdown.file_extensions = ["md", "markdown", "mdx"]
+markdown.wiki_link_format = "title-slug"
+text_sync = "full"
+
+[completion]
+wiki.enabled = true
+local_files.enabled = true
+headings.enabled = true
+tags.enabled = true
+
+[diagnostics]
+broken_links = "error"
+unresolved_wiki_links = "hint"
+orphaned_files = "hint"
+
+[folders]
+ignore = [".git", "node_modules", ".obsidian", ".vscode"]
+
+[wiki_links]
+format = "title-slug"
+case_sensitive = false
+
+[references]
+enabled = true
+include_code_blocks = false
+
+[hover]
+enabled = true
+file_contents = true
+
+[rename]
+enabled = true
+
+[workspace]
+enabled = true
+max_files = 10000

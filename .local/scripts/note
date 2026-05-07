@@ -1,0 +1,288 @@
+#!/usr/bin/env bash
+source "${HOME}/.config/notes/config.sh"
+check_dirs
+
+default_template="${NOTIZEN_TEMPL_PATH}/default.md"
+if [[ ! -f "${default_template}" ]]; then
+	echo "Error: Template ${default_template} not found." >&2
+	exit 1
+fi
+
+declare -A MOD=(
+	[code]=false
+	[daily]=false
+	[format]=false
+	[pinned]=false
+	[review]=false
+	[recipe]=false
+	[scratch]=false
+	[sync]=false
+	[todo]=false
+	[tomorrow]=false
+	[update]=false
+	[xournal]=false
+	[yesterday]=false
+	[zettel]=false
+)
+
+NVIM_MODE=false
+title=""
+note_name=""
+filename=""
+template=""
+sed_pattern=""
+
+while [[ $# -gt 0 ]]; do
+	case $1 in
+	--nvim-mode | -n)
+		NVIM_MODE=true
+		shift
+		;;
+	--code | -c)
+		MOD[code]=true
+		check_args "$@"
+		title="$2"
+		note_name=$(normalize_filename "${title}").md
+		language=${note_name%%-*}
+		filename="${VAULT_ZETTEL_PATH}/${note_name}"
+		template="${VAULT_TEMPL_PATH}/code.md"
+		sed_pattern="s/{{title}}/${title}/g ; s/language/${language}/g"
+		shift 2
+		;;
+	--daily | -d)
+		MOD[daily]=true
+		title=$(date +%d.%m.%Y)
+		note_name=$(date +%Y%m%d).md
+		filename="${VAULT_DAILY_PATH}/${note_name}"
+		template="${VAULT_TEMPL_PATH}/daily.md"
+		sed_pattern="s/{{date[^}]*}}/${title}/g"
+		shift
+		;;
+	--format | -f)
+		MOD[format]=true
+		shift
+		;;
+	--pinned | -p)
+		MOD[pinned]=true
+		check_args "$@"
+		title="Pinned - $2"
+		note_name=$(normalize_filename "${title}").md
+		filename="${VAULT_ZETTEL_PATH}/${note_name}"
+		template="${default_template}"
+		sed_pattern="s/{{title}}/${title}/g"
+		shift 2
+		;;
+	--review | -rv)
+		MOD[review]=true
+		check_args "$@"
+		title="Review - $2"
+		note_name=$(normalize_filename "${title}").md
+		filename="${VAULT_ZETTEL_PATH}/${note_name}"
+		template="${VAULT_TEMPL_PATH}/review.md"
+		sed_pattern="s/{{title}}/${title}/g"
+		shift 2
+		;;
+	--recipe | -rc)
+		MOD[recipe]=true
+		check_args "$@"
+		title="Recipe - $2"
+		note_name=$(normalize_filename "${title}").md
+		filename="${VAULT_ZETTEL_PATH}/${note_name}"
+		template="${VAULT_TEMPL_PATH}/recipe.md"
+		sed_pattern="s/{{title}}/${title}/g"
+		shift 2
+		;;
+	--scratch | -sc)
+		MOD[scratch]=true
+		check_args "$@"
+		title="Scratch - $2"
+		note_name=$(normalize_filename "${title}").md
+		filename="${VAULT_SCRATCH_PATH}/${note_name}"
+		template="${VAULT_TEMPL_PATH}/scratch.md"
+		sed_pattern="s/id/$2/g"
+		shift 2
+		;;
+	--sync | -s)
+		MOD[sync]=true
+		shift
+		;;
+	--todo | -t)
+		MOD[todo]=true
+		check_args "$@"
+		title="TODO - $2"
+		note_name=$(normalize_filename "${title}").md
+		filename="${VAULT_ZETTEL_PATH}/${note_name}"
+		template="${VAULT_TEMPL_PATH}/todo.md"
+		sed_pattern="s/{{title}}/${title}/g"
+		shift 2
+		;;
+	--tomorrow | -td)
+		MOD[daily]=true
+		title=$(date --date="next day" +%d.%m.%Y)
+		note_name=$(date --date="next day" +%Y%m%d).md
+		filename="${VAULT_DAILY_PATH}/${note_name}"
+		template="${VAULT_TEMPL_PATH}/daily.md"
+		sed_pattern="s/{{date[^}]*}}/${title}/g"
+		shift
+		;;
+	--update | -u)
+		MOD[update]=true
+		shift
+		;;
+	--xournal | -x)
+		MOD[xournal]=true
+		note_name="note_$(date +%Y%m%d_%H%M%S).xopp"
+		filename="${VAULT_ASSETS_PATH}/${note_name}"
+		template="${VAULT_TEMPL_PATH}/xpp_template.xopp"
+		shift
+		;;
+	--yesterday | -yd)
+		MOD[daily]=true
+		title=$(date --date="yesterday" +%d.%m.%Y)
+		note_name=$(date --date="yesterday" +%Y%m%d).md
+		filename="${VAULT_DAILY_PATH}/${note_name}"
+		template="${VAULT_TEMPL_PATH}/daily.md"
+		sed_pattern="s/{{date[^}]*}}/${title}/g"
+		shift
+		;;
+	--zettel | -z)
+		MOD[zettel]=true
+		check_args "$@"
+		title="$2"
+		note_name=$(normalize_filename "${title}").md
+		filename="${VAULT_ZETTEL_PATH}/${note_name}"
+		template="${default_template}"
+		sed_pattern="s/{{title}}/${title}/g"
+		shift 2
+		;;
+	*)
+		echo "Error: Not a valid option." >&2
+		exit 1
+		;;
+	esac
+done
+
+active_mod_count=0
+active_mod=""
+for mod in "${!MOD[@]}"; do
+	if [[ "${MOD[$mod]}" = true ]]; then
+		((active_mod_count++))
+		active_mod="$mod"
+	fi
+done
+
+if ((active_mod_count != 1)); then
+	echo "Error: Only 1 mod must be selected." >&2
+	exit 1
+fi
+
+case "$active_mod" in
+daily | yesterday | tomorrow | zettel | pinned | code | scratch | todo | review | recipe)
+	if [[ -z "$title" ]]; then
+		title="Untitled"
+		exit 1
+	fi
+
+	if [[ ! -f "${template}" ]]; then
+		echo "Warning: Template ${template} not found." >&2
+		template="${default_template}"
+		sed_pattern="s/{{title}}/${title}/g"
+	fi
+
+	if [[ ! -f "${filename}" ]]; then
+		sed "${sed_pattern}" "${template}" >"${filename}" 2>/dev/null
+	fi
+
+	handle_exe "${filename}" "${NVIM_MODE}"
+	;;
+xournal)
+	if [[ ! -f "${template}" ]]; then
+		echo "Warning: Template ${template} not found." >&2
+		template="${default_template}"
+	fi
+
+	cp "${template}" "${filename}"
+
+	if [[ "${NVIM_MODE}" = "true" ]]; then
+		realpath "${filename}"
+	else
+		xdg-open "${filename}"
+	fi
+	;;
+sync)
+	templates="${NOTIZEN_TEMPL_PATH}/."
+	marksman="${NOTIZEN_CONFIG_PATH}/.marksman.toml"
+	rm -rf "${VAULT_TEMPL_PATH}" 2>/dev/null
+	rm marksman 2>/dev/null
+	mkdir -p "${VAULT_TEMPL_PATH}" 2>/dev/null
+	cp -r "${templates}" "${VAULT_TEMPL_PATH}/" 2>/dev/null
+	cp "${marksman}" "${VAULT_BASE_PATH}/" 2>/dev/null
+	;;
+format)
+	find "${VAULT_BASE_PATH}" -type f ! -path "*/.obsidian/*" \
+		-name "*.md" -print0 | xargs -0 prettier --write
+	;;
+update)
+	find "${VAULT_BASE_PATH}" \
+		-type f -name "*.md" \
+		! -path "${VAULT_TEMPL_PATH}/*" \
+		! -path "${VAULT_DAILY_PATH}/*" |
+		while read -r file; do
+			new_title=$(grep -m 1 "^# " "${file}" | sed "s/^# //")
+
+			if [[ -z "${new_title}" ]]; then
+				continue
+			fi
+
+			new_ref=$(normalize_filename "${new_title}")
+			new_name="${new_ref}.md"
+			dir_path=$(dirname "${file}")
+			new_file="${dir_path}/${new_name}"
+
+			current_name=$(basename "${file}")
+			current_ref="${current_name%.md}"
+
+			if [[ "${current_name}" = "${new_name}" ]]; then
+				continue
+			fi
+
+			if [[ -f "${new_file}" ]] && [[ "${file}" != "${new_file}" ]]; then
+				echo "${new_file} already exists." >&2
+				continue
+			fi
+
+			echo "${current_ref}|${new_ref}|${file}|${new_file}"
+		done >/tmp/renames.txt
+
+	sed_script="/tmp/replace_refs.sed"
+	: >"${sed_script}"
+
+	while IFS='|' read -r current_ref new_ref old_file new_file; do
+		cat >>"${sed_script}" <<EOF
+s/\[\[${current_ref}#/\[\[${new_ref}#/g
+s/\[\[${current_ref}|/\[\[${new_ref}|/g
+s/\[\[${current_ref}\]\]/\[\[${new_ref}\]\]/g
+s|/${current_ref}\.md)|/${new_ref}\.md)|g
+s|/${current_ref}\.md#|/${new_ref}\.md#|g
+EOF
+	done </tmp/renames.txt
+
+	if [[ -s "${sed_script}" ]]; then
+		find "${VAULT_BASE_PATH}" -type f -name "*.md" -exec sed -i -f "${sed_script}" {} +
+
+		while IFS='|' read -r current_ref new_ref old_file new_file; do
+			mv "${old_file}" "${new_file}"
+			echo "Renamed: $(basename "${old_file}") -> $(basename "${new_file}")." >&2
+		done </tmp/renames.txt
+
+	else
+		echo "No renames needed." >&2
+	fi
+
+	rm -f /tmp/renames.txt "${sed_script}"
+	;;
+*)
+	echo "Error: Not a valid option." >&2
+	exit 1
+	;;
+esac

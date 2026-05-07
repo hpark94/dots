@@ -1,0 +1,7 @@
+[general]
+fullscreen = true
+early-exit = true
+initial-tool = "crop"
+copy-command = "wl-copy"
+output-filename = "~/Bilder/Screenshots/screenshot-%Y%m%d-%H%M%S.png"
+save-after-copy = false

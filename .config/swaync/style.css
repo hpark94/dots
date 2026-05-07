@@ -1,0 +1,32 @@
+@define-color noti-border-color @color12;
+@define-color noti-bg #0e0e16;
+@define-color noti-bg-alt #0e0e16;
+@define-color noti-bg-hover #0e0e16;
+@define-color text-color @foreground;
+
+.notification {
+    background: #0e0e16;
+    padding: 7px 7px 7px 0px;
+    border-radius: 5px;
+    border: 1px solid #0e0e16;
+}
+
+.notification-group {
+    background-color: transparent;
+    border-radius: 10px;
+}
+
+.control-center .notification-row:focus,
+.control-center .notification-row:hover {
+    opacity: 1;
+    background: #0e0e16;
+    border-radius: 10px;
+}
+
+.close-button {
+    background: #f7768e;
+    color: #0e0e16;
+    text-shadow: none;
+    padding: 0;
+    border-radius: 10px;
+}

@@ -1,0 +1,176 @@
+#!/usr/bin/env bash
+source "${HOME}/.config/notes/config.sh"
+check_dirs
+
+default_template="${NOTIZEN_TEMPL_PATH}/default.md"
+if [[ ! -f "${default_template}" ]]; then
+	echo "Error: Template ${default_template} not found." >&2
+	exit 1
+fi
+
+note_cmd="note"
+if [[ ! -x "$(command -v ${note_cmd})" ]]; then
+	echo "The command ${note_cmd} is not available" >&2
+	exit 1
+fi
+
+declare -A MOD=(
+	[index]=false
+	[last]=false
+	[new]=false
+	[rename]=false
+)
+
+NVIM_MODE=false
+
+while [[ $# -gt 0 ]]; do
+	case $1 in
+	--nvim-mode | -n)
+		NVIM_MODE=true
+		shift
+		;;
+	--index | -i)
+		MOD[index]=true
+		check_args "$@"
+		id="$2"
+		shift 2
+		;;
+	--last | -l)
+		MOD[last]=true
+		shift
+		;;
+	--new | -ns)
+		MOD[new]=true
+		shift
+		;;
+	--rename | -r)
+		MOD[rename]=true
+		shift
+		;;
+	*)
+		echo "Error: Not a valid option." >&2
+		exit 1
+		;;
+	esac
+done
+
+active_mod_count=0
+active_mod=""
+for mod in "${!MOD[@]}"; do
+	if [[ "${MOD[$mod]}" = true ]]; then
+		((active_mod_count++))
+		active_mod="$mod"
+	fi
+done
+
+if ((active_mod_count != 1)); then
+	echo "Error: Only 1 mod must be selected." >&2
+	exit 1
+fi
+
+list_scratch_files() {
+	find "${VAULT_SCRATCH_PATH}" \
+		-type f -regextype posix-extended \
+		-regex ".*/scratch-[0-9]+\.md" \
+		-printf "%f|%p\n" 2>/dev/null |
+		awk -F"|" '{if ($1 ~ /^scratch-([0-9]+)\.md$/) {
+			match($1, /scratch-([0-9]+)\.md/, arr);
+			print arr[1] "|" $1 "|" $2;}
+		}'
+}
+
+get_existing_scratch_ids() {
+	list_scratch_files |
+		cut -d'|' -f1 |
+		sort -n
+}
+
+remove_id_gaps() {
+	mapfile -t list_ids < <(get_existing_scratch_ids)
+
+	local max_id="${list_ids[-1]}"
+	declare -a missing_ids
+
+	for missing_id in $(seq 1 "${max_id}"); do
+		if [[ ! " ${list_ids[*]} " =~ [[:space:]]${missing_id}[[:space:]] ]]; then
+			missing_ids+=("$missing_id")
+		fi
+	done
+
+	if [[ ${#missing_ids[@]} -eq 0 ]]; then
+		return 0
+	fi
+
+	local min_missing_id="${missing_ids[0]}"
+
+	while IFS='|' read -r id filename filepath; do
+		if [[ ${id} -ge ${min_missing_id} ]]; then
+			local count=0
+			for missing_id in "${missing_ids[@]}"; do
+				if [[ ${missing_id} -lt ${id} ]]; then
+					((count++))
+				fi
+			done
+
+			local new_id=$((id - count))
+			local new_filename="scratch-${new_id}.md"
+			local new_filepath="${filepath%/*}/${new_filename}"
+
+			echo "Rename: $filepath -> $new_filepath" >&2
+
+			sed "0,/^# Scratch - [0-9]\+$/s//# Scratch - ${new_id}/" \
+				"$filepath" >"$new_filepath" && rm "$filepath"
+		fi
+	done < <(list_scratch_files | sort -t'|' -k1,1n)
+}
+
+get_next_id() {
+	mapfile -t list_ids < <(get_existing_scratch_ids)
+	if [[ ${#list_ids[@]} -eq 0 ]]; then
+		echo "1"
+	else
+		echo $((${list_ids[-1]} + 1))
+	fi
+}
+
+get_last_id() {
+	mapfile -t list_ids < <(get_existing_scratch_ids)
+	if [[ ${#list_ids[@]} -eq 0 ]]; then
+		echo "1"
+	else
+		echo $((${list_ids[-1]}))
+	fi
+}
+
+case "${active_mod}" in
+rename)
+	remove_id_gaps
+	;;
+new)
+	id=$(get_next_id)
+	if [[ ${NVIM_MODE} == true ]]; then
+		note -n -sc "${id}"
+	else
+		note -sc "${id}"
+	fi
+	;;
+last)
+	id=$(get_last_id)
+	if [[ ${NVIM_MODE} == true ]]; then
+		note -n -sc "${id}"
+	else
+		note -sc "${id}"
+	fi
+	;;
+index)
+	if [[ ${NVIM_MODE} == true ]]; then
+		note -n -sc "${id}"
+	else
+		note -sc "${id}"
+	fi
+	;;
+*)
+	echo "Error: Not a valid option." >&2
+	exit 1
+	;;
+esac

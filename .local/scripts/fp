@@ -1,0 +1,49 @@
+#!/usr/bin/env bash
+available_types=$(wl-paste --list-types 2>/dev/null)
+
+if [[ $# -eq 1 ]]; then
+	target_dir="$1"
+else
+	target_dir="."
+fi
+
+filename=""
+result_path=""
+
+if echo "$available_types" | grep -q "image/png"; then
+	filename="image_$(date +%Y%m%d_%H%M%S).png"
+	result_path="$target_dir/$filename"
+	wl-paste --type image/png >"$result_path" 2>/dev/null
+elif echo "$available_types" | grep -q "image/jpeg"; then
+	filename="image_$(date +%Y%m%d_%H%M%S).jpg"
+	result_path="$target_dir/$filename"
+	wl-paste --type image/jpeg >"$result_path" 2>/dev/null
+elif echo "$available_types" | grep -q "text/uri-list"; then
+	filepath=$(wl-paste --type text/uri-list 2>/dev/null | sed "s|file://||" | tr -d "\r\n")
+	filename=$(basename "$filepath")
+	result_path="$target_dir/$filename"
+	cp "$filepath" "$result_path" 2>/dev/null
+elif echo "$available_types" | grep -q "text/html"; then
+	html_content=$(wl-paste --type text/html 2>/dev/null)
+	url=$(echo "$html_content" | grep -o "src="[^"]*" | head -1 | sed "s/src='//;s/'//")
+	if [[ -n "$url" ]]; then
+		filename=$(basename "$url")
+		result_path="$target_dir/$filename"
+		wget "$url" -O "$result_path" 2>/dev/null
+		echo "File downloaded from url: $result_path" >&2
+	fi
+else
+	echo "File type not available." >&2
+	echo "Available file types:" >&2
+	echo "$available_types" >&2
+	exit 1
+fi
+
+if [[ -n "$result_path" ]] && [[ -f "$result_path" ]]; then
+	absolute_path=$(realpath "$result_path")
+	if [[ "$absolute_path" == "$HOME"* ]]; then
+		echo "~${absolute_path#"$HOME"}"
+	else
+		echo "$absolute_path"
+	fi
+fi
