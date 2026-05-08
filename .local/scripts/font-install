@@ -44,6 +44,7 @@ install_font "Maple_Mono_NF" "https://github.com/subframe7536/maple-font/release
 install_font "Geist" "https://github.com/vercel/geist-font/releases/download/1.8.0/geist-font-1.8.0.zip"
 install_font "Noto_CJK_Serif" "https://github.com/googlefonts/noto-cjk/releases/download/Serif2.003/01_NotoSerifCJK.ttc.zip"
 install_font "Noto_CJK_Sans" "https://github.com/googlefonts/noto-cjk/raw/main/Sans/SuperOTC/NotoSansCJK.ttc.zip"
+install_font "Libertinus" "https://github.com/alerque/libertinus/releases/download/v7.051/Libertinus-7.051.zip"
 
 log "INFO" "Updating font cache..."
 fc-cache -f
