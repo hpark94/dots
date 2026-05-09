@@ -1,0 +1,43 @@
+#!/usr/bin/env bash
+set -e
+
+MUSIC_DIR="${HOME}/music"
+
+log() {
+	local level="$1"
+	shift
+	echo -e "[$(date '+%H:%M:%S')] [${level}] $*"
+}
+
+check_installation() {
+	if ! command -v "$1" >/dev/null 2>&1; then
+		log "ERROR" "$1 not installed. Aborting..."
+		exit 1
+	fi
+}
+
+convert() {
+	local flac_file="$1"
+	local relative
+	relative="${flac_file#"${MUSIC_DIR}/flac/"}"
+	local dir
+	dir=$(dirname "${relative}")
+	local mp3_dir="${MUSIC_DIR}/mp3/${dir}"
+	mkdir -p "${mp3_dir}"
+	local filename
+	filename=$(basename "${flac_file%.flac}.mp3")
+	local output_file="${mp3_dir}/${filename}"
+	if [[ -f "${output_file}" ]]; then
+		log "INFO" "Skipping ${filename}, already exists"
+		return
+	fi
+	ffmpeg -y -loglevel error -i "${flac_file}" -q:a 0 -map a "${output_file}" </dev/null >/dev/null
+}
+
+check_installation ffmpeg
+
+while IFS= read -r -d '' file; do
+	log "INFO" "${file} converting..."
+	absolute_path=$(realpath "${file}")
+	convert "${absolute_path}"
+done < <(find "${MUSIC_DIR}" -type f -name "*.flac" -print0)

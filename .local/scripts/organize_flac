@@ -1,0 +1,75 @@
+#!/usr/bin/env bash
+set -e
+
+MUSIC_DIR="${HOME}/music"
+
+log() {
+	local level="$1"
+	shift
+	echo -e "[$(date '+%H:%M:%S')] [${level}] $*"
+}
+
+check_installation() {
+	if ! command -v "$1" >/dev/null 2>&1; then
+		log "ERROR" "$1 not installed. Aborting..."
+		exit 1
+	fi
+}
+
+sanitize() {
+	local val="$1"
+	val="${val,,}"
+	val="${val// /_}"
+	val="${val//\//_}"
+	val="${val//:/-}"
+	val="${val//\'/_}"
+	echo "${val}"
+}
+
+remove_comment() {
+	metaflac --remove-tag=COMMENT "$1" >/dev/null 2>&1 || true
+}
+
+check_installation metaflac
+
+while IFS= read -r -d '' file; do
+	absolute_path=$(realpath "${file}")
+
+	remove_comment "$absolute_path"
+
+	ext="${absolute_path##*.}"
+
+	artist=$(metaflac --show-tag=ARTIST "${absolute_path}" </dev/null | cut -d= -f2)
+	artist=$(sanitize "${artist}")
+	album=$(metaflac --show-tag=ALBUM "${absolute_path}" </dev/null | cut -d= -f2)
+	album=$(sanitize "${album}")
+	title=$(metaflac --show-tag=TITLE "${absolute_path}" </dev/null | cut -d= -f2)
+	title=$(sanitize "${title}")
+	track=$(metaflac --show-tag=TRACKNUMBER "${absolute_path}" </dev/null | cut -d= -f2 | cut -d/ -f1)
+	track=$(printf "%02d" "${track}")
+
+	if [[ -z ${artist} || -z ${album} || -z ${title} || -z ${track} ]]; then
+		log "ERROR" "${absolute_path}: metadata missing!"
+		skip_dir="${MUSIC_DIR}/skipped"
+		skip_name=$(basename "${absolute_path}")
+		skip_file="${skip_dir}/${skip_name}"
+		mkdir -p "${skip_dir}"
+		mv "${absolute_path}" "${skip_file}"
+		continue
+	fi
+
+	newpath="${MUSIC_DIR}/${ext}/${artist}/${album}"
+
+	mkdir -p "${newpath}"
+
+	newname="${track}_${title}-${artist}.${ext}"
+	newname="${newpath}/${newname}"
+
+	if [[ "${file}" == "${newname}" ]]; then
+		echo "Not changed: ${file}"
+		continue
+	fi
+
+	log "INFO" "Rename: ${file} -> ${newname}"
+	mv -- "${file}" "${newname}"
+done < <(find "${MUSIC_DIR}" -type d -name "skipped" -prune -o -type f -name "*.flac" -print0)
