@@ -4,6 +4,14 @@ return {
     lazy = false,
     ---@type snacks.Config
     opts = {
+        styles = {
+            notification = {
+                wo = {
+                    winblend = 0,
+                    wrap = true,
+                },
+            },
+        },
         bigfile = { enabled = true },
         bufdelete = { enabled = true },
         image = {
