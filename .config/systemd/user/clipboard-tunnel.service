@@ -1,0 +1,9 @@
+[Unit]
+Description=Clipboard tunnel for SSH remote paste
+
+[Service]
+ExecStart=socat TCP-LISTEN:11988,fork,reuseaddr EXEC:"wl-paste"
+Restart=always
+
+[Install]
+WantedBy=default.target

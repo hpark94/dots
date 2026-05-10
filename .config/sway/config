@@ -3,11 +3,15 @@ set $browser librewolf
 set $fileManager thunar
 set $menu fuzzel
 set $terminal ghostty
-set $lockcmd swaylock -f -i ~/Bilder/Wallpaper/frieren.jpg
+set $wallpaper ~/Sync/.pictures/wallpaper/frieren.jpg
+set $lockcmd swaylock -f -i $wallpaper
+set $polkit lxpolkit
 
 exec dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP=sway
 exec systemctl --user import-environment WAYLAND_DISPLAY XDG_CURRENT_DESKTOP
-exec /usr/lib/polkit-kde-authentication-agent-1
+exec systemctl --user start clipboard-tunnel.service
+exec $polkit
+
 exec swayidle -w \
     timeout 300 '$lockcmd' \
     timeout 600 'swaymsg "output * dpms off"' resume 'swaymsg "output * dpms on"' \
@@ -15,13 +19,13 @@ exec swayidle -w \
     before-sleep '$lockcmd'
 
 exec protonvpn connect --p2p
-exec swaybg -i ~/Bilder/Wallpaper/frieren.jpg
+exec swaybg -i $wallpaper
 exec fcitx5 -d
 exec waybar -c ~/.config/waybar/sway_config.jsonc
 exec swaync
 exec powerprofilesctl set balanced
 exec_always autotiling-rs
-exec wl-paste --watch cliphist store
+exec pkill -f 'wl-paste.*cliphist' ; wl-paste --watch cliphist store
 
 input "type:keyboard" {
     xkb_layout de
