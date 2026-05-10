@@ -35,7 +35,7 @@ return {
         },
         completion = {
             menu = {
-                border = "single",
+                border = "rounded",
                 scrolloff = 2,
                 scrollbar = false,
                 draw = {
@@ -48,7 +48,7 @@ return {
             },
             documentation = {
                 window = {
-                    border = "single",
+                    border = "rounded",
                     max_width = 50,
                     scrollbar = false,
                     winhighlight = "Normal:BlinkCmpDoc,FloatBorder:BlinkCmpDocBorder,EndOfBuffer:BlinkCmpDoc",
