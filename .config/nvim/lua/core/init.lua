@@ -47,6 +47,19 @@ o.timeoutlen = 300
 o.mouse = "a"
 
 -- Clipboard
+if os.getenv("SSH_CLIENT") or os.getenv("SSH_TTY") then
+    vim.g.clipboard = {
+        name = "OSC52",
+        copy = {
+            ["+"] = require("vim.ui.clipboard.osc52").copy("+"),
+            ["*"] = require("vim.ui.clipboard.osc52").copy("*"),
+        },
+        paste = {
+            ["+"] = require("vim.ui.clipboard.osc52").paste("+"),
+            ["*"] = require("vim.ui.clipboard.osc52").paste("*"),
+        },
+    }
+end
 vim.schedule(function()
     o.clipboard = "unnamedplus"
 end)
