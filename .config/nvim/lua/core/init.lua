@@ -68,9 +68,6 @@ vim.schedule(function()
     o.clipboard = "unnamedplus"
 end)
 
--- Window border
-vim.o.winborder = "rounded"
-
 -- Sign
 o.signcolumn = "yes"
 
