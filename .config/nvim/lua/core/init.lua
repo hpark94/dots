@@ -56,10 +56,10 @@ if os.getenv("SSH_CLIENT") or os.getenv("SSH_TTY") then
         },
         paste = {
             ["+"] = function()
-                return vim.fn.systemlist("nc -q0 localhost 11988 2>/dev/null")
+                return vim.fn.systemlist("nc localhost 11988 2>/dev/null")
             end,
             ["*"] = function()
-                return vim.fn.systemlist("nc -q0 localhost 11988 2>/dev/null")
+                return vim.fn.systemlist("nc localhost 11988 2>/dev/null")
             end,
         },
     }
