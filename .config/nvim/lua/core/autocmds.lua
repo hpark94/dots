@@ -70,7 +70,6 @@ autocmd("LspAttach", {
         end
 
         map("gl", vim.diagnostic.open_float, "Open Diagnostic Float")
-        map("K", vim.lsp.buf.hover, "Hover Documentation")
         map("<leader>la", vim.lsp.buf.code_action, "Code Action")
         map("<leader>lr", vim.lsp.buf.rename, "Rename all references")
         map("<leader>lf", function()
