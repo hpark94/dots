@@ -13,4 +13,4 @@ for ext in "${extensions[@]}"; do
 	fi
 done
 
-find . -type d -name "_minted" -exec rm -rf {} +
+find . -type d -name "_minted*" -exec rm -rf {} +
