@@ -3,7 +3,7 @@ vim.lsp.enable({
     "clangd",
     "lua_ls",
     "marksman",
-    "basedpyright",
+    "pyright",
     "texlab",
     "ts_ls",
 })

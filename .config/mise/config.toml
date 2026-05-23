@@ -34,7 +34,7 @@ stylua = "2.4.0"
 "npm:prettier" = "latest"
 "npm:typescript-language-server" = "latest"
 "npm:yaml-language-server" = "latest"
-"pipx:basedpyright" = "latest"
+"pipx:pyright" = "latest"
 "pipx:black" = "latest"
 "pipx:ruff" = "latest"
 
