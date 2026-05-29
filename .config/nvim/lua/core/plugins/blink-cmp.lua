@@ -9,7 +9,12 @@ return {
     event = "VimEnter",
     version = "1.*",
     opts = {
-        signature = { enabled = true },
+        signature = {
+            enabled = true,
+            window = {
+                border = "rounded",
+            },
+        },
         appearance = {
             use_nvim_cmp_as_default = false,
             nerd_font_variant = "mono",
