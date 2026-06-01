@@ -7,8 +7,8 @@ set $wallpaper ~/Sync/.pictures/wallpaper/frieren.jpg
 set $lockcmd swaylock -f -i $wallpaper
 set $polkit lxpolkit
 
-exec dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP=sway
-exec systemctl --user import-environment WAYLAND_DISPLAY XDG_CURRENT_DESKTOP
+exec /usr/libexec/sway-systemd/session.sh
+
 exec systemctl --user start clipboard-tunnel.service
 exec $polkit
 
@@ -23,8 +23,7 @@ exec swaybg -i $wallpaper
 exec fcitx5 -d
 exec waybar -c ~/.config/waybar/sway_config.jsonc
 exec swaync
-exec powerprofilesctl set balanced
-exec_always autotiling-rs
+exec_always ~/.local/scripts/autotiling
 exec pkill -f 'wl-paste.*cliphist' ; wl-paste --watch cliphist store
 
 input "type:keyboard" {

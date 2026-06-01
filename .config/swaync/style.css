@@ -1,32 +1,291 @@
-@define-color noti-border-color @color12;
-@define-color noti-bg #0e0e16;
-@define-color noti-bg-alt #0e0e16;
-@define-color noti-bg-hover #0e0e16;
-@define-color text-color @foreground;
-
-.notification {
-    background: #0e0e16;
-    padding: 7px 7px 7px 0px;
-    border-radius: 5px;
-    border: 1px solid #0e0e16;
+/* === Variables === */
+:root {
+    --bg-base: #f9f7f6;
+    --bg-muted: rgba(128, 128, 128, 1);
+    --text-primary: #4d4851;
+    --text-light: #f9f7f6;
+    --accent: #edbb9b;
+    --accent-active: #c36022;
+    --critical: #a63f3f;
+    --link: #3a7292;
+    --radius-sm: 0.668rem;
+    --radius-md: 1.159rem;
+    --radius-lg: 1.705rem;
 }
 
-.notification-group {
+/* === Base === */
+* {
+    font-size: 14px;
+    font-family: "Geist", "Noto Sans", sans-serif;
+    transition: 100ms;
+    box-shadow: unset;
+}
+
+/* === Notification shared (control-center + floating) === */
+.notification-background .notification {
+    background-color: var(--bg-muted);
+    margin-bottom: unset;
+}
+
+.notification-background .notification box,
+.notification-background .notification widget,
+.notification-background .notification .notification-content {
+    border: unset;
+    border-radius: var(--radius-sm);
+}
+
+.notification-background .notification .notification-content {
+    background-color: var(--bg-base);
+    padding: 0.818rem;
+    padding-right: unset;
+    margin-right: unset;
+}
+
+/* Hover */
+.notification-background:hover .notification {
+    background-color: var(--accent);
+}
+
+.notification-default-action:hover {
+    background-color: var(--accent);
+    border-radius: var(--radius-sm);
+}
+
+/* Low / Normal */
+.notification.low .notification-content label,
+.notification.normal .notification-content label {
+    color: var(--text-primary);
+}
+
+.notification.low .notification-content .body,
+.notification.normal .notification-content .body {
+    color: var(--text-primary);
+}
+
+.notification.low .notification-content image,
+.notification.normal .notification-content image {
+    background-color: unset;
+    color: var(--link);
+}
+
+/* Critical */
+.notification.critical .notification-content {
+    background-color: var(--critical);
+}
+
+.notification.critical .notification-content label {
+    color: var(--text-light);
+}
+
+.notification.critical .notification-content image {
+    background-color: unset;
+    color: var(--critical);
+}
+
+/* Typography */
+.notification-content .summary {
+    font-size: 0.9909rem;
+    font-weight: 600;
+}
+
+.notification-content .time {
+    font-size: 0.8291rem;
+    font-weight: 600;
+    margin-right: 1rem;
+    padding-right: unset;
+}
+
+.notification-content .body {
+    font-size: 0.8891rem;
+    font-weight: 500;
+    margin-top: 0.31rem;
+    padding-right: unset;
+    margin-right: unset;
+}
+
+/* Close button */
+.notification-row .close-button {
+    background-color: var(--bg-muted);
+    border-radius: 9999px;
+    border: none;
+    box-shadow: unset;
+    margin-right: 13px;
+    margin-top: 6px;
+    margin-bottom: unset;
+    padding-bottom: unset;
+    min-height: 20px;
+    min-width: 20px;
+    text-shadow: unset;
+}
+
+.notification-row .close-button:hover {
+    background-color: var(--accent);
+}
+.notification-row .close-button:active {
+    background-color: var(--accent-active);
+}
+
+/* === Control Center === */
+.control-center {
+    border-radius: var(--radius-lg);
+    border-top: 1px solid rgba(164, 162, 167, 0.19);
+    border-left: 1px solid rgba(164, 162, 167, 0.19);
+    border-right: 1px solid rgba(128, 127, 132, 0.145);
+    border-bottom: 1px solid rgba(128, 127, 132, 0.145);
+    box-shadow: 0px 2px 3px rgba(0, 0, 0, 0.45);
+    margin: 7px;
+    background-color: var(--bg-base);
+    padding: 1.023rem;
+}
+
+.control-center .notification-row {
+    background-color: unset;
+}
+.control-center .notification-row .notification-background .notification {
+    margin-top: 0.15rem;
+}
+
+.control-center trough {
+    border-radius: 9999px;
+    min-width: 0.545rem;
     background-color: transparent;
-    border-radius: 10px;
 }
 
-.control-center .notification-row:focus,
-.control-center .notification-row:hover {
-    opacity: 1;
-    background: #0e0e16;
-    border-radius: 10px;
+.control-center slider {
+    border-radius: 9999px;
+    min-width: 0.273rem;
+    min-height: 2.045rem;
+    background-color: var(--bg-muted);
 }
 
-.close-button {
-    background: #f7768e;
-    color: #0e0e16;
-    text-shadow: none;
-    padding: 0;
-    border-radius: 10px;
+.control-center slider:hover {
+    background-color: var(--accent);
+}
+.control-center slider:active {
+    background-color: var(--accent-active);
+}
+
+/* === Notification Groups === */
+.control-center-list row.notification-group {
+    border-radius: var(--radius-md);
+    background-color: unset;
+}
+
+.notification-group-header.title-1 {
+    color: var(--text-primary);
+}
+.notification-group-icon {
+    color: var(--link);
+}
+
+.notification-group-collapse-button,
+.notification-group-close-all-button {
+    background-color: var(--bg-muted);
+}
+
+.notification-group-collapse-button:hover,
+.notification-group-close-all-button:hover {
+    background-color: var(--accent);
+}
+
+.notification-group-collapse-button:active,
+.notification-group-close-all-button:active {
+    background-color: var(--accent-active);
+}
+
+.notification-group-close-button button {
+    background-color: var(--bg-muted);
+}
+.notification-group-close-button button:hover {
+    background-color: var(--accent-active);
+}
+
+.control-center-list-placeholder {
+    color: var(--text-primary);
+}
+
+/* === Title Widget === */
+.widget-title {
+    padding: 0.341rem;
+    margin: unset;
+}
+
+.widget-title label {
+    font-size: 1.364rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-left: 0.941rem;
+}
+
+.widget-title button {
+    border: unset;
+    background-color: unset;
+    border-radius: var(--radius-md);
+    padding: 0.141rem;
+    margin-right: 0.841rem;
+}
+
+.widget-title button label {
+    font-size: 1.0409rem;
+    color: var(--text-primary);
+    margin-right: 0.841rem;
+}
+
+.widget-title button:hover {
+    background-color: var(--accent);
+}
+.widget-title button:active {
+    background-color: var(--accent-active);
+}
+
+/* === Volume Widget === */
+.widget-volume {
+    background-color: var(--bg-muted);
+    padding: 8px;
+    margin: 8px;
+    border-radius: var(--radius-md);
+}
+
+.widget-volume trough {
+    border: unset;
+    background-color: var(--bg-muted);
+}
+
+.widget-volume trough slider {
+    background-color: var(--bg-base);
+    border-radius: 9999px;
+    min-height: 1.25rem;
+}
+
+.widget-volume highlight,
+.widget-backlight highlight {
+    padding: 3.5px;
+    border-radius: 9999px;
+    background: var(--bg-base);
+}
+
+/* === Mpris Widget === */
+.widget-mpris {
+    background-color: unset;
+    border-radius: var(--radius-md);
+}
+
+.mpris-background {
+    border-radius: 14px;
+    margin: 3px;
+}
+
+.mpris-overlay {
+    border-radius: 14px;
+    background-color: var(--bg-muted);
+    box-shadow: unset;
+}
+
+.widget-mpris-title {
+    font-weight: bold;
+    font-size: 1.25rem;
+}
+
+.widget-mpris-subtitle {
+    font-size: 1.1rem;
 }
