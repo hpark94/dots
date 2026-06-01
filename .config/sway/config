@@ -7,8 +7,11 @@ set $wallpaper ~/Sync/.pictures/wallpaper/frieren.jpg
 set $lockcmd swaylock -f -i $wallpaper
 set $polkit lxpolkit
 
-exec /usr/libexec/sway-systemd/session.sh
+exec test -f /usr/libexec/sway-systemd/session.sh \
+  && /usr/libexec/sway-systemd/session.sh \
+  || dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP=sway
 
+exec systemctl --user import-environment WAYLAND_DISPLAY XDG_CURRENT_DESKTOP
 exec systemctl --user start clipboard-tunnel.service
 exec $polkit
 
