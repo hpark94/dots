@@ -1,291 +1,273 @@
-/* === Variables === */
-:root {
-    --bg-base: #f9f7f6;
-    --bg-muted: rgba(128, 128, 128, 1);
-    --text-primary: #4d4851;
-    --text-light: #f9f7f6;
-    --accent: #edbb9b;
-    --accent-active: #c36022;
-    --critical: #a63f3f;
-    --link: #3a7292;
-    --radius-sm: 0.668rem;
-    --radius-md: 1.159rem;
-    --radius-lg: 1.705rem;
-}
+/* === Color definitions === */
+@define-color bg_base #f9f7f6;
+@define-color bg_muted rgba(128, 128, 128, 1);
+@define-color text_primary #4d4851;
+@define-color text_light #f9f7f6;
+@define-color accent #e5d9cd;
+@define-color accent_active #4d4851;
+@define-color critical #a63f3f;
+@define-color link #3a7292;
 
 /* === Base === */
 * {
-    font-size: 14px;
-    font-family: "Geist", "Noto Sans", sans-serif;
-    transition: 100ms;
-    box-shadow: unset;
+  font-size: 14px;
+  font-family: "Geist", "Noto Sans", sans-serif;
+  transition: 100ms;
+  box-shadow: unset;
+  color: @text_primary;
 }
 
-/* === Notification shared (control-center + floating) === */
+/* === Button styles === */
+button {
+  background-color: @bg_muted;
+  border: unset;
+  border-radius: 9999px;
+  box-shadow: unset;
+  text-shadow: unset;
+}
+
+button label,
+button image {
+  color: @text_light;
+}
+
+button:hover {
+  background-color: @accent;
+}
+button:hover label,
+button:hover image {
+  color: @text_primary;
+}
+
+button:active {
+  background-color: @accent_active;
+}
+button:active label,
+button:active image {
+  color: @text_light;
+}
+
+.close-button {
+  min-height: 20px;
+  min-width: 20px;
+  margin-right: 13px;
+  margin-top: 6px;
+  padding-bottom: unset;
+  margin-bottom: unset;
+}
+
+/* === Tooltip === */
+tooltip {
+  background-color: @bg_base;
+}
+tooltip label,
+tooltip image {
+  color: @text_primary;
+}
+
+/* === Notifications === */
 .notification-background .notification {
-    background-color: var(--bg-muted);
-    margin-bottom: unset;
+  background-color: @bg_muted;
+  margin-bottom: unset;
 }
 
 .notification-background .notification box,
 .notification-background .notification widget,
 .notification-background .notification .notification-content {
-    border: unset;
-    border-radius: var(--radius-sm);
+  border: unset;
+  border-radius: 0.668rem;
 }
 
 .notification-background .notification .notification-content {
-    background-color: var(--bg-base);
-    padding: 0.818rem;
-    padding-right: unset;
-    margin-right: unset;
+  background-color: @bg_base;
+  padding: 0.818rem;
+  padding-right: unset;
+  margin-right: unset;
 }
 
-/* Hover */
-.notification-background:hover .notification {
-    background-color: var(--accent);
-}
-
+.notification-background:hover .notification,
 .notification-default-action:hover {
-    background-color: var(--accent);
-    border-radius: var(--radius-sm);
+  background-color: @accent;
+  border-radius: 0.668rem;
 }
 
-/* Low / Normal */
+/* Low & Normal */
 .notification.low .notification-content label,
-.notification.normal .notification-content label {
-    color: var(--text-primary);
-}
-
+.notification.normal .notification-content label,
 .notification.low .notification-content .body,
 .notification.normal .notification-content .body {
-    color: var(--text-primary);
+  color: @text_primary;
 }
 
 .notification.low .notification-content image,
 .notification.normal .notification-content image {
-    background-color: unset;
-    color: var(--link);
+  background-color: unset;
+  color: @link;
 }
 
 /* Critical */
 .notification.critical .notification-content {
-    background-color: var(--critical);
+  background-color: @critical;
 }
 
 .notification.critical .notification-content label {
-    color: var(--text-light);
+  color: @text_light;
 }
 
 .notification.critical .notification-content image {
-    background-color: unset;
-    color: var(--critical);
+  background-color: unset;
+  color: @critical;
 }
 
 /* Typography */
 .notification-content .summary {
-    font-size: 0.9909rem;
-    font-weight: 600;
+  font-size: 0.9909rem;
+  font-weight: 600;
 }
 
 .notification-content .time {
-    font-size: 0.8291rem;
-    font-weight: 600;
-    margin-right: 1rem;
-    padding-right: unset;
+  font-size: 0.8291rem;
+  font-weight: 600;
+  margin-right: 1rem;
+  padding-right: unset;
 }
 
 .notification-content .body {
-    font-size: 0.8891rem;
-    font-weight: 500;
-    margin-top: 0.31rem;
-    padding-right: unset;
-    margin-right: unset;
-}
-
-/* Close button */
-.notification-row .close-button {
-    background-color: var(--bg-muted);
-    border-radius: 9999px;
-    border: none;
-    box-shadow: unset;
-    margin-right: 13px;
-    margin-top: 6px;
-    margin-bottom: unset;
-    padding-bottom: unset;
-    min-height: 20px;
-    min-width: 20px;
-    text-shadow: unset;
-}
-
-.notification-row .close-button:hover {
-    background-color: var(--accent);
-}
-.notification-row .close-button:active {
-    background-color: var(--accent-active);
+  font-size: 0.8891rem;
+  font-weight: 500;
+  margin-top: 0.31rem;
+  padding-right: unset;
+  margin-right: unset;
 }
 
 /* === Control Center === */
 .control-center {
-    border-radius: var(--radius-lg);
-    border-top: 1px solid rgba(164, 162, 167, 0.19);
-    border-left: 1px solid rgba(164, 162, 167, 0.19);
-    border-right: 1px solid rgba(128, 127, 132, 0.145);
-    border-bottom: 1px solid rgba(128, 127, 132, 0.145);
-    box-shadow: 0px 2px 3px rgba(0, 0, 0, 0.45);
-    margin: 7px;
-    background-color: var(--bg-base);
-    padding: 1.023rem;
+  border-radius: 1.705rem;
+  border-top: 1px solid rgba(164, 162, 167, 0.19);
+  border-left: 1px solid rgba(164, 162, 167, 0.19);
+  border-right: 1px solid rgba(128, 127, 132, 0.145);
+  border-bottom: 1px solid rgba(128, 127, 132, 0.145);
+  box-shadow: 0px 2px 3px rgba(0, 0, 0, 0.45);
+  margin: 7px;
+  background-color: @bg_base;
+  padding: 1.023rem;
 }
 
 .control-center .notification-row {
-    background-color: unset;
+  background-color: unset;
 }
+
 .control-center .notification-row .notification-background .notification {
-    margin-top: 0.15rem;
+  margin-top: 0.15rem;
 }
 
 .control-center trough {
-    border-radius: 9999px;
-    min-width: 0.545rem;
-    background-color: transparent;
+  border-radius: 9999px;
+  min-width: 0.545rem;
+  background-color: transparent;
 }
 
 .control-center slider {
-    border-radius: 9999px;
-    min-width: 0.273rem;
-    min-height: 2.045rem;
-    background-color: var(--bg-muted);
-}
-
-.control-center slider:hover {
-    background-color: var(--accent);
-}
-.control-center slider:active {
-    background-color: var(--accent-active);
+  border-radius: 9999px;
+  min-width: 0.273rem;
+  min-height: 2.045rem;
+  background-color: @bg_muted;
 }
 
 /* === Notification Groups === */
 .control-center-list row.notification-group {
-    border-radius: var(--radius-md);
-    background-color: unset;
+  border-radius: 1.159rem;
+  background-color: unset;
 }
 
 .notification-group-header.title-1 {
-    color: var(--text-primary);
+  color: @text_primary;
 }
 .notification-group-icon {
-    color: var(--link);
+  color: @link;
 }
-
-.notification-group-collapse-button,
-.notification-group-close-all-button {
-    background-color: var(--bg-muted);
-}
-
-.notification-group-collapse-button:hover,
-.notification-group-close-all-button:hover {
-    background-color: var(--accent);
-}
-
-.notification-group-collapse-button:active,
-.notification-group-close-all-button:active {
-    background-color: var(--accent-active);
-}
-
-.notification-group-close-button button {
-    background-color: var(--bg-muted);
-}
-.notification-group-close-button button:hover {
-    background-color: var(--accent-active);
-}
-
 .control-center-list-placeholder {
-    color: var(--text-primary);
+  color: @text_primary;
 }
 
 /* === Title Widget === */
 .widget-title {
-    padding: 0.341rem;
-    margin: unset;
+  padding: 0.341rem;
+  margin: unset;
 }
 
 .widget-title label {
-    font-size: 1.364rem;
-    font-weight: 600;
-    color: var(--text-primary);
-    margin-left: 0.941rem;
+  font-size: 1.364rem;
+  font-weight: 600;
+  margin-left: 0.941rem;
 }
 
 .widget-title button {
-    border: unset;
-    background-color: unset;
-    border-radius: var(--radius-md);
-    padding: 0.141rem;
-    margin-right: 0.841rem;
+  border-radius: 1.159rem;
+  padding: 0.141rem;
+  margin-right: 0.841rem;
 }
 
 .widget-title button label {
-    font-size: 1.0409rem;
-    color: var(--text-primary);
-    margin-right: 0.841rem;
-}
-
-.widget-title button:hover {
-    background-color: var(--accent);
-}
-.widget-title button:active {
-    background-color: var(--accent-active);
+  font-size: 1.0409rem;
+  margin-right: 0.841rem;
 }
 
 /* === Volume Widget === */
 .widget-volume {
-    background-color: var(--bg-muted);
-    padding: 8px;
-    margin: 8px;
-    border-radius: var(--radius-md);
+  background-color: @bg_muted;
+  padding: 8px;
+  margin: 8px;
+  border-radius: 1.159rem;
+}
+
+.widget-volume label {
+  color: @text_light;
 }
 
 .widget-volume trough {
-    border: unset;
-    background-color: var(--bg-muted);
+  border: unset;
+  background-color: @bg_muted;
 }
 
 .widget-volume trough slider {
-    background-color: var(--bg-base);
-    border-radius: 9999px;
-    min-height: 1.25rem;
+  background-color: @bg_base;
+  border-radius: 9999px;
+  min-height: 1.25rem;
 }
 
 .widget-volume highlight,
 .widget-backlight highlight {
-    padding: 3.5px;
-    border-radius: 9999px;
-    background: var(--bg-base);
+  padding: 3.5px;
+  border-radius: 9999px;
+  background: @bg_base;
 }
 
 /* === Mpris Widget === */
 .widget-mpris {
-    background-color: unset;
-    border-radius: var(--radius-md);
+  background-color: unset;
+  border-radius: 1.159rem;
+}
+
+.widget-mpris label {
+  color: @text_light;
 }
 
 .mpris-background {
-    border-radius: 14px;
-    margin: 3px;
+  border-radius: 14px;
+  margin: 3px;
 }
 
 .mpris-overlay {
-    border-radius: 14px;
-    background-color: var(--bg-muted);
-    box-shadow: unset;
+  border-radius: 14px;
+  background-color: @bg_muted;
+  box-shadow: unset;
 }
 
 .widget-mpris-title {
-    font-weight: bold;
-    font-size: 1.25rem;
+  font-weight: bold;
+  font-size: 1.25rem;
 }
-
 .widget-mpris-subtitle {
-    font-size: 1.1rem;
+  font-size: 1.1rem;
 }

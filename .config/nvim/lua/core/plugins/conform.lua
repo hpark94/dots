@@ -5,7 +5,7 @@ return {
             bash = { "shfmt" },
             c = { "clang-format" },
             cpp = { "clang-format" },
-            css = { "biome" },
+            css = { "prettier" },
             html = { "prettier" },
             javascript = { "biome" },
             javascriptreact = { "biome" },
