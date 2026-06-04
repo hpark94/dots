@@ -21,7 +21,7 @@
 button {
   background-color: @bg_muted;
   border: unset;
-  border-radius: 9999px;
+  border-radius: 0.5rem;
   box-shadow: unset;
   text-shadow: unset;
 }
@@ -54,6 +54,7 @@ button:active image {
   margin-top: 6px;
   padding-bottom: unset;
   margin-bottom: unset;
+  border-radius: 9999px;
 }
 
 /* === Tooltip === */
