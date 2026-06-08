@@ -61,6 +61,7 @@ bindsym Control+Alt+l exec $lockcmd
 bindsym Control+Alt+f floating toggle
 bindsym Control+Alt+m fullscreen toggle
 bindsym Control+Alt+p exec sudo battery-threshold-toggle
+bindsym Control+Alt+w exec pkill -USR1 waybar
 
 bindsym Control+Alt+h splith
 bindsym Control+Alt+v splith

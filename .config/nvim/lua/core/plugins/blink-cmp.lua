@@ -10,7 +10,7 @@ return {
     version = "1.*",
     opts = {
         signature = {
-            enabled = true,
+            enabled = false,
             window = {
                 border = "rounded",
             },
