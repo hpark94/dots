@@ -148,3 +148,11 @@ function tmux_sessionizer_wrapper() {
         zle accept-line
     fi
 }
+
+zupdate() {
+    zinit self-update
+    zinit update --all
+    find ~/.local/share/zinit/completions/ -xtype l -delete
+    rm -f ~/.zcompdump*
+    exec zsh
+}

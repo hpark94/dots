@@ -8,6 +8,19 @@ if [ ! -d "$ZINIT_HOME" ]; then
 fi
 source "${ZINIT_HOME}/zinit.zsh"
 
+# Load completions
+autoload -Uz compinit && compinit
+_comp_options+=(globdots)
+
+# Source config
+source "$HOME/.envs.sh"
+_has mise && eval "$(~/.local/bin/mise activate zsh)"
+source "$HOME/.aliases.sh"
+_has fzf && _has tmux && source "$HOME/.shell_functions.sh"
+_has fzf && source <(fzf --zsh)
+_has zoxide && eval "$(zoxide init --cmd cd zsh)"
+_has direnv && eval "$(direnv hook zsh)"
+
 # Plugins
 zinit light zsh-users/zsh-syntax-highlighting
 zinit light zsh-users/zsh-completions
@@ -15,10 +28,6 @@ zinit light zsh-users/zsh-autosuggestions
 zinit light Aloxaf/fzf-tab
 zinit ice compile'(pure|async).zsh' pick'async.zsh' src'pure.zsh'
 zinit light sindresorhus/pure
-
-# Load completions
-autoload -Uz compinit && compinit
-_comp_options+=(globdots)
 
 zinit cdreplay -q
 # Completion styling
@@ -62,16 +71,6 @@ bindkey '^ ' autosuggest-accept
 
 # Disable highlight of pasted text
 zle_highlight+=(paste:none)
-
-# Source config
-source "$HOME/.envs.sh"
-_has mise && eval "$(~/.local/bin/mise activate zsh)"
-source "$HOME/.aliases.sh"
-_has fzf && _has tmux && source "$HOME/.shell_functions.sh"
-_has fzf && source <(fzf --zsh)
-_has zoxide && eval "$(zoxide init --cmd cd zsh)"
-_has direnv && eval "$(direnv hook zsh)"
-
 
 # Start TMUX-Session
 [[ -o interactive ]] && declare -f tmux_start >/dev/null && tmux_start
