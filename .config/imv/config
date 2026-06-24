@@ -15,7 +15,7 @@ c = center
 
 y = exec wl-copy < "$imv_current_file"
 
-<Shift+H> = prev
-<Shift+J> = zoom -2
-<Shift+K> = zoom 2
-<Shift+L> = next
+<Shift+K> = prev
+<Shift+J> = next
+<plus> = zoom 2
+<minus> = zoom -2

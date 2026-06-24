@@ -3,7 +3,7 @@ Description=Clipboard tunnel for SSH remote paste
 
 [Service]
 Environment=WAYLAND_DISPLAY=wayland-1
-ExecStart=socat TCP-LISTEN:11988,fork,reuseaddr EXEC:"wl-paste"
+ExecStart=socat TCP-LISTEN:11989,fork,reuseaddr EXEC:"wl-paste"
 Restart=always
 
 [Install]

@@ -16,31 +16,31 @@ set selection-clipboard clipboard
 set search-hadjust true
 set render-loading true
 
-set default-bg              "#1a1b26"
-set default-fg              "#c0caf5"
-set statusbar-bg            "#1a1b26"
-set statusbar-fg            "#c0caf5"
+set default-bg              "#000000"
+set default-fg              "#f9f7f6"
+set statusbar-bg            "#000000"
+set statusbar-fg            "#f9f7f6"
 
-set inputbar-bg             "#1a1b26"
-set inputbar-fg             "#c0caf5"
+set inputbar-bg             "#000000"
+set inputbar-fg             "#f9f7f6"
 
 set highlight-color         "rgba(255, 255, 0, 0.2)"
 set highlight-active-color  "rgba(255, 0, 0, 0.2)"
 
 set notification-error-bg   "#fb6f92"
-set notification-error-fg   "#1a1b26"
+set notification-error-fg   "#000000"
 set notification-warning-bg "#fb6f92"
-set notification-warning-fg "#1a1b26"
+set notification-warning-fg "#000000"
 
 set completion-highlight-fg "#23B0A3"
-set completion-highlight-bg "#1a1b26"
-set completion-bg           "#1a1b26"
-set completion-fg           "#c0caf5"
-set notification-bg         "#c0caf5"
-set notification-fg         "#1a1b26"
+set completion-highlight-bg "#000000"
+set completion-bg           "#000000"
+set completion-fg           "#f9f7f6"
+set notification-bg         "#f9f7f6"
+set notification-fg         "#000000"
 set highlight-fg            "#007acc"
 
 set recolor                 false
-set recolor-lightcolor      "#1a1b26"
-set recolor-darkcolor       "#c0caf5"
+set recolor-lightcolor      "#000000"
+set recolor-darkcolor       "#f9f7f6"
 set recolor-keephue         true

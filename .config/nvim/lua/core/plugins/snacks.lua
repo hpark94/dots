@@ -20,6 +20,10 @@ return {
             convert = {
                 notify = false,
             },
+            doc = {
+                max_width = 70,
+                max_height = 15,
+            },
         },
         picker = { enabled = true },
         notifier = { enabled = true },

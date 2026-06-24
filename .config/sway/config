@@ -36,6 +36,11 @@ input "type:keyboard" {
 input "type:touchpad" {
     natural_scroll enabled
     tap enabled
+    dwt enabled
+    drag_lock disabled
+    tap_button_map lrm
+    scroll_method two_finger
+    click_method clickfinger
 }
 
 input "elan9008:00-04f3:2d4b-stylus" {
