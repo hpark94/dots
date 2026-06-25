@@ -2,6 +2,7 @@
 
 fixed_paths=(
 	~/
+	~/dots
 	~/projects
 	~/bookmarks
 	~/repos

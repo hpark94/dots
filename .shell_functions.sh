@@ -9,6 +9,20 @@ function _fzf_comprun() {
     esac
 }
 
+_ffd() {
+    local -a tools
+    tools=()
+    local dir bin
+    for dir in ${(s.:.)PATH}; do
+        for bin in "$dir"/*(N-.:t); do
+            tools+=("$bin")
+        done
+    done
+    tools=(${(u)tools})
+    _describe 'tool' tools
+}
+compdef _ffd ffd
+
 function frg() {
     local query="$*"
 
