@@ -37,6 +37,20 @@ zstyle ':completion:*' menu no
 zstyle ':fzf-tab:complete:*:*' fzf-preview 'if [[ -d $realpath ]]; then eza --tree --color=always --level=2 $realpath | head -200; else bat -n --color=always $realpath; fi'
 zstyle ':fzf-tab:*' use-fzf-default-opts yes
 
+_ffd() {
+    local -a tools
+    tools=()
+    local dir bin
+    for dir in ${(s.:.)PATH}; do
+        for bin in "$dir"/*(N-x:t); do
+            tools+=("$bin")
+        done
+    done
+    tools=(${(u)tools})
+    _describe 'tool' tools
+}
+compdef _ffd ffd
+
 # Themes
 export FZF_DEFAULT_OPTS=$FZF_DEFAULT_OPTS' --color=fg:#4d4851,bg:#f9f7f6,hl:#4d4851 --color=fg+:#4d4851,bg+:#e4ded7,hl+:#4d4851 --color=info:#3a7292,prompt:#6b77bd,pointer:#a63f3f --color=marker:#3a784c,spinner:#614096,header:#c36022'
 export BAT_THEME="Coldark-Cold"
