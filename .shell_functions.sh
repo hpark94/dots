@@ -66,6 +66,7 @@ function frg() {
 
 ffd() {
     local tool="${1:-nvim}"
+    local flags=("${@:2}")
 
     if ! command -v "${tool}" &>/dev/null; then
         echo "Error: '${tool}' is not installed or not in PATH" >&2
@@ -75,21 +76,21 @@ ffd() {
     local is_terminal=false
 
     case "${tool}" in
-        nvim | vim | vi | nano | emacs | less | more | cat | bat)
+        nvim | vim | vi | nano | emacs | less | more | cat | bat | ls | stat | file | wc)
             is_terminal=true
             ;;
     esac
 
     local opener
     if [[ "${is_terminal}" == true ]]; then
-        opener="${tool} \"\$@\""
+        opener="${tool} ${flags[*]} \"\$@\""
     else
         opener="
 		if [[ \$FZF_SELECT_COUNT -eq 0 ]]; then
-		    ${tool} \"\$1\" &>/dev/null &
+		    ${tool} ${flags[*]} \"\$1\" &>/dev/null &
 		else
 		    for file in \"\$@\"; do
-			${tool} \"\$file\" &>/dev/null &
+			${tool} ${flags[*]} \"\$file\" &>/dev/null &
 		    done
 		fi"
     fi
