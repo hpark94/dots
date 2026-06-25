@@ -2,13 +2,14 @@
 
 fixed_paths=(
 	~/
-	~/dots
-	~/Sync
+	~/projects
+	~/bookmarks
+	~/repos
 )
 
 search_paths=(
 	~/projects
-	~/sessions
+	~/bookmarks
 	~/repos
 )
 
