@@ -289,3 +289,5 @@ build
 lazy-lock.json
 .config/nvim/spell/*.spl
 .config/nvim/spell/*.sug
+syncthing.service
+.gitconfig

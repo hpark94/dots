@@ -1,0 +1,10 @@
+[user]
+	name = Hyeong-Gyu Park
+	email = hyeonggyu94@googlemail.com
+[core]
+	excludesFile = ~/.gitignore
+	editor = nvim
+[init]
+	defaultBranch = main
+[pull]
+	rebase = true
