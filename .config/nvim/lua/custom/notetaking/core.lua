@@ -130,8 +130,8 @@ M.delete_asset = function()
     local assets_path = util.get_assets_path()
     local line = vim.api.nvim_get_current_line()
 
-    local filename = line:match("%[%[assets/([^%]]+)%]%]")
-        or line:match("%(assets/([^%)]+)%)")
+    local filename = line:match("%[%[%.%.%/assets/([^%]]+)%]%]")
+        or line:match("%(%.%.%/assets/([^%)]+)%)")
 
     if not filename then
         vim.notify("No asset found in current line", vim.log.levels.WARN)
