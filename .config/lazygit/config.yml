@@ -1,0 +1,9 @@
+gui:
+  theme:
+    activeBorderColor:
+      - "#3a7292"
+      - bold
+    selectedLineBgColor:
+      - default
+    defaultFgColor:
+      - "#4d4851"

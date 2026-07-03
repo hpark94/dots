@@ -15,14 +15,10 @@ return {
         bigfile = { enabled = true },
         bufdelete = { enabled = true },
         image = {
-            enabled = true,
+            enabled = false,
             math = { enabled = false },
             convert = {
                 notify = false,
-            },
-            doc = {
-                max_width = 70,
-                max_height = 15,
             },
         },
         picker = { enabled = true },

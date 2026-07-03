@@ -2,7 +2,7 @@ set $mainMod Mod4
 set $browser librewolf
 set $fileManager thunar
 set $menu fuzzel
-set $terminal ghostty
+set $terminal foot
 set $wallpaper ~/Sync/.pictures/wallpaper/frieren.jpg
 set $lockcmd swaylock -f -i $wallpaper
 set $polkit lxpolkit
