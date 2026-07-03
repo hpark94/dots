@@ -11,3 +11,6 @@ fi
 if [[ -f "${HOME}/.env" ]]; then
     source "${HOME}/.env"
 fi
+
+_has() { command -v "$1" >/dev/null 2>&1; }
+_has nvim && export EDITOR=nvim
