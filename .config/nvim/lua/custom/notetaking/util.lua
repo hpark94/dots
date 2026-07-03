@@ -83,7 +83,7 @@ end
 ---@return string
 M.create_asset_link = function(filepath)
     local asset_path = M.get_relative_path(filepath)
-    return string.format("![](../%s)", asset_path)
+    return string.format("![[../%s]]", asset_path)
 end
 
 ---@return boolean
