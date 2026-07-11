@@ -12,7 +12,6 @@ return {
             "css",
             "dtd",
             "html",
-            "java",
             "javascript",
             "json",
             "lua",

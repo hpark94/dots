@@ -185,13 +185,4 @@ M.notify = function()
     end, "Show Notifications History")
 end
 
-M.jdtls = function()
-    map("n", "<leader>lt", function()
-        require("jdtls.tests").generate()
-    end, "Generate Java Test")
-    map("n", "<leader>lj", function()
-        require("jdtls.tests").goto_subjects()
-    end, "Jump to Java tests or subjects")
-end
-
 return M

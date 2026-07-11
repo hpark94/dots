@@ -5,7 +5,11 @@ local use_snacks = ok and Snacks.picker ~= nil
 
 -- Reload buffer
 autocmd({ "FocusGained", "BufEnter" }, {
+    group = augroup("reload_buffer", { clear = true }),
     callback = function()
+        if vim.fn.getcmdwintype() ~= "" then
+            return
+        end
         vim.cmd("checktime")
     end,
 })
@@ -130,7 +134,8 @@ autocmd({
 })
 
 -- Treesitter
-vim.api.nvim_create_autocmd("FileType", {
+autocmd("FileType", {
+    group = augroup("treesitter_setup", { clear = true }),
     callback = function()
         pcall(vim.treesitter.start)
         vim.wo.foldmethod = "expr"
