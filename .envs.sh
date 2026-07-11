@@ -14,3 +14,4 @@ fi
 
 _has() { command -v "$1" >/dev/null 2>&1; }
 _has nvim && export EDITOR=nvim
+_has librewolf && export BROWSER=librewolf

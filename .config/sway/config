@@ -136,4 +136,4 @@ workspace 10 output $monitor
 
 for_window [app_id="mpv"] floating enable, move position center
 for_window [app_id="com.gabm.satty"] floating enable, move position center
-for_window [app_id="imv"] floating enable, move position center
+for_window [app_id="xdg-desktop-portal-gtk"] floating enable, resize set 900 px 700 px, move position center
