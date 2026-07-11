@@ -1,4 +1,4 @@
-palette = 0=#4d4851
+palette = 0=#000000
 palette = 1=#a63f3f
 palette = 2=#3a784c
 palette = 3=#c36022
@@ -15,8 +15,8 @@ palette = 13=#c7b7e1
 palette = 14=#aeb4da
 palette = 15=#e4ded7
 background = #f9f7f6
-foreground = #4d4851
+foreground = #000000
 cursor-color = cell-foreground
 cursor-text = cell-background
 selection-background = #e4ded7
-selection-foreground = #4d4851
+selection-foreground = #000000
