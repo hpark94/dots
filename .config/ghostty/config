@@ -4,7 +4,7 @@ window-padding-x = 2
 font-family = "Maple Mono NF"
 font-family = "Noto Sans CJK KR"
 font-size = 13
-theme = "royalfox"
+theme = "hp_light"
 mouse-hide-while-typing
 confirm-close-surface = false
 minimum-contrast = 2
