@@ -1,69 +1,88 @@
 local lush = require("lush")
 local hsl = lush.hsl
-
 ---@diagnostic disable: undefined-global
 local theme = lush(function(injected_functions)
     local sym = injected_functions.sym
+
+    local bg = hsl(275, 10, 6)
+    local fg = hsl(30, 15, 90)
+    local gray = hsl(275, 6, 55)
+
+    local red = hsl(0, 55, 62)
+    local red_bg = hsl(0, 35, 26)
+    local orange = hsl(23, 70, 60)
+    local orange_bg = hsl(23, 70, 26)
+    local yellow = hsl(45, 80, 58)
+    local yellow_bg = hsl(45, 80, 24)
+    local green = hsl(137, 45, 55)
+    local green_bg = hsl(137, 35, 24)
+    local cyan = hsl(202, 55, 62)
+    local cyan_bg = hsl(202, 43, 24)
+    local blue = hsl(231, 55, 68)
+    local blue_bg = hsl(231, 38, 26)
+    local violet = hsl(263, 55, 68)
+    local violet_bg = hsl(263, 40, 26)
+    local magenta = hsl(354, 60, 68)
+    local magenta_1 = hsl(340, 60, 58)
+    local magenta_bg = hsl(340, 50, 26)
+
     local p = {
-        -- Dark theme palette
-        -- Background colors (inverted light/dark)
-        black_0 = hsl(30, 20, 10), -- Darkest background
-        black_1 = hsl(30, 20, 20),
-        black_2 = hsl(30, 20, 30), -- Derived from black_1
-        gray_0 = hsl(275, 6, 50),
-        gray_1 = hsl(275, 6, 60),
-        white_0 = hsl(30, 20, 80), -- Lightest background
-        white_1 = hsl(30, 20, 90), -- Lighter background
-        white_2 = hsl(30, 20, 95), -- Derived from white_1
+        bg_0 = bg,
+        bg_1 = bg.abs_lighten(10),
+        bg_2 = bg.abs_lighten(20),
 
-        -- Foreground colors (inverted from original bg colors)
-        red_0 = hsl(0, 45, 65),
-        red_1 = hsl(0, 45, 75),
-        red_bg_0 = hsl(0, 35, 25),
-        red_bg_1 = hsl(0, 35, 35),
+        gray_0 = gray,
+        gray_1 = gray.abs_lighten(10),
 
-        orange_0 = hsl(23, 70, 65),
-        orange_1 = hsl(23, 70, 75),
-        orange_bg_0 = hsl(23, 70, 25),
-        orange_bg_1 = hsl(23, 70, 35),
+        fg_0 = fg,
+        fg_1 = fg.abs_lighten(10),
 
-        yellow_0 = hsl(45, 80, 65),
-        yellow_1 = hsl(45, 80, 75),
-        yellow_bg_0 = hsl(45, 80, 25),
-        yellow_bg_1 = hsl(45, 80, 35),
+        red_0 = red,
+        red_1 = red.abs_lighten(10),
+        red_bg_0 = red_bg,
+        red_bg_1 = red_bg.abs_lighten(10),
 
-        green_0 = hsl(137, 35, 65),
-        green_1 = hsl(137, 35, 75),
-        green_bg_0 = hsl(137, 35, 25),
-        green_bg_1 = hsl(137, 35, 35),
+        orange_0 = orange,
+        orange_1 = orange.abs_lighten(10),
+        orange_bg_0 = orange_bg,
+        orange_bg_1 = orange_bg.abs_lighten(10),
 
-        cyan_0 = hsl(202, 43, 65),
-        cyan_1 = hsl(202, 43, 75),
-        cyan_bg_0 = hsl(202, 43, 25),
-        cyan_bg_1 = hsl(202, 43, 35),
+        yellow_0 = yellow,
+        yellow_1 = yellow.abs_lighten(10),
+        yellow_bg_0 = yellow_bg,
+        yellow_bg_1 = yellow_bg.abs_lighten(10),
 
-        blue_0 = hsl(231, 38, 65),
-        blue_1 = hsl(231, 38, 75),
-        blue_bg_0 = hsl(231, 38, 25),
-        blue_bg_1 = hsl(231, 38, 35),
+        green_0 = green,
+        green_1 = green.abs_lighten(5),
+        green_bg_0 = green_bg,
+        green_bg_1 = green_bg.abs_lighten(10),
 
-        violet_0 = hsl(263, 40, 65),
-        violet_1 = hsl(263, 40, 75),
-        violet_bg_0 = hsl(263, 40, 25),
-        violet_bg_1 = hsl(263, 40, 35),
+        cyan_0 = cyan,
+        cyan_1 = cyan.abs_lighten(10),
+        cyan_bg_0 = cyan_bg,
+        cyan_bg_1 = cyan_bg.abs_lighten(10),
 
-        magenta_0 = hsl(354, 50, 65),
-        magenta_1 = hsl(340, 50, 75),
-        magenta_bg_0 = hsl(340, 50, 25),
-        magenta_bg_1 = hsl(340, 50, 35),
+        blue_0 = blue,
+        blue_1 = blue.abs_lighten(10),
+        blue_bg_0 = blue_bg,
+        blue_bg_1 = blue_bg.abs_lighten(10),
 
-        -- Pure accent colors
-        red = hsl(0, 100, 60),
-        yellow = hsl(50, 100, 60),
-        green = hsl(100, 100, 50),
-        blue = hsl(210, 100, 60),
-        violet = hsl(290, 100, 60),
-        gray = hsl(0, 0, 60),
+        violet_0 = violet,
+        violet_1 = violet.abs_lighten(10),
+        violet_bg_0 = violet_bg,
+        violet_bg_1 = violet_bg.abs_lighten(10),
+
+        magenta_0 = magenta,
+        magenta_1 = magenta_1,
+        magenta_bg_0 = magenta_bg,
+        magenta_bg_1 = magenta_bg.abs_lighten(10),
+
+        vivid_red = hsl(0, 90, 50),
+        vivid_yellow = hsl(50, 90, 50),
+        vivid_green = hsl(100, 70, 50),
+        vivid_blue = hsl(210, 90, 50),
+        vivid_violet = hsl(290, 80, 50),
+        vivid_gray = hsl(0, 0, 50),
     }
     return {
         ColorColumn({ fg = p.gray_1, bg = nil }),
@@ -73,7 +92,7 @@ local theme = lush(function(injected_functions)
         lCursor({ Cursor }),
         CursorIM({ Cursor }),
         CursorColumn({ fg = p.gray_1, bg = nil }),
-        CursorLine({ fg = nil, bg = p.black_1 }),
+        CursorLine({ fg = nil, bg = p.bg_1 }),
         Directory({ fg = p.cyan_1, bg = nil }),
         Removed({ fg = nil, bg = p.red_bg_0 }),
         Added({ fg = nil, bg = p.green_bg_0 }),
@@ -83,97 +102,89 @@ local theme = lush(function(injected_functions)
         DiffChange({ Changed }),
         DiffText({ fg = nil, bg = p.blue_bg_0, gui = "italic" }),
         TermCursor({ Cursor }),
-        TermCursorNC({ fg = nil, bg = p.black_2 }),
+        TermCursorNC({ fg = nil, bg = p.bg_2 }),
         ErrorMsg({ fg = p.red_0, gui = "italic" }),
-
         IncSearch({ fg = Normal.fg, bg = p.green_bg_0 }),
         Substitute({ fg = Normal.fg, bg = p.yellow_bg_0 }),
         LineNr({ fg = p.gray_0, bg = nil }),
         LineNrAbove({ LineNr }),
         LineNrBelow({ LineNr }),
-        CursorLineNr({ fg = p.white_0, bg = CursorLine.bg, gui = "bold" }),
-
+        CursorLineNr({ fg = p.fg_0, bg = CursorLine.bg, gui = "bold" }),
         MatchParen({ fg = p.cyan_1, bg = p.cyan_bg_1 }),
         ModeMsg({ fg = p.green_0, bg = nil }),
         MsgArea({ fg = p.gray_1, bg = nil }),
         MsgSeparator({ MsgArea }),
         MoreMsg({ fg = p.cyan_1, bg = nil }),
         NonText({ fg = p.gray_0, bg = nil }),
-        Normal({ fg = p.white_0, bg = p.black_0 }),
-        NormalFloat({ fg = nil, bg = p.black_0 }),
-        FloatBorder({ fg = p.cyan_1, bg = p.black_0 }),
-        FloatTitle({ fg = p.cyan_1, bg = p.black_0 }),
+        Normal({ fg = p.fg_0, bg = p.bg_0 }),
+        NormalFloat({ fg = nil, bg = p.bg_0 }),
+        FloatBorder({ fg = p.cyan_1, bg = p.bg_0 }),
+        FloatTitle({ fg = p.cyan_1, bg = p.bg_0 }),
         NormalNC({ Normal }),
-        Pmenu({ fg = Normal.fg, bg = p.black_0 }),
-        PmenuSel({ fg = Pmenu.fg, bg = p.black_1, gui = "bold" }),
+        Pmenu({ fg = Normal.fg, bg = p.bg_0 }),
+        PmenuSel({ fg = Pmenu.fg, bg = p.bg_1, gui = "bold" }),
         PmenuKind({ fg = p.cyan_0, bg = Pmenu.bg }),
         PmenuKindSel({ fg = PmenuKind.fg, bg = PmenuSel.bg }),
         PmenuExtra({ Pmenu, gui = "italic" }),
         PmenuExtraSel({ PmenuSel, gui = "italic,bold" }),
-
         Question({ fg = p.cyan_0, bg = nil }),
         QuickFixLine({ fg = p.cyan_0, bg = nil }),
         Search({ fg = Normal.fg, bg = p.yellow_bg_0 }),
         SpecialKey({ fg = p.gray_0, bg = nil }),
-        SpellBad({ fg = nil, bg = nil, sp = p.red, gui = "underline" }),
-        SpellCap({ fg = nil, bg = nil, sp = p.gray, gui = "underline" }),
-        SpellLocal({ fg = nil, bg = nil, sp = p.blue, gui = "underline" }),
-        SpellRare({ fg = nil, bg = nil, sp = p.violet, gui = "underline" }),
-        StatusLine({ fg = nil, bg = p.black_1 }),
+        SpellBad({ fg = nil, bg = nil, sp = p.vivid_red, gui = "underline" }),
+        SpellCap({ fg = nil, bg = nil, sp = p.vivid_gray, gui = "underline" }),
+        SpellLocal({ fg = nil, bg = nil, sp = p.vivid_blue, gui = "underline" }),
+        SpellRare({
+            fg = nil,
+            bg = nil,
+            sp = p.vivid_violet,
+            gui = "underline",
+        }),
+        StatusLine({ fg = nil, bg = p.bg_1 }),
         StatusLineNC({ StatusLine }),
         Title({ fg = p.cyan_1, bg = nil, gui = "bold" }),
         Visual({ fg = nil, bg = p.cyan_bg_0 }),
-
         WarningMsg({ fg = p.yellow_0, bg = nil }),
         Whitespace({ fg = p.gray_0, bg = nil }),
-        Winseparator({ fg = p.black_0, bg = nil }),
+        Winseparator({ fg = p.fg_0, bg = nil }),
         WildMenu({ PmenuSel }),
-
         Comment({ fg = p.gray_0, bg = nil, gui = "italic" }),
-
         Constant({ fg = p.yellow_0, bg = nil }),
         String({ fg = p.green_0, bg = nil, gui = "italic" }),
         Character({ fg = p.violet_0, bg = nil }),
         Number({ fg = p.orange_0, bg = nil }),
         Boolean({ fg = p.orange_0, bg = nil }),
         Float({ fg = p.orange_0, bg = nil }),
-
         Identifier({ fg = p.blue_1, bg = nil }),
         Function({ fg = p.cyan_0, bg = nil }),
-
-        Statement({ fg = p.white_0, bg = nil, gui = "bold" }),
+        Statement({ fg = p.fg_0, bg = nil, gui = "bold" }),
         Conditional({ fg = p.magenta_0, bg = nil, gui = "italic" }),
         Repeat({ Conditional }),
         Label({ Conditional }),
         Operator({ fg = p.blue_0, bg = nil }),
         Keyword({ fg = p.magenta_0, bg = nil }),
         Exception({ fg = p.violet_0, bg = nil, gui = "italic" }),
-
         PreProc({ fg = p.red_0, bg = nil }),
         Include({ PreProc }),
         Define({ PreProc }),
         Macro({ PreProc }),
         PreCondit({ PreProc }),
-
         Type({ fg = p.magenta_1, bg = nil }),
         StorageClass({ Type }),
         Structure({ Type }),
         Typedef({ Type }),
-
         Special({ fg = p.cyan_0, bg = nil }),
         SpecialChar({ Special }),
         Tag({ Special }),
         Delimiter({ fg = p.violet_0, bg = nil }),
         SpecialComment({ Special }),
         Debug({ fg = p.blue_0, bg = nil, gui = "italic" }),
-
         Underlined({ fg = nil, bg = nil, gui = "underline" }),
         Ignore({ fg = nil, bg = nil }),
-        Error({ fg = p.white_0, bg = p.red_bg_0, gui = "bold" }),
-        Todo({ fg = p.white_0, bg = p.yellow_bg_0, gui = "bold" }),
-
+        Error({ fg = p.fg_0, bg = p.red_bg_0, gui = "bold" }),
+        Todo({ fg = p.fg_0, bg = p.yellow_bg_0, gui = "bold" }),
         LspReferenceText({
-            fg = p.white_0,
+            fg = p.fg_0,
             bg = p.blue_bg_0,
             gui = "underline",
         }),
@@ -181,8 +192,7 @@ local theme = lush(function(injected_functions)
         LspReferenceWrite({ LspReferenceText, fg = p.green_1 }),
         LspCodeLens({ fg = p.gray_1, bg = nil, gui = "italic" }),
         LspCodeLensSeparator({ LspCodeLens }),
-        LspSignatureActiveParameter({ fg = p.white_0, bg = p.cyan_bg_0 }),
-
+        LspSignatureActiveParameter({ fg = p.fg_0, bg = p.cyan_bg_0 }),
         DiagnosticError({ fg = p.red_0, bg = nil }),
         DiagnosticWarn({ fg = p.yellow_0, bg = nil }),
         DiagnosticInfo({ fg = p.gray_1, bg = nil }),
@@ -208,7 +218,6 @@ local theme = lush(function(injected_functions)
         DiagnosticSignInfo({ DiagnosticInfo }),
         DiagnosticSignHint({ DiagnosticHint }),
         DiagnosticSignOk({ DiagnosticOk }),
-
         sym("@text.literal")({ Comment }),
         sym("@text.reference")({ Identifier }),
         sym("@text.title")({ Title }),
@@ -260,20 +269,18 @@ local theme = lush(function(injected_functions)
         sym("@diff.minus")({ DiffDelete }),
         sym("@diff.plus")({ DiffAdd }),
         sym("@diff.delta")({ DiffChange }),
-
-        GitSignsAdd({ fg = p.green, bg = nil }),
+        GitSignsAdd({ fg = p.vivid_green, bg = nil }),
         GitSignsAddLn({ GitSignsAdd }),
         GitSignsAddInline({ GitSignsAdd }),
-        GitSignsChange({ fg = p.yellow, bg = nil }),
+        GitSignsChange({ fg = p.vivid_yellow, bg = nil }),
         GitSignsChangeLn(GitSignsChange),
         GitSignsChangeInline(GitSignsChange),
-        GitSignsDelete({ fg = p.red, bg = nil }),
+        GitSignsDelete({ fg = p.vivid_red, bg = nil }),
         GitSignsDeleteLn({ GitSignsDelete }),
         GitSignsDeleteInline({ GitSignsDelete }),
-        GitSignsUntracked({ fg = p.blue, bg = nil }),
+        GitSignsUntracked({ fg = p.vivid_blue, bg = nil }),
         GitSignsUntrackedLn({ GitSignsUntracked }),
         GitSignsUntrackedInline({ GitSignsUntracked }),
-
         NotifyDEBUGBorder({ fg = p.cyan_0, bg = nil }),
         NotifyDEBUGIcon({ NotifyDEBUGBorder }),
         NotifyDEBUGTitle({ NotifyDEBUGBorder }),
@@ -289,65 +296,64 @@ local theme = lush(function(injected_functions)
         NotifyWARNBorder({ fg = p.yellow_0, bg = nil }),
         NotifyWARNIcon({ NotifyWARNBorder }),
         NotifyWARNTitle({ NotifyWARNBorder }),
-
         BlinkCmpKind({ fg = p.cyan_0 }),
-
-        MiniStatuslineDevinfo({ fg = p.cyan_0, bg = p.black_1 }),
+        MiniStatuslineDevinfo({ fg = p.cyan_0, bg = p.bg_1 }),
         MiniStatuslineFileinfo({ MiniStatuslineDevinfo }),
-        MiniStatuslineFilename({ fg = p.white_0, bg = p.black_0 }),
+        MiniStatuslineFilename({ fg = p.fg_0, bg = p.bg_0 }),
         MiniStatuslineInactive({ StatusLineNC }),
         MiniStatuslineModeCommand({
-            fg = p.black_0,
+            fg = p.bg_0,
             bg = p.blue_0,
             gui = "bold",
         }),
         MiniStatuslineModeInsert({
-            fg = p.black_0,
+            fg = p.bg_0,
             bg = p.green_0,
             gui = "bold",
         }),
         MiniStatuslineModeNormal({
-            fg = p.black_0,
+            fg = p.bg_0,
             bg = p.cyan_0,
             gui = "bold",
         }),
         MiniStatuslineModeVisual({
-            fg = p.black_0,
+            fg = p.bg_0,
             bg = p.magenta_0,
             gui = "bold",
         }),
         MiniStatuslineModeOther({
-            fg = p.black_0,
-            bg = p.white_0,
+            fg = p.bg_0,
+            bg = p.fg_0,
             gui = "bold",
         }),
         MiniStatuslineModeReplace({
-            fg = p.black_0,
+            fg = p.bg_0,
             bg = p.violet_0,
             gui = "bold",
         }),
-
         RenderMarkdownBullet({ fg = p.cyan_0, bg = nil }),
         RenderMarkdownChecked({ DiagnosticOk }),
         RenderMarkdownUnchecked({ DiagnosticWarn }),
-        RenderMarkdownCode({ fg = nil, bg = p.violet_bg_0 }),
-        RenderMarkdownCodeInline({ fg = p.violet_0, bg = p.violet_bg_0 }),
+        RenderMarkdownCode({ fg = nil, bg = p.violet_bg_0.abs_darken(5) }),
+        RenderMarkdownCodeInline({
+            fg = nil,
+            bg = p.violet_bg_0.abs_darken(5),
+        }),
         RenderMarkdownDash({ RenderMarkdownBullet }),
         RenderMarkdownDash({ RenderMarkdownBullet }),
         RenderMarkdownH1({ fg = p.red_0, bg = nil }),
-        RenderMarkdownH1Bg({ fg = p.white_0, bg = p.red_bg_0, gui = "bold" }),
+        RenderMarkdownH1Bg({ fg = p.fg_0, bg = p.red_bg_0, gui = "bold" }),
         RenderMarkdownH2({ fg = p.yellow_0, bg = nil }),
-        RenderMarkdownH2Bg({ fg = p.white_0, bg = p.yellow_bg_0, gui = "bold" }),
+        RenderMarkdownH2Bg({ fg = p.fg_0, bg = p.yellow_bg_0, gui = "bold" }),
         RenderMarkdownH3({ fg = p.cyan_0, bg = nil }),
-        RenderMarkdownH3Bg({ fg = p.white_0, bg = p.cyan_bg_0, gui = "bold" }),
+        RenderMarkdownH3Bg({ fg = p.fg_0, bg = p.cyan_bg_0, gui = "bold" }),
         RenderMarkdownH4({ fg = p.orange_0, bg = nil }),
-        RenderMarkdownH4Bg({ fg = p.white_0, bg = p.orange_bg_0, gui = "bold" }),
+        RenderMarkdownH4Bg({ fg = p.fg_0, bg = p.orange_bg_0, gui = "bold" }),
         RenderMarkdownH5({ fg = p.green_0, bg = nil }),
-        RenderMarkdownH5Bg({ fg = p.white_0, bg = p.green_bg_0, gui = "bold" }),
+        RenderMarkdownH5Bg({ fg = p.fg_0, bg = p.green_bg_0, gui = "bold" }),
         RenderMarkdownH6({ fg = p.blue_0, bg = nil }),
-        RenderMarkdownH6Bg({ fg = p.white_0, bg = p.blue_bg_0, gui = "bold" }),
+        RenderMarkdownH6Bg({ fg = p.fg_0, bg = p.blue_bg_0, gui = "bold" }),
         RenderMarkdownTodo({ Todo }),
     }
 end)
-
 return theme

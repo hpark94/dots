@@ -291,3 +291,4 @@ lazy-lock.json
 .config/nvim/spell/*.sug
 syncthing.service
 .gitconfig
+.aider*

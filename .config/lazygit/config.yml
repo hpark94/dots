@@ -5,5 +5,3 @@ gui:
       - bold
     selectedLineBgColor:
       - default
-    defaultFgColor:
-      - "#4d4851"

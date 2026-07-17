@@ -37,4 +37,5 @@ stylua = "2.4.0"
 "pipx:pyright" = "latest"
 "pipx:black" = "latest"
 "pipx:ruff" = "latest"
+"pipx:aider-chat" = "latest"
 
