@@ -40,7 +40,7 @@ set notification-bg         "#e9e6e2"
 set notification-fg         "#100e11"
 set highlight-fg            "#69acd3"
 
-set recolor                 true
+set recolor                 false
 set recolor-lightcolor      "#100e11"
 set recolor-darkcolor       "#e9e6e2"
 set recolor-keephue         true
