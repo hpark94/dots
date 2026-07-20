@@ -292,3 +292,5 @@ lazy-lock.json
 syncthing.service
 .gitconfig
 .aider*
+
+**/.claude/settings.local.json
