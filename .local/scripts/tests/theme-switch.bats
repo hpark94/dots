@@ -2,8 +2,30 @@
 
 setup() {
 	export XDG_STATE_HOME="$BATS_TEST_TMPDIR/state"
+	export XDG_CONFIG_HOME="$BATS_TEST_TMPDIR/config"
+	unset SWAYSOCK
 	SCRIPT="$BATS_TEST_DIRNAME/../theme-switch"
 	source "$SCRIPT"
+
+	mkdir -p "$XDG_CONFIG_HOME/theme"
+	{
+		for i in $(seq 0 15); do
+			printf 'color%d=#0000%02x\n' "$i" "$i"
+		done
+		printf 'bg=#f00001\n'
+		printf 'fg=#f00002\n'
+		printf 'selection_bg=#f00003\n'
+		printf 'selection_fg=#f00004\n'
+	} >"$XDG_CONFIG_HOME/theme/hp_light.sh"
+	{
+		for i in $(seq 0 15); do
+			printf 'color%d=#1000%02x\n' "$i" "$i"
+		done
+		printf 'bg=#d00001\n'
+		printf 'fg=#d00002\n'
+		printf 'selection_bg=#d00003\n'
+		printf 'selection_fg=#d00004\n'
+	} >"$XDG_CONFIG_HOME/theme/hp_dark.sh"
 }
 
 @test "resolve_mode dark returns dark" {
@@ -68,4 +90,62 @@ setup() {
 	main dark
 	main toggle
 	[ "$(cat "$XDG_STATE_HOME/theme/mode")" = "light" ]
+}
+
+@test "generate_foot sets initial-color-theme to the requested mode" {
+	generate_foot dark "$BATS_TEST_TMPDIR/out"
+	grep -qx "initial-color-theme=dark" "$BATS_TEST_TMPDIR/out/foot-colors.ini"
+
+	generate_foot light "$BATS_TEST_TMPDIR/out"
+	grep -qx "initial-color-theme=light" "$BATS_TEST_TMPDIR/out/foot-colors.ini"
+}
+
+@test "generate_foot writes both colors-light and colors-dark blocks with # stripped, regardless of mode" {
+	generate_foot dark "$BATS_TEST_TMPDIR/out"
+	run cat "$BATS_TEST_TMPDIR/out/foot-colors.ini"
+
+	[[ "$output" == *"[colors-light]"* ]]
+	[[ "$output" == *"background=f00001"* ]]
+	[[ "$output" == *"foreground=f00002"* ]]
+	[[ "$output" == *"regular0=000000"* ]]
+	[[ "$output" == *"bright7=00000f"* ]]
+	[[ "$output" == *"selection-foreground=f00004"* ]]
+	[[ "$output" == *"selection-background=f00003"* ]]
+
+	[[ "$output" == *"[colors-dark]"* ]]
+	[[ "$output" == *"background=d00001"* ]]
+	[[ "$output" == *"regular3=100003"* ]]
+	[[ "$output" == *"bright0=100008"* ]]
+}
+
+@test "generate_sway writes client.focused/focused_inactive from the light palette" {
+	generate_sway light "$BATS_TEST_TMPDIR/out"
+	run cat "$BATS_TEST_TMPDIR/out/sway-colors.conf"
+	[ "${lines[0]}" = "client.focused #00000b #00000b #ffffff #00000b #00000b" ]
+	[ "${lines[1]}" = "client.focused_inactive #000008 #000008 #ffffff #000008 #000008" ]
+}
+
+@test "generate_sway writes client.focused/focused_inactive from the dark palette" {
+	generate_sway dark "$BATS_TEST_TMPDIR/out"
+	run cat "$BATS_TEST_TMPDIR/out/sway-colors.conf"
+	[ "${lines[0]}" = "client.focused #10000b #10000b #ffffff #10000b #10000b" ]
+	[ "${lines[1]}" = "client.focused_inactive #100008 #100008 #ffffff #100008 #100008" ]
+}
+
+@test "generate_ghostty writes only a theme line matching the mode" {
+	generate_ghostty dark "$BATS_TEST_TMPDIR/out"
+	[ "$(cat "$BATS_TEST_TMPDIR/out/ghostty-theme.conf")" = 'theme = "hp_dark"' ]
+
+	generate_ghostty light "$BATS_TEST_TMPDIR/out"
+	[ "$(cat "$BATS_TEST_TMPDIR/out/ghostty-theme.conf")" = 'theme = "hp_light"' ]
+}
+
+@test "apply_foot does not error when no foot process is running" {
+	run apply_foot dark
+	[ "$status" -eq 0 ]
+}
+
+@test "apply_sway does not error and skips live commands when SWAYSOCK is unset" {
+	run apply_sway dark
+	[ "$status" -eq 0 ]
 }

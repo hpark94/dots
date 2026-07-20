@@ -54,8 +54,7 @@ default_floating_border pixel 3
 gaps inner 3
 gaps outer 6
 
-client.focused #edbb9b #edbb9b #ffffff #edbb9b #edbb9b
-client.focused_inactive #595959 #595959 #ffffff #595959 #595959
+include ~/.local/state/theme/sway-colors.conf
 
 bindsym Control+Alt+t exec $terminal
 bindsym Control+Alt+e exec $fileManager
@@ -63,6 +62,7 @@ bindsym Control+Alt+r exec $menu
 bindsym Control+Alt+b exec $browser
 bindsym Control+Alt+q kill
 bindsym Control+Alt+c exec ~/.local/scripts/caffeine
+bindsym Control+Alt+d exec ~/.local/scripts/theme-switch toggle
 bindsym Control+Alt+l exec $lockcmd
 bindsym Control+Alt+f floating toggle
 bindsym Control+Alt+m fullscreen toggle

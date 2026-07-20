@@ -9,6 +9,15 @@ theme_state_file() {
 	echo "$(theme_state_dir)/mode"
 }
 
+theme_config_dir() {
+	echo "${XDG_CONFIG_HOME:-$HOME/.config}/theme"
+}
+
+theme_palette_file() {
+	local mode=$1
+	echo "$(theme_config_dir)/hp_${mode}.sh"
+}
+
 resolve_mode() {
 	local requested=$1
 	case "$requested" in
@@ -39,6 +48,88 @@ write_state() {
 	printf '%s' "$mode" >"$state_dir/mode"
 }
 
+foot_colors_block() {
+	local palette_file=$1
+	# shellcheck disable=SC1090,SC2154
+	(
+		source "$palette_file"
+		printf 'background=%s\n' "${bg#\#}"
+		printf 'foreground=%s\n\n' "${fg#\#}"
+		printf 'regular0=%s\n' "${color0#\#}"
+		printf 'regular1=%s\n' "${color1#\#}"
+		printf 'regular2=%s\n' "${color2#\#}"
+		printf 'regular3=%s\n' "${color3#\#}"
+		printf 'regular4=%s\n' "${color4#\#}"
+		printf 'regular5=%s\n' "${color5#\#}"
+		printf 'regular6=%s\n' "${color6#\#}"
+		printf 'regular7=%s\n\n' "${color7#\#}"
+		printf 'bright0=%s\n' "${color8#\#}"
+		printf 'bright1=%s\n' "${color9#\#}"
+		printf 'bright2=%s\n' "${color10#\#}"
+		printf 'bright3=%s\n' "${color11#\#}"
+		printf 'bright4=%s\n' "${color12#\#}"
+		printf 'bright5=%s\n' "${color13#\#}"
+		printf 'bright6=%s\n' "${color14#\#}"
+		printf 'bright7=%s\n\n' "${color15#\#}"
+		printf 'selection-foreground=%s\n' "${selection_fg#\#}"
+		printf 'selection-background=%s\n' "${selection_bg#\#}"
+	)
+}
+
+generate_foot() {
+	local mode=$1 out_dir=$2
+	mkdir -p "$out_dir"
+	{
+		printf 'initial-color-theme=%s\n\n' "$mode"
+		printf '[colors-light]\n'
+		foot_colors_block "$(theme_palette_file light)"
+		printf '\n[colors-dark]\n'
+		foot_colors_block "$(theme_palette_file dark)"
+	} >"$out_dir/foot-colors.ini"
+}
+
+sway_client_line() {
+	local group=$1 color=$2
+	printf 'client.%s %s %s #ffffff %s %s' "$group" "$color" "$color" "$color" "$color"
+}
+
+generate_sway() {
+	local mode=$1 out_dir=$2
+	mkdir -p "$out_dir"
+	# shellcheck disable=SC1090,SC2154
+	(
+		source "$(theme_palette_file "$mode")"
+		{
+			printf '%s\n' "$(sway_client_line focused "$color11")"
+			printf '%s\n' "$(sway_client_line focused_inactive "$color8")"
+		} >"$out_dir/sway-colors.conf"
+	)
+}
+
+generate_ghostty() {
+	local mode=$1 out_dir=$2
+	mkdir -p "$out_dir"
+	printf 'theme = "hp_%s"\n' "$mode" >"$out_dir/ghostty-theme.conf"
+}
+
+apply_foot() {
+	local mode=$1 sig=USR2
+	[[ "$mode" == "dark" ]] && sig=USR1
+	pkill -"$sig" -x foot >/dev/null 2>&1 || true
+}
+
+apply_sway() {
+	local mode=$1
+	if [[ -n "${SWAYSOCK:-}" ]] && command -v swaymsg >/dev/null 2>&1; then
+		# shellcheck disable=SC1090,SC2154
+		(
+			source "$(theme_palette_file "$mode")"
+			swaymsg "$(sway_client_line focused "$color11")" >/dev/null 2>&1 || true
+			swaymsg "$(sway_client_line focused_inactive "$color8")" >/dev/null 2>&1 || true
+		)
+	fi
+}
+
 notify_mode() {
 	local mode=$1
 	if command -v notify-send >/dev/null 2>&1; then
@@ -47,9 +138,18 @@ notify_mode() {
 }
 
 main() {
-	local mode
+	local mode out_dir
 	mode=$(resolve_mode "${1:-toggle}")
 	write_state "$mode"
+
+	out_dir=$(theme_state_dir)
+	generate_foot "$mode" "$out_dir"
+	generate_sway "$mode" "$out_dir"
+	generate_ghostty "$mode" "$out_dir"
+
+	apply_foot "$mode"
+	apply_sway "$mode"
+
 	notify_mode "$mode"
 }
 
