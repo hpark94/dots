@@ -10,6 +10,8 @@ The dotfiles owner maintains matching dark/light color palettes by hand across g
 
 A single script, `theme-switch`, flips a persisted global Theme Mode (`dark`/`light`) and updates all seven integration points using the strategy that fits each app's actual reload capability (see `docs/adr/0001-theme-switching-per-app-strategy.md`): live signal/command updates for foot, tmux, and sway; a generated include fragment for ghostty; a direct state-file read for nvim; and env-var-driven updates for bat and fzf. All apps read from one canonical palette source per mode. The script fires a desktop notification confirming the switch, is callable from the CLI with an explicit mode or a toggle, and is also bound to a sway keybind.
 
+GTK and Qt apps are folded into the same script under the same per-app-capability rationale: GTK gets a `gsettings` call against the `gtk-theme` key, read by each app at its own startup (no live update, no generated fragment — dconf already persists it), and Qt gets a surgical in-place edit of `qt6ct.conf`'s color-scheme key, applied on next launch only. Both flip built-in light/dark rather than a palette-matched custom theme. Claude Code is deliberately not wired into the script at all — it already self-syncs to the terminal's background via its own native `auto` theme setting.
+
 ## User Stories
 
 1. As the dotfiles owner, I want to run one command to switch every themed tool to dark mode, so that I don't have to manually edit multiple config files.
@@ -32,6 +34,12 @@ A single script, `theme-switch`, flips a persisted global Theme Mode (`dark`/`li
 18. As the dotfiles owner, I want sway's `focused_inactive` border color to be derived from the canonical palette's muted-gray slot rather than the current bespoke gray, so that inactive window borders are consistent with the rest of the palette.
 19. As the dotfiles owner, I want to invoke the switch script with an explicit mode argument, so that I can set a specific mode without needing to know or care what the current mode is.
 20. As a future maintainer (or myself later), I want the color-generation logic to be testable without foot, tmux, sway, ghostty, or notify-send actually running, so that I can verify it in isolation and catch regressions before they hit my real dotfiles.
+21. As the dotfiles owner, I want a single command to switch my GTK apps between light and dark, so that evince, xarchiver, and pavucontrol match the rest of my desktop without me digging into settings by hand.
+22. As the dotfiles owner, I want a freshly launched GTK app to reflect the current Theme Mode regardless of how I launched it (terminal, app launcher, file manager), so that I don't have to think about which launch path actually picks up the setting.
+23. As the dotfiles owner, I want Qt apps to switch between light and dark alongside everything else, so that Okular doesn't clash visually with the rest of my switched-over desktop.
+24. As the dotfiles owner, I want the Qt integration to touch only the specific setting controlling light/dark, so that other qt6ct preferences I set by hand (style, icon theme, fonts) survive every theme switch.
+25. As the dotfiles owner, I want the Qt config patch tested the same way the rest of the switch script is tested, so that a regression that clobbers unrelated qt6ct settings gets caught before it hits my real config.
+26. As the dotfiles owner, I want Claude Code's own theme to keep following my terminal's appearance without `theme-switch` needing to know anything about it, so that I don't have to build and maintain an integration point for a tool that already syncs itself.
 
 ## Implementation Decisions
 
@@ -52,6 +60,18 @@ A single script, `theme-switch`, flips a persisted global Theme Mode (`dark`/`li
 - **Notification**: `notify-send "Theme" "Switched to dark mode"` (or `"light"`), fired once per invocation, no icon or urgency customization.
 - **Sway keybind**: a new `bindsym` in sway config invoking `theme-switch toggle`.
 - Live-vs-next-launch behavior per app is fixed as designed in ADR-0001 (foot/tmux/sway live; ghostty/nvim/bat/fzf next-launch) — not user-configurable.
+- **GTK**: new `apply_gtk(mode)` function, invoked from `main()` alongside the other apply steps. Runs `gsettings set org.gnome.desktop.interface gtk-theme Adwaita-dark|Adwaita-light`. This corrects two assumptions made during grilling, both disproven by manual end-to-end testing (real `gsettings` calls, fresh app launches, screenshots) rather than left as design-time guesses:
+  - `color-scheme` (the newer key, plus the legacy `gtk-application-prefer-dark-theme` boolean) has **zero visible effect** on any of the three installed apps. `color-scheme` is only consumed by libadwaita's `AdwStyleManager`; none of evince (plain GTK4), xarchiver, or pavucontrol (plain GTK3) link libadwaita. The legacy boolean key doesn't even exist in this system's `gsettings-desktop-schemas` (v50.1) anymore, and even if it did, nothing bridges it to `color-scheme` without gnome-settings-daemon running, which sway doesn't run.
+  - `gtk-theme` (the actual theme *name* key), by contrast, is read directly by `GtkSettings` in every GTK2/3/4 app at that app's own startup — confirmed working for both evince and pavucontrol via fresh-launch screenshots. This has no launcher-dependence problem at all (unlike an env-var approach, which was also tried and rejected — see below), since gsettings/dconf is a persistent daemon-backed store every process reads independently, regardless of whether it was launched from a terminal, app launcher, or file manager.
+  - An env-var approach (`GTK_THEME=Adwaita:dark`, GTK's own built-in override, confirmed to work when set directly on a command line) was considered and rejected as the primary mechanism: making it reach GUI-launcher-invoked apps would require propagating it via `systemctl --user set-environment`/`dbus-update-activation-environment`, but sway's own `exec` and fuzzel (this system's launcher) fork children from their own already-resident process environment, not a freshly-queried systemd table — so already-running long-lived processes (sway, fuzzel) would never see a live update this way. The `gsettings gtk-theme` approach avoids this problem entirely.
+  - Confirmed via manual testing that an already-running instance does **not** re-theme when the gsettings value changes (neither evince nor pavucontrol did) — so GTK is a **Next-launch app**, not Live-switchable as originally designed. See the corrected `CONTEXT.md` entry below.
+  - Guarded by `command -v gsettings`, matching the existing `command -v tmux`/`swaymsg` guard pattern. No Generated Config fragment — dconf already persists the value durably.
+- **Qt**: new `patch_qt6ct(mode, target_file)` pure function, parameterized by target file path (not hardcoded to `$HOME`) so it's testable against a scratch fixture. Surgically edits only the `[Appearance]` color-scheme key in `qt6ct.conf`, leaving every other key (style, icon theme, fonts, etc.) untouched, since `qt6ct.conf` is real local app state the qt6ct GUI itself writes to — not a Generated Config fragment the script owns outright. Called from `main()` against `$XDG_CONFIG_HOME/qt6ct/qt6ct.conf`; a no-op if the file doesn't exist yet (qt6ct not installed/configured). No live-apply exists for Qt — same Next-launch category as ghostty; already-open Okular windows don't update, new ones do.
+- **New system dependency**: `qt6ct` (Fedora package) as the Qt platform theme engine, targeting Okular as the first Qt app, plus `QT_QPA_PLATFORMTHEME=qt6ct` set once via sway's session-start environment (alongside the existing `dbus-update-activation-environment` line) rather than a shell rc file, so GUI-launched Qt apps — not just ones launched from a terminal — pick it up too.
+- **`qt6ct.conf` is not git-tracked or stowed.** It's local machine state living wherever qt6ct creates it; base preferences (style, icon theme) are set once manually via the qt6ct GUI after installing — the same one-time-setup-step category as `bat cache --build`.
+- **Both GTK and Qt get built-in light/dark only** — no custom GTK CSS theme or Qt color scheme hand-matched to the `hp_dark`/`hp_light` Canonical Palette (unlike nvim/bat's hand-authored Selected Themes). Adwaita's built-in dark/light and Qt's default light/dark style are used as-is.
+- **Claude Code gets no `theme-switch` integration.** It has a native `theme: auto` setting (`/theme auto`) that queries the terminal's actual background and follows OS appearance changes live; combined with ghostty's existing Next-launch classification, it self-syncs for free once set. This is a one-time manual setting, not a script integration point.
+- **`CONTEXT.md` vocabulary update**: GTK is added to the **Next-launch app** list (not Live-switchable, corrected per the discovery above) alongside ghostty/nvim/bat/fzf. Qt is added to the same list.
 
 ## Testing Decisions
 
@@ -60,18 +80,28 @@ A single script, `theme-switch`, flips a persisted global Theme Mode (`dark`/`li
 - Cover both modes (`dark`, `light`) for every generator function, plus all three `resolve_mode` paths: explicit `dark`, explicit `light`, and `toggle` (reading an existing state file and producing the opposite mode, including the case where no state file exists yet).
 - Do not attempt to automate the live-apply step (signals, `tmux set-option`, `swaymsg`) or the `notify-send` call — no branching logic to verify, and they depend on external processes being present. Verify these manually by running the script for real and observing foot/tmux/sway/notification behavior.
 - No prior art exists in this repo for shell-script tests; this establishes the pattern for any future `.local/scripts/` testing.
+- `patch_qt6ct` is tested the same way as the existing generator functions: called directly against a scratch copy of a fixture `qt6ct.conf` containing unrelated pre-existing keys, asserting the color-scheme key is updated for both modes and every other key is byte-for-byte unchanged.
+- `apply_gtk` gets the same guard-path smoke test as `apply_sway`/`apply_tmux`/`notify_mode` ("does not error when the dependency is absent") — none of these automate the external command's actual effect, only that the guard makes the function safe to call when `gsettings`/`tmux`/`swaymsg`/`notify-send` isn't present. The real effect was checked manually: running `theme-switch dark`/`light`, freshly launching evince/xarchiver/pavucontrol, and confirming via screenshot which one actually changed appearance — this manual pass is what caught the `color-scheme`-has-no-effect / `gtk-theme`-is-what-actually-works discovery documented in Implementation Decisions.
 
 ## Out of Scope
 
 - Sway's `unfocused`, `urgent`, and `placeholder` border colors — only `focused` and `focused_inactive` are currently defined and in scope.
-- Any app not explicitly listed: waybar, rofi/wofi, mako/dunst (swaync itself), lock screen, GTK/Qt app theming, wallpaper.
+- Any app not explicitly listed: waybar, rofi/wofi, mako/dunst (swaync itself), lock screen, wallpaper.
 - Auto-following the desktop/OS light-dark preference (e.g. ghostty's `theme = light:...,dark:...` auto-detection) or a time-of-day scheduler — switching is always an explicit user action (CLI or keybind).
-- Live-switching already-open ghostty windows, already-running nvim sessions, or already-open shells' `FZF_DEFAULT_OPTS`/`BAT_THEME` — explicitly deferred per the next-launch decision.
+- Live-switching already-open ghostty windows, already-running nvim sessions, already-open shells' `FZF_DEFAULT_OPTS`/`BAT_THEME`, or already-running GTK apps — explicitly deferred per the next-launch decision (GTK confirmed Next-launch during implementation; see Implementation Decisions).
 - Any new palette roles beyond the existing 16 ANSI colors + bg/fg/selection — the tmux/sway bespoke values are dropped rather than preserved as new roles (e.g. no `accent_muted` or `mode_bg`).
+- Any Qt app other than Okular — Qt scope stops at getting `qt6ct` + Okular working; other Qt apps are assumed to follow along for free but aren't individually verified.
+- Any GTK app other than evince, xarchiver, and pavucontrol — same reasoning as above.
+- A custom GTK CSS theme or Qt color scheme matched to the Canonical Palette — built-in light/dark only, per Implementation Decisions.
+- Installing or configuring qt6ct's non-theme preferences (style, icon theme, fonts) via the switch script — a one-time manual GUI setup step, not scripted.
+- A `theme-switch`-driven integration point for Claude Code — it self-syncs via its own native `auto` theme detection; see Implementation Decisions.
+- KDE Plasma-specific theming (`kdeglobals`, Plasma color schemes) — this environment is sway, not Plasma, so `qt6ct` is the chosen mechanism instead.
 
 ## Further Notes
 
 - `docs/adr/0001-theme-switching-per-app-strategy.md` records why each app gets a different integration strategy rather than one uniform mechanism — read before implementing.
-- `CONTEXT.md` defines the vocabulary (Theme Mode, Canonical Palette, Generated Config, Selected Theme, Live-switchable app, Next-launch app) used throughout this spec.
+- `CONTEXT.md` defines the vocabulary (Theme Mode, Canonical Palette, Generated Config, Selected Theme, Live-switchable app, Next-launch app) used throughout this spec; it needs the GTK/Qt additions described in Implementation Decisions.
 - The bat `.tmTheme` hex-to-role mapping should mirror `lush_theme/lua/lush_theme/hp_light.lua` / `hp_dark.lua` as closely as the `.tmTheme` format allows. `.tmTheme` doesn't support a `gui`-style field, but does support per-scope `fontStyle: italic`, which should be used where the nvim theme uses `gui = "italic"` (e.g. comments, strings).
 - `bat cache --build` must be (re-)run after the new theme files are added or changed; this is a one-time/per-edit setup step, not part of the switch script itself.
+- Installing `qt6ct` and Okular, and doing the one-time qt6ct GUI pass to set base preferences, is a manual prerequisite before the Qt ticket can be verified end-to-end — same category as the `bat cache --build` note above.
+- Claude Code's `theme: auto` behavior (queries the terminal's background, follows OS appearance changes live) is documented at https://code.claude.com/docs/en/terminal-config.md, confirmed during grilling for this addition.
