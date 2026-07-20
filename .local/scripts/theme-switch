@@ -1,0 +1,58 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+theme_state_dir() {
+	echo "${XDG_STATE_HOME:-$HOME/.local/state}/theme"
+}
+
+theme_state_file() {
+	echo "$(theme_state_dir)/mode"
+}
+
+resolve_mode() {
+	local requested=$1
+	case "$requested" in
+	dark | light)
+		echo "$requested"
+		;;
+	toggle)
+		local state_file
+		state_file=$(theme_state_file)
+		if [[ -f "$state_file" ]] && [[ "$(<"$state_file")" == "dark" ]]; then
+			echo "light"
+		else
+			echo "dark"
+		fi
+		;;
+	*)
+		echo "usage: theme-switch dark|light|toggle" >&2
+		return 1
+		;;
+	esac
+}
+
+write_state() {
+	local mode=$1
+	local state_dir
+	state_dir=$(theme_state_dir)
+	mkdir -p "$state_dir"
+	printf '%s' "$mode" >"$state_dir/mode"
+}
+
+notify_mode() {
+	local mode=$1
+	if command -v notify-send >/dev/null 2>&1; then
+		notify-send "Theme" "Switched to $mode mode" || true
+	fi
+}
+
+main() {
+	local mode
+	mode=$(resolve_mode "${1:-toggle}")
+	write_state "$mode"
+	notify_mode "$mode"
+}
+
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+	main "$@"
+fi
