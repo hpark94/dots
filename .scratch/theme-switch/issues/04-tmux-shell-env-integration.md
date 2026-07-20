@@ -13,4 +13,5 @@
 - [ ] Test: `generate_shell_env` produces the expected `FZF_DEFAULT_OPTS` and `BAT_THEME` values for both modes.
 - [ ] `.zshrc` and `.bashrc` source the generated shell-env fragment, replacing the currently hardcoded `FZF_DEFAULT_OPTS` line and its commented-out dark alternative.
 - [ ] `.config/bat/config` sets static `--theme-light="hp_light"` / `--theme-dark="hp_dark"` and no longer hardcodes `--theme="Coldark-Dark"`.
-- [ ] Verified manually: `theme-switch dark` recolors tmux's status bar live across attached clients, and a newly opened shell shows both fzf's chrome and bat's syntax highlighting in dark mode.
+- [ ] `.config/bat/config` sets `--italic-text="always"` — the `hp_light`/`hp_dark` themes (ticket 02) encode italic comments/strings, but bat's own default (`--italic-text=never`) suppresses them regardless of theme; discovered while verifying ticket 02.
+- [ ] Verified manually: `theme-switch dark` recolors tmux's status bar live across attached clients, and a newly opened shell shows both fzf's chrome and bat's syntax highlighting (including italics) in dark mode.
