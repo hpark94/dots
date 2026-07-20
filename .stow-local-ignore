@@ -19,3 +19,14 @@ _darcs
 ^/README.*
 ^/LICENSE.*
 ^/COPYING
+
+# Project-local tooling, docs, and scratch state - not dotfiles to deploy,
+# never meant to be symlinked/folded into $HOME (~/.claude, ~/docs, etc.)
+^/\.claude
+^/CLAUDE\.md
+^/\.scratch
+^/docs
+
+# Accidental nvim runtime state (logs/shada/plugin cache) that leaked into
+# the repo root from a misconfigured XDG path - not a stow package
+^/nvim
