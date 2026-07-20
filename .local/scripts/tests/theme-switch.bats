@@ -149,3 +149,44 @@ setup() {
 	run apply_sway dark
 	[ "$status" -eq 0 ]
 }
+
+@test "generate_tmux writes status/window/message/mode styling from the light palette" {
+	generate_tmux light "$BATS_TEST_TMPDIR/out"
+	run cat "$BATS_TEST_TMPDIR/out/tmux-colors.conf"
+	[[ "$output" == *'set -g window-status-style "fg=#000004"'* ]]
+	[[ "$output" == *'set -g window-status-current-style "fg=#f00001,bold,bg=#000004"'* ]]
+	[[ "$output" == *'set -g display-panes-colour "#000004"'* ]]
+	[[ "$output" == *'set -g display-panes-active-colour "#000003"'* ]]
+	[[ "$output" == *'set -g status-style "fg=#f00002,bg=#f00001"'* ]]
+	[[ "$output" == *'set -g status-left "#[fg=#000004,bold] #S #[default] "'* ]]
+	[[ "$output" == *'set -g status-right "#[fg=#f00002] %H:%M #[fg=#000004,bold] #H "'* ]]
+	[[ "$output" == *'set -g message-style "fg=#000005"'* ]]
+	[[ "$output" == *'set -g mode-style "bg=#00000c"'* ]]
+}
+
+@test "generate_tmux writes status/window/message/mode styling from the dark palette" {
+	generate_tmux dark "$BATS_TEST_TMPDIR/out"
+	run cat "$BATS_TEST_TMPDIR/out/tmux-colors.conf"
+	[[ "$output" == *'set -g window-status-style "fg=#100004"'* ]]
+	[[ "$output" == *'set -g display-panes-active-colour "#100003"'* ]]
+	[[ "$output" == *'set -g mode-style "bg=#10000c"'* ]]
+}
+
+@test "apply_tmux does not error when no tmux server is running" {
+	run apply_tmux dark
+	[ "$status" -eq 0 ]
+}
+
+@test "generate_shell_env writes FZF_DEFAULT_OPTS and BAT_THEME for the light palette" {
+	generate_shell_env light "$BATS_TEST_TMPDIR/out"
+	run cat "$BATS_TEST_TMPDIR/out/shell-env.sh"
+	[[ "$output" == *"export FZF_DEFAULT_OPTS='--color=fg:#f00002,bg:#f00001,hl:#f00002 --color=fg+:#f00002,bg+:#f00003,hl+:#f00002 --color=info:#000004,prompt:#000005,pointer:#000001 --color=marker:#000002,spinner:#000005,header:#000003'"* ]]
+	[[ "$output" == *"export BAT_THEME=light"* ]]
+}
+
+@test "generate_shell_env writes FZF_DEFAULT_OPTS and BAT_THEME for the dark palette" {
+	generate_shell_env dark "$BATS_TEST_TMPDIR/out"
+	run cat "$BATS_TEST_TMPDIR/out/shell-env.sh"
+	[[ "$output" == *"export FZF_DEFAULT_OPTS='--color=fg:#d00002,bg:#d00001,hl:#d00002 --color=fg+:#d00002,bg+:#d00003,hl+:#d00002 --color=info:#100004,prompt:#100005,pointer:#100001 --color=marker:#100002,spinner:#100005,header:#100003'"* ]]
+	[[ "$output" == *"export BAT_THEME=dark"* ]]
+}

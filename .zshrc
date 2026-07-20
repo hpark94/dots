@@ -52,8 +52,7 @@ _ffd() {
 compdef _ffd ffd
 
 # Themes
-export FZF_DEFAULT_OPTS=$FZF_DEFAULT_OPTS' --color=fg:#4d4851,bg:#f9f7f6,hl:#4d4851 --color=fg+:#4d4851,bg+:#e4ded7,hl+:#4d4851 --color=info:#3a7292,prompt:#614096,pointer:#a63f3f --color=marker:#3a784c,spinner:#614096,header:#c36022'
-# export FZF_DEFAULT_OPTS=$FZF_DEFAULT_OPTS' --color=fg:#e9e6e2,bg:#100e11,hl:#e9e6e2 --color=fg+:#e9e6e2,bg+:#29252d,hl+:#e9e6e2 --color=info:#69acd3,prompt:#a381da,pointer:#d36969 --color=marker:#59c076,spinner:#a381da,header:#e08852'
+[ -f "$HOME/.local/state/theme/shell-env.sh" ] && source "$HOME/.local/state/theme/shell-env.sh"
 
 # History
 HIST_STAMPS="dd.mm.yyyy"

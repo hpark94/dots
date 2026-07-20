@@ -112,6 +112,52 @@ generate_ghostty() {
 	printf 'theme = "hp_%s"\n' "$mode" >"$out_dir/ghostty-theme.conf"
 }
 
+tmux_option_pairs() {
+	local mode=$1
+	local -n _tmux_option_pairs_out=$2
+	# shellcheck disable=SC1090,SC2154
+	mapfile -t _tmux_option_pairs_out < <(
+		source "$(theme_palette_file "$mode")"
+		printf '%s\n' \
+			"window-status-style" "fg=$color4" \
+			"window-status-current-style" "fg=$bg,bold,bg=$color4" \
+			"display-panes-colour" "$color4" \
+			"display-panes-active-colour" "$color3" \
+			"status-style" "fg=$fg,bg=$bg" \
+			"status-left" "#[fg=$color4,bold] #S #[default] " \
+			"status-right" "#[fg=$fg] %H:%M #[fg=$color4,bold] #H " \
+			"message-style" "fg=$color5" \
+			"mode-style" "bg=$color12"
+	)
+}
+
+generate_tmux() {
+	local mode=$1 out_dir=$2
+	mkdir -p "$out_dir"
+	local pairs i
+	tmux_option_pairs "$mode" pairs
+	{
+		for ((i = 0; i < ${#pairs[@]}; i += 2)); do
+			printf 'set -g %s "%s"\n' "${pairs[i]}" "${pairs[i + 1]}"
+		done
+	} >"$out_dir/tmux-colors.conf"
+}
+
+generate_shell_env() {
+	local mode=$1 out_dir=$2
+	mkdir -p "$out_dir"
+	# shellcheck disable=SC1090,SC2154
+	(
+		source "$(theme_palette_file "$mode")"
+		{
+			# args map 1:1 onto: fg,bg,hl / fg+,bg+,hl+ / info,prompt,pointer / marker,spinner,header
+			printf "export FZF_DEFAULT_OPTS='--color=fg:%s,bg:%s,hl:%s --color=fg+:%s,bg+:%s,hl+:%s --color=info:%s,prompt:%s,pointer:%s --color=marker:%s,spinner:%s,header:%s'\n" \
+				"$fg" "$bg" "$fg" "$fg" "$selection_bg" "$fg" "$color4" "$color5" "$color1" "$color2" "$color5" "$color3"
+			printf 'export BAT_THEME=%s\n' "$mode"
+		} >"$out_dir/shell-env.sh"
+	)
+}
+
 apply_foot() {
 	local mode=$1 sig=USR2
 	[[ "$mode" == "dark" ]] && sig=USR1
@@ -127,6 +173,17 @@ apply_sway() {
 			swaymsg "$(sway_client_line focused "$color11")" >/dev/null 2>&1 || true
 			swaymsg "$(sway_client_line focused_inactive "$color8")" >/dev/null 2>&1 || true
 		)
+	fi
+}
+
+apply_tmux() {
+	local mode=$1
+	if command -v tmux >/dev/null 2>&1 && tmux list-sessions >/dev/null 2>&1; then
+		local pairs i
+		tmux_option_pairs "$mode" pairs
+		for ((i = 0; i < ${#pairs[@]}; i += 2)); do
+			tmux set-option -g "${pairs[i]}" "${pairs[i + 1]}" >/dev/null 2>&1 || true
+		done
 	fi
 }
 
@@ -146,9 +203,12 @@ main() {
 	generate_foot "$mode" "$out_dir"
 	generate_sway "$mode" "$out_dir"
 	generate_ghostty "$mode" "$out_dir"
+	generate_tmux "$mode" "$out_dir"
+	generate_shell_env "$mode" "$out_dir"
 
 	apply_foot "$mode"
 	apply_sway "$mode"
+	apply_tmux "$mode"
 
 	notify_mode "$mode"
 }

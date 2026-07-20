@@ -21,6 +21,8 @@ HISTCONTROL=ignoreboth:erasedups
 source "$HOME/.envs.sh"
 _has mise && eval "$(~/.local/bin/mise activate bash)"
 
+[ -f "$HOME/.local/state/theme/shell-env.sh" ] && source "$HOME/.local/state/theme/shell-env.sh"
+
 source "$HOME/.aliases.sh"
 _has fzf && _has tmux && source "$HOME/.shell_functions.sh"
 

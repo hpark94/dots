@@ -1,1 +1,3 @@
---theme="Coldark-Dark"
+--theme-light="hp_light"
+--theme-dark="hp_dark"
+--italic-text="always"
