@@ -188,10 +188,14 @@ apply_tmux() {
 }
 
 apply_gtk() {
-	local mode=$1 gtk_theme=Adwaita-light
-	[[ "$mode" == "dark" ]] && gtk_theme=Adwaita-dark
+	local mode=$1 gtk_theme=Adwaita-light color_scheme=prefer-light
+	if [[ "$mode" == "dark" ]]; then
+		gtk_theme=Adwaita-dark
+		color_scheme=prefer-dark
+	fi
 	if command -v gsettings >/dev/null 2>&1; then
 		gsettings set org.gnome.desktop.interface gtk-theme "$gtk_theme" >/dev/null 2>&1 || true
+		gsettings set org.gnome.desktop.interface color-scheme "$color_scheme" >/dev/null 2>&1 || true
 	fi
 }
 
