@@ -187,6 +187,14 @@ apply_tmux() {
 	fi
 }
 
+apply_gtk() {
+	local mode=$1 gtk_theme=Adwaita-light
+	[[ "$mode" == "dark" ]] && gtk_theme=Adwaita-dark
+	if command -v gsettings >/dev/null 2>&1; then
+		gsettings set org.gnome.desktop.interface gtk-theme "$gtk_theme" >/dev/null 2>&1 || true
+	fi
+}
+
 notify_mode() {
 	local mode=$1
 	if command -v notify-send >/dev/null 2>&1; then
@@ -209,6 +217,7 @@ main() {
 	apply_foot "$mode"
 	apply_sway "$mode"
 	apply_tmux "$mode"
+	apply_gtk "$mode"
 
 	notify_mode "$mode"
 }

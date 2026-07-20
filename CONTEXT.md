@@ -25,5 +25,5 @@ An app whose already-running instances pick up a Theme Mode change immediately: 
 _Avoid_: hot reload
 
 **Next-launch app**:
-An app that only picks up a Theme Mode change in new instances/sessions, because it has no live-reload hook without fragile extra infra: ghostty (keybind/restart only), nvim (colorscheme picked at startup), and shell-env-driven tools (fzf, bat) for already-open shells.
+An app that only picks up a Theme Mode change in new instances/sessions, because it has no live-reload hook without fragile extra infra: ghostty (keybind/restart only), nvim (colorscheme picked at startup), shell-env-driven tools (fzf, bat) for already-open shells, and GTK (`gsettings set org.gnome.desktop.interface gtk-theme`, read by `GtkSettings` at each app's own startup — confirmed via manual testing that an already-running GTK3 or GTK4 app does not re-theme live on this system, since neither links libadwaita and no gnome-settings-daemon runs under sway to bridge the newer `color-scheme` key to anything these apps watch).
 _Avoid_: static, cold

@@ -177,6 +177,12 @@ setup() {
 	[ "$status" -eq 0 ]
 }
 
+@test "apply_gtk does not error when gsettings is unavailable" {
+	mkdir -p "$BATS_TEST_TMPDIR/empty-bin"
+	run "$(command -v bash)" -c "PATH='$BATS_TEST_TMPDIR/empty-bin'; source '$SCRIPT'; apply_gtk dark"
+	[ "$status" -eq 0 ]
+}
+
 @test "generate_shell_env writes FZF_DEFAULT_OPTS and BAT_THEME for the light palette" {
 	generate_shell_env light "$BATS_TEST_TMPDIR/out"
 	run cat "$BATS_TEST_TMPDIR/out/shell-env.sh"
