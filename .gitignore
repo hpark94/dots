@@ -293,5 +293,5 @@ syncthing.service
 .gitconfig
 .aider*
 .local/state/theme/
-
 **/.claude/settings.local.json
+graphify-out/
