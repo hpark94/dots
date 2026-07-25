@@ -10,6 +10,26 @@ Rather than forcing one uniform mechanism, each app gets the strategy that match
 - **bat, fzf**: driven by env vars (`BAT_THEME`, `FZF_DEFAULT_OPTS`) exported from a generated shell snippet sourced by `.zshrc`/`.bashrc`; applied on next shell.
 - **nvim and bat** additionally get hand-authored Selected Themes (mirroring nvim's existing semantic HSL palette) instead of being derived from the flat 16-color Canonical Palette, since syntax highlighting needs more semantic roles than 16 ANSI slots provide.
 
+A fourth shape was added later, when the roster grew to waybar, swaync, fuzzel and zathura (see
+`.scratch/portable-dotfiles/issues/07-theme-switch-app-roster.md`). It strengthens rather than
+weakens the thesis above, because it is an app whose actual capability is to need nothing from us:
+
+- **waybar**: **pull**, not push. waybar subscribes to the XDG desktop portal's
+  `org.freedesktop.appearance` and, when started without `-s`, prefers `style-dark.css` /
+  `style-light.css` over `style.css`, re-reading on every change. The `color-scheme` write that
+  `apply_gtk` already performs is therefore the whole integration: no signal, no apply step, no
+  `theme-switch` code. Its two stylesheets are tracked and carry structure only, each importing a
+  Generated Config fragment that carries the colors, which means the generator writes **both** modes
+  on every switch rather than only the current one, since waybar and not the script chooses.
+- **swaync** and **zathura** are ordinary push apps (`swaync-client -rs`, D-Bus `SourceConfig`), and
+  **fuzzel** needs no reload at all: it is spawned per invocation and exits, so its `include` is
+  always read fresh.
+
+Note this sits close to, but does not cross, the deliberate exclusion of "auto-following the
+desktop/OS light-dark preference." The portal value waybar reads is written by our own `apply_gtk`,
+so switching remains an explicit user action; waybar merely learns about it by subscription instead
+of by signal. Nothing follows an external or scheduled source.
+
 All Generated Config fragments live outside the tracked dotfiles tree (gitignored under `~/.local/state/theme/`) so `git status` stays clean after every switch. Only the Canonical Palette source files and the hand-authored Selected Themes are tracked in git.
 
 Considered and rejected: forcing every app through one uniform "generate a file and reload" pipeline. This would have meant either accepting stale/dirty git diffs on tracked configs (ghostty, nvim, bat, .zshrc) on every switch, or inventing fake reload mechanisms (simulated keypresses, nvim RPC sockets) for apps that don't need them.

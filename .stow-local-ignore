@@ -25,6 +25,7 @@ _darcs
 ^/\.claude
 ^/CLAUDE\.md
 ^/\.scratch
+^/CONTEXT.md
 ^/docs
 
 # Accidental nvim runtime state (logs/shada/plugin cache) that leaked into
