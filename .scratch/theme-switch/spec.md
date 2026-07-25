@@ -82,6 +82,11 @@ GTK apps are folded into the same script under the same per-app-capability ratio
 
 - Sway's `unfocused`, `urgent`, and `placeholder` border colors — only `focused` and `focused_inactive` are currently defined and in scope.
 - Any app not explicitly listed: waybar, rofi/wofi, mako/dunst (swaync itself), lock screen, wallpaper.
+  **Reopened after this spec shipped.** `.scratch/portable-dotfiles/issues/07-theme-switch-app-roster.md`
+  admits waybar, swaync, fuzzel and zathura to the roster; the lock screen (swaylock) and the
+  wallpaper (swaybg) stay out. This line stands as the record of what this spec shipped, and the
+  roster ticket is the record of what supersedes it. The "no new palette roles" exclusion below was
+  re-examined by the same ticket and **upheld**.
 - Auto-following the desktop/OS light-dark preference (e.g. ghostty's `theme = light:...,dark:...` auto-detection) or a time-of-day scheduler — switching is always an explicit user action (CLI or keybind).
 - Live-switching already-open ghostty windows, already-running nvim sessions, already-open shells' `FZF_DEFAULT_OPTS`/`BAT_THEME`, or already-running GTK apps — explicitly deferred per the next-launch decision (GTK confirmed Next-launch during implementation; see Implementation Decisions).
 - Any new palette roles beyond the existing 16 ANSI colors + bg/fg/selection — the tmux/sway bespoke values are dropped rather than preserved as new roles (e.g. no `accent_muted` or `mode_bg`).

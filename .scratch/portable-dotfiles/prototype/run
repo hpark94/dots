@@ -1,0 +1,66 @@
+#!/usr/bin/env bash
+# PROTOTYPE - THROWAWAY. Ticket 04 of the Portable dotfiles map.
+#
+#   ./run
+#
+# Builds a scratch vault in $(mktemp -d), drives every command, and shows the
+# resulting flat vault. Touches no real vault and opens no editor.
+set -euo pipefail
+
+here="$(cd "$(dirname "$0")" && pwd)"
+repo="$(cd "$here/../../.." && pwd)"
+
+root=$(mktemp -d -t "PROTOTYPE-note-XXXXXX")
+trap 'rm -rf "$root"' EXIT
+
+export VAULT_BASE_PATH="$root/vault"
+export NOTIZEN_TEMPL_PATH="$root/templates"
+mkdir -p "$VAULT_BASE_PATH" "$NOTIZEN_TEMPL_PATH"
+cp "$repo"/.config/notes/templates/* "$NOTIZEN_TEMPL_PATH/"
+# Normalize the bare-word placeholder the real scratch template still uses.
+sed -i 's/# Scratch - id/# Scratch - {{id}}/' "$NOTIZEN_TEMPL_PATH/scratch.md"
+
+n() { "$here/note" "$@" 2>&1 | sed "s|$root|<VAULT>|g"; }
+
+echo "=== create ==="
+n -z "Wie funktioniert Zustandsverwaltung?"
+n -z "한글 제목 테스트"
+n -z "Über die Größe"
+n -d
+n -d 1
+n -d -1
+n -sn
+n -sn
+n -sl
+n -x
+
+echo
+echo "=== flat vault ==="
+(cd "$root" && find vault -print | sort | sed 's|[^/]*/|  |g')
+
+echo
+echo "=== update: heading no longer matches filename ==="
+# Retitle an existing note in place, and point wiki links at its old name.
+printf -- '---\ntags:\n  - tag\n---\n\n# Die neue Größe\n' >"$VAULT_BASE_PATH/über-die-größe.md"
+printf -- '\nSiehe [[über-die-größe]] und [[über-die-größe|alt]].\n' \
+	>>"$VAULT_BASE_PATH/wie-funktioniert-zustandsverwaltung.md"
+
+n -u
+
+echo
+echo "=== link rewritten in the referring note ==="
+tail -2 "$VAULT_BASE_PATH/wie-funktioniert-zustandsverwaltung.md"
+
+echo
+echo "=== dailies and scratches were left alone by -u ==="
+(cd "$VAULT_BASE_PATH" && ls | sort)
+
+echo
+echo "=== stdout is ONLY the path (stderr discarded) ==="
+"$here/note" -u 2>/dev/null | sed "s|$root|<VAULT>|g"
+echo "(nothing above means -u printed no path, which is correct)"
+
+echo
+echo "=== errors ==="
+n -z || true
+n --bogus || true

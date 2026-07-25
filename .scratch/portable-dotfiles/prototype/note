@@ -1,0 +1,209 @@
+#!/usr/bin/env bash
+# PROTOTYPE - THROWAWAY. Ticket 04 of the Portable dotfiles map.
+#
+# Sketch of the restructured `note`, to your spec:
+#   - bash only, no python anywhere
+#   - flat vault: every note in the root, only assets/ and templates/ are dirs
+#   - reduced roster: zettel, daily, scratch new/last, xournal, format, update
+#   - `scratch` folded in, no second script
+#
+# Not production. Always prints the path; never opens an editor.
+set -euo pipefail
+
+# POSIX character classes are LOCALE-DEPENDENT. Under LC_ALL=C (what cron and
+# systemd units inherit) [[:alnum:]] collapses to ASCII and would silently strip
+# Korean from every filename. The script must not inherit this decision.
+export LC_ALL="${NOTE_LOCALE:-C.UTF-8}"
+
+: "${VAULT_BASE_PATH:?}" "${NOTIZEN_TEMPL_PATH:?}"
+
+# ---------------------------------------------------------------------------
+# The table, as PARALLEL arrays rather than delimited records.
+#
+# This is deliberate. A single "dest|template|prefix|..." record has no schema:
+# a row with the wrong number of fields is silently padded by `read` and runs
+# fine. Parallel arrays make a missing cell a lookup on a key that is not there,
+# which ${...:?} turns into a loud failure.
+# ---------------------------------------------------------------------------
+declare -A TEMPLATE=(
+	[zettel]=default.md
+	[daily]=daily.md
+	[scratch]=scratch.md
+	[xournal]=xpp_template.xopp
+)
+declare -A NEEDS_TITLE=([zettel]=1)
+declare -A IS_COPY=([xournal]=1) # copy verbatim, no substitution
+
+declare -A ALIAS=(
+	[z]=zettel [zettel]=zettel
+	[d]=daily [daily]=daily
+	[sn]=scratch-new [scratch-new]=scratch-new
+	[sl]=scratch-last [scratch-last]=scratch-last
+	[x]=xournal [xournal]=xournal
+	[f]=format [format]=format
+	[u]=update [update]=update
+)
+
+# Filename patterns that identify a note WITHOUT a directory. This is what makes
+# the flat vault work, and what `update` must use now that it can no longer
+# exclude dailies by path.
+DAILY_RE='^[0-9]{8}\.md$'
+SCRATCH_RE='^scratch-[0-9]+\.md$'
+
+# ---------------------------------------------------------------------------
+
+slug() {
+	local s="${1,,}"
+	s=$(printf '%s' "$s" | sed 's/[^[:alnum:] -]//g')
+	s="${s#"${s%%[![:space:]]*}"}"
+	s="${s%"${s##*[![:space:]]}"}"
+	printf '%s' "$s" | tr -s ' ' '-' | tr -s '-'
+}
+
+scratch_ids() {
+	find "$VAULT_BASE_PATH" -maxdepth 1 -type f -regextype posix-extended \
+		-regex '.*/scratch-[0-9]+\.md' -printf '%f\n' 2>/dev/null |
+		sed 's/^scratch-\([0-9]*\)\.md$/\1/' | sort -n
+}
+
+render() {
+	# All placeholders are {{name}} now. Today the templates mix {{title}} with
+	# the bare words `language` and `id`, substituted by per-type sed pattern
+	# strings, so `s/id/../g` rewrites any word containing "id".
+	local src=$1 title=$2 id=${3:-}
+	sed -e "s|{{title}}|${title}|g" \
+		-e "s|{{date[^}]*}}|${title}|g" \
+		-e "s|{{id}}|${id}|g" "$src"
+}
+
+create() {
+	local type=$1 title=$2 stem=$3 id=${4:-}
+	local dir="$VAULT_BASE_PATH" ext=md
+	[[ $type == xournal ]] && dir="$VAULT_BASE_PATH/assets" && ext=xopp
+
+	local path="$dir/$stem.$ext"
+	mkdir -p "$dir"
+
+	if [[ ! -f $path ]]; then
+		local src="$NOTIZEN_TEMPL_PATH/${TEMPLATE[$type]:?no template for $type}"
+		[[ -f $src ]] || {
+			echo "Error: template $src missing" >&2
+			return 1
+		}
+		# Write-then-rename. `sed ... > "$file" 2>/dev/null` truncates first, so
+		# today a failed substitution leaves a zero-byte note behind.
+		if [[ -n ${IS_COPY[$type]:-} ]]; then
+			cp "$src" "$path.partial"
+		else
+			render "$src" "$title" "$id" >"$path.partial"
+		fi
+		mv "$path.partial" "$path"
+	fi
+	printf '%s\n' "$path"
+}
+
+op_format() {
+	find "$VAULT_BASE_PATH" -maxdepth 1 -type f -name '*.md' -print0 |
+		xargs -0 --no-run-if-empty prettier --write 2>/dev/null ||
+		echo "[format] prettier would run over $(find "$VAULT_BASE_PATH" -maxdepth 1 -name '*.md' | wc -l) files" >&2
+}
+
+op_update() {
+	# Rename notes whose "# heading" no longer matches their filename, and fix
+	# every wiki link pointing at the old name.
+	local renames=() file base new_stem
+	while IFS= read -r file; do
+		base=$(basename "$file")
+		# Flat vault: dailies and scratches are excluded BY PATTERN, because
+		# there is no longer a daily/ directory to exclude by path. Their
+		# headings are dates and ids, not titles, so renaming them is wrong.
+		[[ $base =~ $DAILY_RE || $base =~ $SCRATCH_RE ]] && continue
+		local heading
+		heading=$(grep -m1 '^# ' "$file" 2>/dev/null | sed 's/^# //') || true
+		[[ -z $heading ]] && continue
+		new_stem=$(slug "$heading")
+		[[ "$base" == "$new_stem.md" ]] && continue
+		if [[ -e "$VAULT_BASE_PATH/$new_stem.md" ]]; then
+			echo "[update] skip: $new_stem.md already exists" >&2
+			continue
+		fi
+		renames+=("${base%.md}|$new_stem")
+	done < <(find "$VAULT_BASE_PATH" -maxdepth 1 -type f -name '*.md')
+
+	((${#renames[@]})) || {
+		echo "[update] no renames needed" >&2
+		return 0
+	}
+
+	local script
+	script=$(mktemp -t "note-update-XXXXXX.sed") # was hardcoded /tmp/replace_refs.sed
+	local r old new
+	for r in "${renames[@]}"; do
+		old=${r%%|*} new=${r##*|}
+		printf 's|\\[\\[%s#|[[%s#|g\ns|\\[\\[%s\\||[[%s\\||g\ns|\\[\\[%s\\]\\]|[[%s]]|g\ns|/%s\\.md|/%s.md|g\n' \
+			"$old" "$new" "$old" "$new" "$old" "$new" "$old" "$new" >>"$script"
+	done
+	find "$VAULT_BASE_PATH" -maxdepth 1 -type f -name '*.md' -exec sed -i -f "$script" {} +
+	for r in "${renames[@]}"; do
+		old=${r%%|*} new=${r##*|}
+		mv "$VAULT_BASE_PATH/$old.md" "$VAULT_BASE_PATH/$new.md"
+		echo "[update] $old.md -> $new.md" >&2
+	done
+	rm -f "$script"
+}
+
+main() {
+	# No mode flag. stdout is ALWAYS the path and nothing else; every message
+	# goes to stderr, so a caller can read stdout without filtering it.
+	local args=("$@")
+	((${#args[@]})) || {
+		echo "usage: note {-z TITLE|-d [N]|-sn|-sl|-x|-f|-u}" >&2
+		return 1
+	}
+
+	local key="${args[0]#--}" cmd
+	key="${key#-}"
+	cmd="${ALIAS[$key]:-}"
+	[[ -n $cmd ]] || {
+		echo "Error: unknown option '${args[0]}'" >&2
+		return 1
+	}
+
+	case $cmd in
+	format) op_format ;;
+	update) op_update ;;
+	zettel)
+		local title="${args[1]:-}"
+		[[ -n $title ]] || {
+			echo "Error: -z needs a title" >&2
+			return 1
+		}
+		create zettel "$title" "$(slug "$title")"
+		;;
+	daily)
+		# yesterday/tomorrow are not types, they are this argument.
+		local offset="${args[1]:-0}" when
+		[[ $offset =~ ^-?[0-9]+$ ]] || {
+			echo "Error: -d takes a day offset, got '$offset'" >&2
+			return 1
+		}
+		when="$offset days"
+		create daily "$(date --date="$when" +%d.%m.%Y)" "$(date --date="$when" +%Y%m%d)"
+		;;
+	xournal) create xournal "" "note_$(date +%Y%m%d_%H%M%S)" ;;
+	scratch-new | scratch-last)
+		local ids id
+		mapfile -t ids < <(scratch_ids)
+		if ((${#ids[@]} == 0)); then
+			id=1
+		elif [[ $cmd == scratch-new ]]; then
+			id=$((ids[-1] + 1))
+		else
+			id="${ids[-1]}"
+		fi
+		create scratch "Scratch - $id" "scratch-$id" "$id"
+		;;
+	esac
+}
+
+main "$@"
