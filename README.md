@@ -22,3 +22,16 @@ via SSH or working locally, I want same snappiness and set of tools.
   programming sessions in well-lit environments.
 - **Philosopy:** Minimal bloat, maximum portability. The configuration is
   structured to be easily deployed on any remote machine.
+
+## Installation
+
+From a bare machine to a fully built one in three steps:
+
+1. Install `git` and `stow` (stock packages on every target distro).
+2. Clone this repo to `~/dots`: `git clone <repo-url> ~/dots`.
+3. Run `~/dots/bootstrap.sh <desktop|headless>`.
+
+`bootstrap.sh` handles everything else (stow, the Role Marker, `mise` and its
+toolchain, tmux/nvim/zinit plugins, and the default theme state). It is
+idempotent: safe to re-run, and it also retrofits a machine that already has the
+dotfiles deployed by hand.

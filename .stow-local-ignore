@@ -31,3 +31,11 @@ _darcs
 # Accidental nvim runtime state (logs/shada/plugin cache) that leaked into
 # the repo root from a misconfigured XDG path - not a stow package
 ^/nvim
+
+# A literal ~/.gitconfig must never be a symlink into the repo: gh auth login
+# writes through it (a Write-Back Config). The real ~/.gitconfig is an untracked
+# stub that [include]s the tracked .gitconfig.shared, which stows normally.
+^/\.gitconfig$
+
+# bootstrap.sh is run by path from the clone root, never symlinked into $HOME.
+^/bootstrap\.sh$
