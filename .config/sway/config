@@ -12,7 +12,6 @@ exec test -f /usr/libexec/sway-systemd/session.sh \
   && /usr/libexec/sway-systemd/session.sh \
   || dbus-update-activation-environment --systemd WAYLAND_DISPLAY XDG_CURRENT_DESKTOP=sway
 
-exec systemctl --user start clipboard-tunnel.service
 exec $polkit
 
 exec swayidle -w \

@@ -47,20 +47,19 @@ o.timeoutlen = 300
 o.mouse = "a"
 
 -- Clipboard
-if os.getenv("SSH_CLIENT") or os.getenv("SSH_TTY") then
+-- Choose the strategy by whether a compositor clipboard is reachable from this
+-- session (WAYLAND_DISPLAY), not by SSH-ness: correct under waypipe and when
+-- SSHing into one's own Desktop, and read fresh so it can never go stale.
+if not os.getenv("WAYLAND_DISPLAY") then
     vim.g.clipboard = {
-        name = "OSC52+tunnel",
+        name = "osc52",
         copy = {
             ["+"] = require("vim.ui.clipboard.osc52").copy("+"),
             ["*"] = require("vim.ui.clipboard.osc52").copy("*"),
         },
         paste = {
-            ["+"] = function()
-                return vim.fn.systemlist("nc localhost 11989 2>/dev/null")
-            end,
-            ["*"] = function()
-                return vim.fn.systemlist("nc localhost 11989 2>/dev/null")
-            end,
+            ["+"] = require("vim.ui.clipboard.osc52").paste("+"),
+            ["*"] = require("vim.ui.clipboard.osc52").paste("*"),
         },
     }
 end

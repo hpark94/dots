@@ -8,6 +8,7 @@ config-file = ?../../.local/state/theme/ghostty-theme.conf
 mouse-hide-while-typing
 confirm-close-surface = false
 minimum-contrast = 2
+clipboard-read = allow
 
 keybind = clear
 keybind = ctrl+shift+c=copy_to_clipboard
