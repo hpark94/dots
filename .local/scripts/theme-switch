@@ -139,20 +139,46 @@ generate_ghostty() {
 	printf 'theme = "hp_%s"\n' "$mode" >"$out_dir/ghostty-theme.conf"
 }
 
+# Name of the palette slot the tmux status bar uses as its accent, keyed on this
+# machine's own Role. A Headless machine swaps the normal accent (color4) for a
+# distinct, already-existing slot (color1) so its status bar is unmistakable from
+# the Desktop's at a glance, rebuilding the one useful thing the deleted
+# .tmux.remote.conf provided (clipboard-rewire spec, "The remote status bar
+# accent becomes Role-keyed, not file-gated"). No new Canonical Palette role is
+# introduced.
+#
+# Unlike every other read_role caller, this must NOT hard-fail: generate_tmux is
+# part of the Role-agnostic render half, reached by --render on Marker-less and
+# retrofit machines too, so it has to produce a fragment regardless. Headless is
+# therefore the only outcome that switches the accent; Desktop and every other
+# outcome (missing, empty, or unreadable Marker) resolve to the Desktop accent.
+# The decision is made fresh on every generate, so it can never go stale across
+# detach/reattach the way the deleted if-shell's once-evaluated branch could.
+tmux_accent_slot() {
+	if [[ "$(read_role 2>/dev/null || true)" == "headless" ]]; then
+		printf 'color1'
+	else
+		printf 'color4'
+	fi
+}
+
 tmux_option_pairs() {
 	local mode=$1
 	local -n _tmux_option_pairs_out=$2
+	local accent_slot
+	accent_slot=$(tmux_accent_slot)
 	# shellcheck disable=SC1090,SC2154
 	mapfile -t _tmux_option_pairs_out < <(
 		source "$(theme_palette_file "$mode")"
+		local accent="${!accent_slot}"
 		printf '%s\n' \
-			"window-status-style" "fg=$color4" \
-			"window-status-current-style" "fg=$bg,bold,bg=$color4" \
-			"display-panes-colour" "$color4" \
+			"window-status-style" "fg=$accent" \
+			"window-status-current-style" "fg=$bg,bold,bg=$accent" \
+			"display-panes-colour" "$accent" \
 			"display-panes-active-colour" "$color3" \
 			"status-style" "fg=$fg,bg=$bg" \
-			"status-left" "#[fg=$color4,bold] #S #[default] " \
-			"status-right" "#[fg=$fg] %H:%M #[fg=$color4,bold] #H " \
+			"status-left" "#[fg=$accent,bold] #S #[default] " \
+			"status-right" "#[fg=$fg] %H:%M #[fg=$accent,bold] #H " \
 			"message-style" "fg=$color5" \
 			"mode-style" "bg=$color12"
 	)

@@ -193,6 +193,88 @@ stub_externals() {
 	[ "$status" -eq 0 ]
 }
 
+# --- Role-keyed tmux accent (clipboard-rewire ticket 02) ---
+
+@test "tmux_accent_slot resolves to color4 for a desktop Role Marker" {
+	printf 'desktop' >"$XDG_CONFIG_HOME/dotfiles/role"
+	run tmux_accent_slot
+	[ "$status" -eq 0 ]
+	[ "$output" = "color4" ]
+}
+
+@test "tmux_accent_slot resolves to the distinct color1 for a headless Role Marker" {
+	printf 'headless' >"$XDG_CONFIG_HOME/dotfiles/role"
+	run tmux_accent_slot
+	[ "$status" -eq 0 ]
+	[ "$output" = "color1" ]
+}
+
+@test "tmux_accent_slot falls back to the desktop accent, not an error, when the Marker is absent" {
+	rm -f "$XDG_CONFIG_HOME/dotfiles/role"
+	run tmux_accent_slot
+	[ "$status" -eq 0 ]
+	[ "$output" = "color4" ]
+}
+
+@test "tmux_accent_slot falls back to the desktop accent on an empty or unreadable Marker" {
+	: >"$XDG_CONFIG_HOME/dotfiles/role"
+	run tmux_accent_slot
+	[ "$status" -eq 0 ]
+	[ "$output" = "color4" ]
+
+	printf 'Headless' >"$XDG_CONFIG_HOME/dotfiles/role" # wrong case is not headless
+	run tmux_accent_slot
+	[ "$status" -eq 0 ]
+	[ "$output" = "color4" ]
+}
+
+@test "generate_tmux keeps the color4 accent for a desktop Marker (light and dark)" {
+	printf 'desktop' >"$XDG_CONFIG_HOME/dotfiles/role"
+
+	generate_tmux light "$BATS_TEST_TMPDIR/out"
+	run cat "$BATS_TEST_TMPDIR/out/tmux-colors.conf"
+	[[ "$output" == *'set -g window-status-style "fg=#000004"'* ]]
+	[[ "$output" == *'set -g window-status-current-style "fg=#f00001,bold,bg=#000004"'* ]]
+	[[ "$output" == *'set -g display-panes-colour "#000004"'* ]]
+	[[ "$output" == *'set -g status-left "#[fg=#000004,bold] #S #[default] "'* ]]
+	[[ "$output" == *'set -g status-right "#[fg=#f00002] %H:%M #[fg=#000004,bold] #H "'* ]]
+
+	generate_tmux dark "$BATS_TEST_TMPDIR/out"
+	run cat "$BATS_TEST_TMPDIR/out/tmux-colors.conf"
+	[[ "$output" == *'set -g window-status-style "fg=#100004"'* ]]
+	[[ "$output" == *'set -g status-left "#[fg=#100004,bold] #S #[default] "'* ]]
+}
+
+@test "generate_tmux swaps every accent position to color1 for a headless Marker (light and dark)" {
+	printf 'headless' >"$XDG_CONFIG_HOME/dotfiles/role"
+
+	generate_tmux light "$BATS_TEST_TMPDIR/out"
+	run cat "$BATS_TEST_TMPDIR/out/tmux-colors.conf"
+	[[ "$output" == *'set -g window-status-style "fg=#000001"'* ]]
+	[[ "$output" == *'set -g window-status-current-style "fg=#f00001,bold,bg=#000001"'* ]]
+	[[ "$output" == *'set -g display-panes-colour "#000001"'* ]]
+	[[ "$output" == *'set -g status-left "#[fg=#000001,bold] #S #[default] "'* ]]
+	[[ "$output" == *'set -g status-right "#[fg=#f00002] %H:%M #[fg=#000001,bold] #H "'* ]]
+	# Non-accent slots are untouched by the swap.
+	[[ "$output" == *'set -g display-panes-active-colour "#000003"'* ]]
+	[[ "$output" == *'set -g mode-style "bg=#00000c"'* ]]
+
+	generate_tmux dark "$BATS_TEST_TMPDIR/out"
+	run cat "$BATS_TEST_TMPDIR/out/tmux-colors.conf"
+	[[ "$output" == *'set -g window-status-style "fg=#100001"'* ]]
+	[[ "$output" == *'set -g display-panes-colour "#100001"'* ]]
+	[[ "$output" == *'set -g status-right "#[fg=#d00002] %H:%M #[fg=#100001,bold] #H "'* ]]
+	# The active-pane slot stays color3, distinct from the headless accent.
+	[[ "$output" == *'set -g display-panes-active-colour "#100003"'* ]]
+}
+
+@test "generate_tmux uses the desktop accent when no Role Marker is present at all" {
+	rm -f "$XDG_CONFIG_HOME/dotfiles/role"
+	generate_tmux dark "$BATS_TEST_TMPDIR/out"
+	run cat "$BATS_TEST_TMPDIR/out/tmux-colors.conf"
+	[[ "$output" == *'set -g window-status-style "fg=#100004"'* ]]
+}
+
 @test "apply_gtk does not error when gsettings is unavailable" {
 	mkdir -p "$BATS_TEST_TMPDIR/empty-bin"
 	run "$(command -v bash)" -c "PATH='$BATS_TEST_TMPDIR/empty-bin'; source '$SCRIPT'; apply_gtk dark"

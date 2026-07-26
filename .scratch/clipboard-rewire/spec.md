@@ -1,4 +1,4 @@
-Status: ready-for-agent
+Status: done
 
 # Clipboard rewire: delete the tunnel, OSC 52 both directions
 
@@ -171,10 +171,12 @@ could. Accepted consequence: SSHing into one's own Desktop and running tmux ther
 distinguishing accent, since that machine's Role is Desktop — this is the correct trade, since Role is
 also what keeps the bar following Theme Mode correctly in that same case.
 
-**This decision depends on the Role-reading capability [theme-switch
+**This decision depended on the Role-reading capability [theme-switch
 expansion](../theme-switch-expansion/spec.md) adds to `theme-switch`** (its Role gate + render-only
-entry point ticket). Sequence this spec's tmux-accent work after that lands, or add the Role read as
-part of implementing this change if it hasn't yet.
+entry point ticket), which has since landed. The tmux-accent work is now implemented on `main` (ticket
+02): `generate_tmux` reads the machine's own Role via that canonical `read_role` and swaps the accent
+slot from `color4` to `color1` only when the Role is Headless, falling back to the Desktop accent for
+every other outcome including a missing Marker.
 
 ### Live cleanup is a manual, documented checklist — not shipped as code
 
