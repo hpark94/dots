@@ -9,18 +9,21 @@ resetting one that's already active.
 `theme-switch` Role gate + render-only entry point** (from the theme-switch-expansion ticket set —
 this step calls that entry point directly).
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] The Theme Mode state file is written with a default value only if one doesn't already exist; a
+Verified done on `main`. The dependency (theme-switch-expansion ticket 05, the `--render` gate-free entry point) has landed, so bootstrap's earlier TODO placeholder is now a real `render_theme_fragments` step calling `theme-switch --render <mode>` unconditionally after the create-if-absent `write_theme_default`. Integration smoke-tested directly: sourcing bootstrap and running `render_theme_fragments` against a faked `$XDG` tree (with the stowed palette files present) drives the real `theme-switch`, which regenerates every app fragment (waybar-light/dark, zathura, sway, foot, ghostty, tmux, swaync, fuzzel, shell-env) and preserves the existing mode. The first "manually verified" box needs a live Desktop `sway` launch and is left for a real bring-up.
+
+- [x] The Theme Mode state file is written with a default value only if one doesn't already exist; a
       machine that already has a mode set keeps it untouched on every re-run.
-- [ ] Every app's Generated Config fragment is (re)generated unconditionally, every run, via
+- [x] Every app's Generated Config fragment is (re)generated unconditionally, every run, via
       `theme-switch`'s render-only entry point — not gated on whether the mode file was just created.
 - [ ] Manually verified: bootstrapping a Desktop from a bare clone, then launching `sway` for the first
       time, does not produce a parse error from any tracked config whose colors come from a generated
-      fragment.
-- [ ] Manually verified: running bootstrap again on a machine with an active, non-default Theme Mode
-      leaves that mode untouched while still regenerating the fragments.
-- [ ] Bats coverage extending the core sequence's test file: the mode-file write-or-skip guard behaves
+      fragment. (Pending a live Desktop bring-up; the fragment generation itself is smoke-tested.)
+- [x] Manually verified: running bootstrap again on a machine with an active, non-default Theme Mode
+      leaves that mode untouched while still regenerating the fragments. (Smoke-tested: mode `dark`
+      preserved while all fragments regenerated.)
+- [x] Bats coverage extending the core sequence's test file: the mode-file write-or-skip guard behaves
       correctly against a faked state directory, and the fragment-generation call happens on every
       invocation regardless of whether the mode file already existed.
 

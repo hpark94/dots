@@ -107,3 +107,40 @@ failing_stubs() {
 	write_theme_default
 	[ "$(cat "$(theme_state_file)")" = "dark" ]
 }
+
+@test "build_bat_cache is a no-op when bat is unavailable" {
+	# Drop bat off PATH entirely so the presence guard skips the cache build.
+	PATH="/nonexistent" run build_bat_cache
+	[ "$status" -eq 0 ]
+}
+
+# Record every theme-switch invocation via a stubbed binary path, so we can
+# prove --render is called with the resolved mode on every run.
+stub_theme_switch() {
+	mkdir -p "$BATS_TEST_TMPDIR/stub-bin"
+	cat >"$BATS_TEST_TMPDIR/stub-bin/theme-switch" <<-'EOF'
+		#!/usr/bin/env bash
+		printf '%s\n' "$*" >>"$BATS_TEST_TMPDIR/render-args"
+	EOF
+	chmod +x "$BATS_TEST_TMPDIR/stub-bin/theme-switch"
+	theme_switch_bin() { echo "$BATS_TEST_TMPDIR/stub-bin/theme-switch"; }
+}
+
+@test "render_theme_fragments invokes --render with the resolved mode" {
+	stub_theme_switch
+	mkdir -p "$(dirname "$(theme_state_file)")"
+	printf 'dark' >"$(theme_state_file)"
+	render_theme_fragments
+	[ "$(cat "$BATS_TEST_TMPDIR/render-args")" = "--render dark" ]
+}
+
+@test "render_theme_fragments still runs when the mode file already existed" {
+	stub_theme_switch
+	# write_theme_default is a no-op here (mode already set), but fragment
+	# generation must still happen unconditionally on the same run.
+	mkdir -p "$(dirname "$(theme_state_file)")"
+	printf 'light' >"$(theme_state_file)"
+	write_theme_default
+	render_theme_fragments
+	[ "$(cat "$BATS_TEST_TMPDIR/render-args")" = "--render light" ]
+}

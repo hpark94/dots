@@ -37,6 +37,13 @@ tpm_dir() {
 	echo "$HOME/.tmux/plugins/tpm"
 }
 
+# theme-switch lives in the repo (and is stowed onto PATH), but bootstrap's own
+# non-interactive process may not have the stowed scripts dir on PATH, so we call
+# it by its repo path. A function so the bats suite can point it at a stub.
+theme_switch_bin() {
+	echo "$REPO_DIR/.local/scripts/theme-switch"
+}
+
 # 1. The shared XDG namespaces must be real dirs before stow, or stow folds each
 #    whole namespace into one symlink into the repo and mise/zinit/nvim plugins
 #    and the Role Marker all drift into the working tree.
@@ -135,8 +142,19 @@ install_zinit() {
 	fi
 }
 
-# 11. Write a default Theme Mode only if absent (never resets a live mode on a
-#     retrofit run); a cold machine renders light, matching nvim's own fallback.
+# 10b. Rebuild bat's theme cache so the tracked custom themes (hp_dark/hp_light
+#      under .config/bat/themes/) register; without it bat warns "Unknown theme
+#      'hp_dark', using default" and silently falls back to a built-in theme.
+#      Same "make a tracked asset take effect" category as tpm/nvim/zinit, and
+#      idempotent. Guarded on bat's presence, matching install_zinit's zsh guard.
+build_bat_cache() {
+	if command -v bat >/dev/null 2>&1; then
+		bat cache --build
+	fi
+}
+
+# 11a. Write a default Theme Mode only if absent (never resets a live mode on a
+#      retrofit run); a cold machine renders light, matching nvim's own fallback.
 write_theme_default() {
 	local mode_file
 	mode_file=$(theme_state_file)
@@ -145,6 +163,20 @@ write_theme_default() {
 	fi
 	mkdir -p "$(dirname "$mode_file")"
 	printf '%s' light >"$mode_file"
+}
+
+# 11b. Regenerate every app's Generated Config fragment for the resolved mode,
+#      unconditionally every run. The mode value above is create-if-absent, but
+#      the derived fragments are safe to regenerate and MUST exist before a
+#      Desktop's first sway launch: waybar's and zathura's tracked configs
+#      hard-fail to parse when their @import/include target is missing. Uses
+#      theme-switch's gate-free --render entry point, which never touches the
+#      Role Marker and whose live apply_* steps all self-guard, so it exits 0
+#      here even with no compositor attached.
+render_theme_fragments() {
+	local mode
+	mode=$(<"$(theme_state_file)")
+	"$(theme_switch_bin)" --render "$mode"
 }
 
 main() {
@@ -172,14 +204,9 @@ main() {
 	install_tpm_plugins
 	install_nvim_plugins
 	install_zinit
+	build_bat_cache
 	write_theme_default
-	# TODO(theme-switch-expansion ticket 05): once `theme-switch` gains its
-	# render-only entry point, invoke it here UNCONDITIONALLY (outside the
-	# create-if-absent mode guard above) to regenerate every app's color
-	# fragment, so a fresh Desktop's waybar/zathura configs find their
-	# @import/include targets on the first sway launch. Deferred until that
-	# entry point exists; see
-	# .scratch/roles-bootstrap-deployment/issues/04-bootstrap-theme-fragment-generation.md
+	render_theme_fragments
 }
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then

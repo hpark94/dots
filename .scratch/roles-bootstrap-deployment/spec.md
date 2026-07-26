@@ -1,4 +1,4 @@
-Status: ready-for-agent
+Status: done
 
 # Roles, bootstrap, and deployment: from `git clone` to a fully built machine
 
