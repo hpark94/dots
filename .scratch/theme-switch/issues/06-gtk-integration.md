@@ -4,7 +4,7 @@
 
 **Blocked by:** 01 — Canonical palette + `theme-switch` skeleton
 
-**Status:** ready-for-agent
+**Status:** done
 
 - [x] `apply_gtk(mode)` runs `gsettings set org.gnome.desktop.interface gtk-theme Adwaita-dark|Adwaita-light`.
 - [x] `apply_gtk` also runs `gsettings set org.gnome.desktop.interface color-scheme prefer-dark|prefer-light`, needed for portal-aware apps (Librewolf) that don't consume `gtk-theme` — see Comments.

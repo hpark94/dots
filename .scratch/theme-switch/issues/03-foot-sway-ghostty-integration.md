@@ -4,7 +4,7 @@
 
 **Blocked by:** 01 — Canonical palette + `theme-switch` skeleton
 
-**Status:** ready-for-agent
+**Status:** done
 
 - [x] `generate_foot` writes a foot colors fragment (mode-appropriate `[colors-light]`/`[colors-dark]` values sourced from the Canonical Palette) to the generated-config output directory; `foot.ini` includes it via `include`, replacing the current inline blocks.
 - [x] Test: `generate_foot` produces the expected fragment content for both dark and light modes, given a scratch output directory.

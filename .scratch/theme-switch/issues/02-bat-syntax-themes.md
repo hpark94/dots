@@ -4,7 +4,7 @@
 
 **Blocked by:** None — can start immediately
 
-**Status:** ready-for-agent
+**Status:** done
 
 - [x] `hp_light.tmTheme` and `hp_dark.tmTheme` exist and are installed under bat's custom themes directory.
 - [x] Each scope's hex color is computed directly from the corresponding HSL formula in `lush_theme/lua/lush_theme/hp_light.lua` / `hp_dark.lua` — not eyeballed, not re-derived by screenshot/color-picker.

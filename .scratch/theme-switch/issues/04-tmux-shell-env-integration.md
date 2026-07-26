@@ -4,7 +4,7 @@
 
 **Blocked by:** 01 — Canonical palette + `theme-switch` skeleton; 02 — Bat syntax themes (the shell-env demo needs `hp_dark`/`hp_light` actually registered with bat)
 
-**Status:** ready-for-agent
+**Status:** done
 
 - [x] `generate_tmux` writes a tmux fragment with `set-option` commands for status/window/message/mode styling, sourced strictly from Canonical Palette slots for both modes (dark accent → `color4`, dark mode-style bg → `bright4`, discarding the old bespoke `#5b9dc4`/`#2e4650`); `.tmux.conf` sources it via `source-file`, replacing the current hardcoded "Light" block and commented-out "Dark" block.
 - [x] Test: `generate_tmux` produces the expected fragment content for both modes, given a scratch output directory.

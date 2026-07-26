@@ -1,4 +1,4 @@
-Status: ready-for-agent
+Status: done
 
 # Theme switching across dotfiles tooling
 
