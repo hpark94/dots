@@ -1,4 +1,4 @@
-Status: ready-for-agent
+Status: done
 
 # theme-switch expansion: waybar/swaync/zathura/fuzzel roster, and Headless Theme Mode propagation
 
@@ -346,8 +346,8 @@ stays genuinely gate-free.
 - **Any new Canonical Palette role.** Explicitly re-examined by this spec's source ticket and upheld,
   not overturned — see Implementation Decisions.
 - **A default theme state file written at install/bootstrap time.** That narrows the Headless cold-case
-  window further but is `bootstrap.sh`'s responsibility, covered by the (separate, not yet written)
-  roles/bootstrap/deployment spec.
+  window further but is `bootstrap.sh`'s responsibility, covered by the separate
+  roles/bootstrap/deployment spec (since written and done).
 - **Automating the `~/.ssh/config` Include line.** Always a manual, one-time step per Implementation
   Decisions — no script, including `bootstrap.sh`, ever writes it.
 - **Tracking the real `Host` entries in `~/.ssh/config`**, genericized or otherwise. Only the wildcard

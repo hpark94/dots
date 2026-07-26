@@ -7,13 +7,15 @@ script in this repo touches.
 **Blocked by:** [01 — OSC 52 clipboard rewire, tunnel deleted](01-osc52-clipboard-rewire.md) — confirm
 the new mechanism works before tearing down the old one.
 
-**Status:** ready-for-human
+**Status:** done
 
-- [ ] Confirm OSC 52 copy-paste works correctly (per ticket 01's manual verification) before proceeding.
-- [ ] `systemctl --user disable --now clipboard-tunnel.service` on the Desktop.
-- [ ] Remove the now-unmanaged unit file left under `~/.config/systemd/user/` once `stow` no longer
+Completed by the operator: OSC 52 copy-paste confirmed working over SSH, and the `clipboard-tunnel.service` unit plus its leftover symlink are removed from the live Desktop.
+
+- [x] Confirm OSC 52 copy-paste works correctly (per ticket 01's manual verification) before proceeding.
+- [x] `systemctl --user disable --now clipboard-tunnel.service` on the Desktop.
+- [x] Remove the now-unmanaged unit file left under `~/.config/systemd/user/` once `stow` no longer
       symlinks it there.
-- [ ] Delete the four `RemoteForward 11989 localhost:11989` lines from the real `~/.ssh/config`.
+- [x] Delete the four `RemoteForward 11989 localhost:11989` lines from the real `~/.ssh/config`.
 
 **Further Notes:** See `.scratch/clipboard-rewire/spec.md`, Implementation Decisions → "Live cleanup is
 a manual, documented checklist — not shipped as code."

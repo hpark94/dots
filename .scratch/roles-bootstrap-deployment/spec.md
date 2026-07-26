@@ -294,9 +294,9 @@ from nothing documented to three lines that are actually true.
 - `CONTEXT.md`'s **Role**, **Role Marker**, **Role Fact**, **Session Fact**, **Capability Probe**, and
   **Write-Back Config** entries already document the vocabulary this spec implements against; no
   further vocabulary changes are expected here, only code.
-- The repo's working tree currently has `.gitconfig.example` already deleted and some CONTEXT.md/ADR
-  amendments already staged, uncommitted, from earlier work on this map — `.gitconfig.shared` itself,
-  `bootstrap.sh`, and the README's install section do not exist yet and are this spec's actual
-  deliverables.
+- At planning time the working tree had `.gitconfig.example` already deleted and some CONTEXT.md/ADR
+  amendments staged from earlier work on this map, while `.gitconfig.shared`, `bootstrap.sh`, and the
+  README's install section did not exist yet and were this spec's actual deliverables. All three now
+  exist and are committed on `main`; this spec is done.
 - Per this repo's own testing convention, when a manual end-to-end verification needs a live remote
   target, use this repo's established default host, not the full list.
