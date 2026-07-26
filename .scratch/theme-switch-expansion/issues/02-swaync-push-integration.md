@@ -6,7 +6,20 @@ waybar it must be told explicitly on every switch.
 
 **Blocked by:** None — can start immediately.
 
-**Status:** ready-for-agent
+**Status:** ready-for-human
+
+**Implemented.** `style.css` rewritten onto fragment-local custom properties
+(`surface` -> `selection_bg`, `text` -> `fg`, `bg`, `critical` -> `color1`,
+`link` -> `color4`, plus `shadow` -> `color0` so the control-center drop shadow
+stays dark in both modes), importing one current-mode fragment. The old invented
+muted grey collapses into `surface`; hover is softened one step with
+`shade(@surface, 1.05)`; the remaining border/shadow literals derive via
+`alpha()`. `generate_swaync` writes the fragment; `apply_swaync` runs
+`swaync-client -rs` every switch. `config.json` untouched. Verified: GTK4
+`CssProvider` parses the stylesheet (incl. `shade()`/`alpha()`/`@import`) through
+the stow symlink with no parsing errors; bats covers exact fragment contents and
+the `apply_swaync` guard path. Remaining for a human: toggle with the
+notification center open and confirm it re-themes immediately.
 
 - [ ] swaync's stylesheet is rewritten so its surfaces and text reuse existing Canonical Palette roles
       (a shared "surface" and "text" role, matching the same values waybar's hover state resolves to)

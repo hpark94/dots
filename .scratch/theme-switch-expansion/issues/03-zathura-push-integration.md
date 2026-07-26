@@ -8,7 +8,21 @@ today, holding until the next theme switch reasserts the generated value.
 
 **Blocked by:** None — can start immediately.
 
-**Status:** ready-for-agent
+**Status:** ready-for-human
+
+**Implemented.** Every color-bearing setting moved out of `zathurarc` into the
+generated `zathura-colors` fragment, included last via the relative path
+`../../.local/state/theme/zathura-colors` (zathura does not expand `~`).
+Keybinds, window/scroll/font options, and `recolor-keephue` stay tracked; the
+`i` recolor keybind is untouched. `generate_zathura` sets `recolor true` for dark
+(with `recolor-lightcolor`/`recolor-darkcolor` = `bg`/`fg`) and `recolor false`
+for light; `apply_zathura` calls `SourceConfig()` on each
+`org.pwmt.zathura.PID-<pid>` D-Bus name. bats covers the recolor on/off assertion
+per mode and the `apply_zathura` guard path. Remaining for a human: with a
+document open, confirm chrome + recolor re-render on toggle, confirm
+`SourceConfig` re-asserts the generated `recolor` (source-read inference in the
+spec, not yet observed live), and that the `i` override holds until the next
+switch.
 
 - [ ] Every color-bearing setting currently hardcoded directly in the tracked zathura config (chrome
       colors, highlight colors, and the recolor on/off + recolor light/dark colors) moves out into a

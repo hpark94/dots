@@ -9,7 +9,20 @@ step, no signal, no `theme-switch` code path beyond the generator.
 
 **Blocked by:** None — can start immediately.
 
-**Status:** ready-for-agent
+**Status:** ready-for-human
+
+**Implemented.** `style.css` split into `style-rules.css` (structure only, color
+references rewritten to palette-role custom properties) plus thin
+`style-dark.css`/`style-light.css`, each importing its per-mode fragment then the
+rules. `generate_waybar` writes both `waybar-dark.css`/`waybar-light.css` every
+switch; no apply code. Off-palette values resolve per the spec table (hover ->
+`selection_bg`, lock -> `color13`, active wash -> `alpha(color12,0.1)`, tooltip
+border -> `alpha(fg,0.1)`). Verified: GTK3 `CssProvider` parses both stylesheets
+loaded through the stow dir symlink, confirming the relative `@import` resolves
+to `~/.local/state/theme/` (US-17). bats covers both-fragment writing and the
+resolved values. Remaining for a human at a compositor: confirm waybar prefers
+`style-<mode>.css` over `style.css` and re-themes live on toggle (no config
+pins a stylesheet, so it should).
 
 - [ ] Before building anything else: confirm, by observation, that waybar actually switches to the
       mode-named stylesheet over the plain one when both are present and it's started the way it is

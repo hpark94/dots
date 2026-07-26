@@ -9,7 +9,29 @@ on the target.
 
 **Blocked by:** [05 — `theme-switch` Role gate + render-only entry point](05-role-gate-render-entrypoint.md).
 
-**Status:** ready-for-agent
+**Status:** ready-for-human
+
+**Implemented.** Tracked, stowed `.config/ssh/config.shared` holds a host-name-free
+`Host *` block (`ControlMaster auto`, `ControlPath ~/.ssh/.cm-%C`,
+`ControlPersist 10m`, `PermitLocalCommand yes`, `LocalCommand
+~/.local/scripts/theme-push-connect %n`); its header documents the one manual
+`Include` at the bottom of the real `~/.ssh/config`, and no script writes that
+line. `push_headless` (called only on `main`'s deciding path, never `--render`)
+enumerates concrete `Host` aliases via `ssh_config_hosts`, `ssh -O check`s each
+under `timeout 5`, and renders the mode on live hosts under `timeout 10`.
+`theme-push-connect` is the connect-time hook: it renders the Desktop's persisted
+mode on the reached host, guarded against recursion by an exported
+`THEME_PUSH_INFLIGHT` flag, gated to Desktop-with-a-decided-mode, backgrounded
+and `timeout`-bounded. Cold case renders light (render writes state; a missing
+state file is nvim's existing fallback). `.tmux.conf` gained `source-file -q`.
+bats covers the push guard paths (no ssh, no config, wildcard-only) and
+`ssh_config_hosts` filtering. Remaining for a human, against `ubuntu-server`
+only: confirm a toggle updates its live tmux over an open ControlMaster, a cold
+connect renders light, and neither push path hangs when it is made unreachable
+mid-check. The exact connect-time hook (`LocalCommand`) and timeout bounds were
+the spec's implementation-time verification items: `LocalCommand` is used on the
+documented "fires once per master" basis, backed additionally by the recursion
+guard so it is safe even if that does not hold.
 
 - [ ] A new tracked, stowed SSH config fragment exists holding only a fully generic default block:
       connection multiplexing settings (a control socket that persists across reconnects) and whatever

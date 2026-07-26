@@ -3,6 +3,10 @@
 setup() {
 	export XDG_STATE_HOME="$BATS_TEST_TMPDIR/state"
 	export XDG_CONFIG_HOME="$BATS_TEST_TMPDIR/config"
+	# Isolate HOME so push_headless reads no real ~/.ssh/config during tests
+	# (main now calls it on the deciding path).
+	export HOME="$BATS_TEST_TMPDIR/home"
+	mkdir -p "$HOME"
 	unset SWAYSOCK
 	SCRIPT="$BATS_TEST_DIRNAME/../theme-switch"
 	source "$SCRIPT"
@@ -39,7 +43,7 @@ setup() {
 stub_externals() {
 	local bin="$BATS_TEST_TMPDIR/stub-bin" cmd
 	mkdir -p "$bin"
-	for cmd in gsettings tmux swaymsg pkill notify-send; do
+	for cmd in gsettings tmux swaymsg pkill notify-send swaync-client gdbus ssh; do
 		printf '#!/usr/bin/env bash\nexit 0\n' >"$bin/$cmd"
 		chmod +x "$bin/$cmd"
 	done
@@ -306,4 +310,145 @@ stub_externals() {
 	run main --render toggle
 	[ "$status" -ne 0 ]
 	[ ! -f "$XDG_STATE_HOME/theme/mode" ]
+}
+
+# --- waybar (pull): writes both mode fragments on every switch ---
+
+@test "generate_waybar writes both light and dark fragments in one invocation" {
+	generate_waybar dark "$BATS_TEST_TMPDIR/out"
+	[ -f "$BATS_TEST_TMPDIR/out/waybar-light.css" ]
+	[ -f "$BATS_TEST_TMPDIR/out/waybar-dark.css" ]
+
+	# Called with light, it still writes both.
+	rm -rf "$BATS_TEST_TMPDIR/out"
+	generate_waybar light "$BATS_TEST_TMPDIR/out"
+	[ -f "$BATS_TEST_TMPDIR/out/waybar-light.css" ]
+	[ -f "$BATS_TEST_TMPDIR/out/waybar-dark.css" ]
+}
+
+@test "generate_waybar light fragment resolves the off-palette slots onto existing roles" {
+	generate_waybar dark "$BATS_TEST_TMPDIR/out"
+	run cat "$BATS_TEST_TMPDIR/out/waybar-light.css"
+	[[ "$output" == *"@define-color bg #f00001;"* ]]
+	[[ "$output" == *"@define-color fg #f00002;"* ]]           # tooltip border base
+	[[ "$output" == *"@define-color selection_bg #f00003;"* ]] # module hover
+	[[ "$output" == *"@define-color color12 #00000c;"* ]]      # active-workspace wash base
+	[[ "$output" == *"@define-color color13 #00000d;"* ]]      # sidebar lock icon
+}
+
+@test "generate_waybar dark fragment uses the dark palette" {
+	generate_waybar light "$BATS_TEST_TMPDIR/out"
+	run cat "$BATS_TEST_TMPDIR/out/waybar-dark.css"
+	[[ "$output" == *"@define-color bg #d00001;"* ]]
+	[[ "$output" == *"@define-color selection_bg #d00003;"* ]]
+	[[ "$output" == *"@define-color color13 #10000d;"* ]]
+}
+
+# --- swaync (push) ---
+
+@test "generate_swaync collapses surface onto selection_bg and text onto fg (light)" {
+	generate_swaync light "$BATS_TEST_TMPDIR/out"
+	run cat "$BATS_TEST_TMPDIR/out/swaync-colors.css"
+	[ "${lines[0]}" = "@define-color bg #f00001;" ]
+	[ "${lines[1]}" = "@define-color surface #f00003;" ]
+	[ "${lines[2]}" = "@define-color text #f00002;" ]
+	[ "${lines[3]}" = "@define-color critical #000001;" ]
+	[ "${lines[4]}" = "@define-color link #000004;" ]
+	[ "${lines[5]}" = "@define-color shadow #000000;" ]
+}
+
+@test "generate_swaync uses the dark palette for dark" {
+	generate_swaync dark "$BATS_TEST_TMPDIR/out"
+	run cat "$BATS_TEST_TMPDIR/out/swaync-colors.css"
+	[[ "$output" == *"@define-color surface #d00003;"* ]]
+	[[ "$output" == *"@define-color text #d00002;"* ]]
+}
+
+@test "apply_swaync does not error when swaync-client is unavailable" {
+	mkdir -p "$BATS_TEST_TMPDIR/empty-bin"
+	run "$(command -v bash)" -c "PATH='$BATS_TEST_TMPDIR/empty-bin'; source '$SCRIPT'; apply_swaync dark"
+	[ "$status" -eq 0 ]
+}
+
+# --- zathura (push) + recolor ---
+
+@test "generate_zathura turns recolor on for dark with palette-derived endpoints" {
+	generate_zathura dark "$BATS_TEST_TMPDIR/out"
+	run cat "$BATS_TEST_TMPDIR/out/zathura-colors"
+	[[ "$output" == *'set recolor true'* ]]
+	[[ "$output" == *'set recolor-lightcolor "#d00001"'* ]]
+	[[ "$output" == *'set recolor-darkcolor "#d00002"'* ]]
+	[[ "$output" == *'set default-bg "#d00001"'* ]]
+	[[ "$output" == *'set default-fg "#d00002"'* ]]
+	[[ "$output" == *'set highlight-fg "#100004"'* ]]
+	[[ "$output" == *'set highlight-color "rgba(16, 0, 6, 0.2)"'* ]]
+}
+
+@test "generate_zathura turns recolor off for light" {
+	generate_zathura light "$BATS_TEST_TMPDIR/out"
+	run cat "$BATS_TEST_TMPDIR/out/zathura-colors"
+	[[ "$output" == *'set recolor false'* ]]
+	[[ "$output" == *'set completion-highlight-fg "#000002"'* ]]
+	[[ "$output" == *'set highlight-color "rgba(0, 0, 6, 0.2)"'* ]]
+	[[ "$output" == *'set highlight-active-color "rgba(0, 0, 1, 0.2)"'* ]]
+}
+
+@test "apply_zathura does not error when gdbus is unavailable" {
+	mkdir -p "$BATS_TEST_TMPDIR/empty-bin"
+	run "$(command -v bash)" -c "PATH='$BATS_TEST_TMPDIR/empty-bin'; source '$SCRIPT'; apply_zathura dark"
+	[ "$status" -eq 0 ]
+}
+
+# --- fuzzel (next-launch) ---
+
+@test "generate_fuzzel writes a [colors] fragment as RRGGBBAA without # (light)" {
+	generate_fuzzel light "$BATS_TEST_TMPDIR/out"
+	run cat "$BATS_TEST_TMPDIR/out/fuzzel-colors.ini"
+	[ "${lines[0]}" = "[colors]" ]
+	[[ "$output" == *"background=f00001ff"* ]]
+	[[ "$output" == *"text=f00002ff"* ]]
+	[[ "$output" == *"match=000004ff"* ]]
+	[[ "$output" == *"selection=f00003ff"* ]]
+	[[ "$output" == *"selection-text=f00002ff"* ]]
+	[[ "$output" == *"selection-match=000004ff"* ]]
+	[[ "$output" == *"border=00000bff"* ]]
+}
+
+@test "generate_fuzzel uses the dark palette for dark" {
+	generate_fuzzel dark "$BATS_TEST_TMPDIR/out"
+	run cat "$BATS_TEST_TMPDIR/out/fuzzel-colors.ini"
+	[[ "$output" == *"background=d00001ff"* ]]
+	[[ "$output" == *"border=10000bff"* ]]
+}
+
+# --- Headless push (toggle-time) ---
+
+@test "push_headless does not error when ssh is unavailable" {
+	mkdir -p "$BATS_TEST_TMPDIR/empty-bin"
+	run "$(command -v bash)" -c "PATH='$BATS_TEST_TMPDIR/empty-bin'; source '$SCRIPT'; push_headless dark"
+	[ "$status" -eq 0 ]
+}
+
+@test "push_headless does not error when no ssh config is present" {
+	rm -f "$HOME/.ssh/config"
+	run push_headless dark
+	[ "$status" -eq 0 ]
+}
+
+@test "push_headless does not error when only a wildcard host block is configured" {
+	mkdir -p "$HOME/.ssh"
+	printf 'Host *\n    ControlMaster auto\n' >"$HOME/.ssh/config"
+	run push_headless dark
+	[ "$status" -eq 0 ]
+}
+
+@test "ssh_config_hosts lists concrete hosts and skips pattern entries" {
+	mkdir -p "$HOME/.ssh"
+	printf 'Host alpha beta\n    HostName x\nHost *.example\n    User y\nHost *\n    ControlMaster auto\n' \
+		>"$HOME/.ssh/config"
+	run ssh_config_hosts
+	[[ "$output" == *"alpha"* ]]
+	[[ "$output" == *"beta"* ]]
+	[[ "$output" != *"example"* ]]
+	[[ "$output" != *"*"* ]]
 }

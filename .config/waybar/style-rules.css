@@ -1,14 +1,19 @@
-/* --- Variables --- */
-@define-color bg        #f9f7f6;
-@define-color bg-hover  #e5d9cd;
-@define-color fg        #3a7292;
-@define-color fg-green  #3a784c;
-@define-color fg-red    #a63f3f;
-@define-color fg-orange #c36022;
-@define-color fg-purple #614096;
-@define-color fg-dark   #4d4851;
-@define-color fg-blue   #4c5aa9;
-@define-color fg-lilac  #babbf1;
+/*
+ * Structural waybar stylesheet: layout, spacing, radii, transitions, and
+ * which Canonical Palette slot each element draws from. No literal colors.
+ *
+ * Colors come from a generated per-mode fragment (waybar-dark.css /
+ * waybar-light.css) that @define-colors every palette slot; this file is
+ * pulled in by style-dark.css / style-light.css after that fragment, and
+ * waybar picks which of the two to load per the desktop-portal appearance
+ * state that theme-switch's apply_gtk writes. See ADR-0001 (the *pull* shape).
+ *
+ * Off-palette values in the old single style.css resolve onto existing slots:
+ *   module hover background -> selection_bg
+ *   sidebar lock icon       -> color13
+ *   active-workspace wash   -> alpha(color12, 0.1)
+ *   tooltip border          -> alpha(fg, 0.1)
+ */
 
 /* --- Global --- */
 * {
@@ -22,7 +27,7 @@
 /* --- Waybar Container --- */
 #waybar {
   background: transparent;
-  color: @fg;
+  color: @color4;
   margin: 0px;
 }
 
@@ -68,7 +73,7 @@
 #network:hover,
 #custom-lock:hover,
 #battery:hover {
-  background-color: @bg-hover;
+  background-color: @selection_bg;
 }
 
 /* --- Fully Rounded Singles (Left + Center) --- */
@@ -108,7 +113,7 @@
 
 /* --- Workspace Buttons --- */
 #workspaces button {
-  color: @fg;
+  color: @color4;
   border-radius: 5px;
   padding: 0.3rem 0.6rem;
   background: transparent;
@@ -117,74 +122,74 @@
   outline: none;
 }
 #workspaces button.active {
-  color: @fg-green;
-  background-color: rgba(153, 209, 219, 0.1);
+  color: @color2;
+  background-color: alpha(@color12, 0.1);
 }
 
 /* --- Per-Module Colors --- */
 #temperature {
-  color: @fg-green;
+  color: @color2;
 }
 #temperature.critical {
-  color: @fg-red;
+  color: @color1;
 }
 #cpu {
-  color: @fg-orange;
+  color: @color3;
 }
 #clock {
-  color: @fg-purple;
+  color: @color5;
 }
 #pulseaudio {
-  color: @fg;
+  color: @color4;
 }
 #backlight {
-  color: @fg-green;
+  color: @color2;
 }
 #network {
-  color: @fg-orange;
+  color: @color3;
 }
 #network.disconnected {
-  color: @fg-red;
+  color: @color1;
 }
 #custom-lock {
-  color: @fg-lilac;
+  color: @color13;
 }
 #bluetooth {
-  color: @fg-dark;
+  color: @fg;
   font-size: 15px;
 }
 #bluetooth.on,
 #bluetooth.connected {
-  color: @fg-blue;
+  color: @color6;
 }
 #battery {
-  color: @fg;
+  color: @color4;
 }
 #battery.charging {
-  color: @fg-green;
+  color: @color2;
 }
 #battery.warning:not(.charging),
 #battery.critical:not(.charging) {
-  color: @fg-red;
+  color: @color1;
 }
 #custom-caffeine.active {
-  color: @fg-green;
+  color: @color2;
 }
 #custom-caffeine.inactive {
-  color: @fg-red;
+  color: @color1;
 }
 
 /* --- Tooltip --- */
 tooltip {
   background-color: @bg;
-  color: @fg-dark;
+  color: @fg;
   padding: 5px 12px;
   margin: 5px 0px;
   border-radius: 5px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid alpha(@fg, 0.1);
 }
 tooltip label {
-  color: @fg-dark;
+  color: @fg;
   font-weight: 500;
   text-shadow: none;
 }

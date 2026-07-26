@@ -1,0 +1,25 @@
+# Shared, host-name-free SSH defaults. Tracked and stowed to ~/.config/ssh/.
+#
+# Wire it in by ONE manual, one-time edit: add
+#
+#     Include ~/.config/ssh/config.shared
+#
+# at the BOTTOM of your real ~/.ssh/config. ssh uses first-obtained-value-wins,
+# so a generic default must sit after every host-specific block to avoid
+# overriding it. No script, including bootstrap, ever adds this line.
+#
+# This file is Desktop-only. It drives the Headless Theme Mode push, which
+# assumes this machine initiates the SSH connections: ControlMaster keeps a
+# multiplexed socket alive so `ssh -O check` and the connect-time hook are
+# cheap, and LocalCommand pushes the current Theme Mode to each host you reach
+# so a machine that missed a toggle catches up on reconnect. Never add it on an
+# institution-managed host whose SSH config nothing here should touch.
+#
+# No concrete hostname, username, or IP ever belongs in this file.
+
+Host *
+    ControlMaster auto
+    ControlPath ~/.ssh/.cm-%C
+    ControlPersist 10m
+    PermitLocalCommand yes
+    LocalCommand ~/.local/scripts/theme-push-connect %n

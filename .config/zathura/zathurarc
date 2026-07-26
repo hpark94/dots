@@ -15,32 +15,12 @@ set scroll-hstep 100
 set selection-clipboard clipboard
 set search-hadjust true
 set render-loading true
+set recolor-keephue true
 
-set default-bg              "#100e11"
-set default-fg              "#e9e6e2"
-set statusbar-bg            "#100e11"
-set statusbar-fg            "#e9e6e2"
-
-set inputbar-bg             "#100e11"
-set inputbar-fg             "#e9e6e2"
-
-set highlight-color         "rgba(255, 255, 0, 0.2)"
-set highlight-active-color  "rgba(255, 0, 0, 0.2)"
-
-set notification-error-bg   "#d36969"
-set notification-error-fg   "#100e11"
-set notification-warning-bg "#d36969"
-set notification-warning-fg "#100e11"
-
-set completion-highlight-fg "#59c076"
-set completion-highlight-bg "#100e11"
-set completion-bg           "#100e11"
-set completion-fg           "#e9e6e2"
-set notification-bg         "#e9e6e2"
-set notification-fg         "#100e11"
-set highlight-fg            "#69acd3"
-
-set recolor                 false
-set recolor-lightcolor      "#100e11"
-set recolor-darkcolor       "#e9e6e2"
-set recolor-keephue         true
+# All color-bearing settings (chrome, highlights, and recolor on/off + endpoints)
+# live in the generated per-mode fragment, which theme-switch rewrites on every
+# switch and apply_zathura re-sources over D-Bus into running instances. The
+# include path is relative because zathura's include does not expand ~; it
+# resolves through stow's symlink from ~/.config/zathura/ to ~/.local/state/theme/.
+# It is placed last so it wins over any color default above.
+include ../../.local/state/theme/zathura-colors

@@ -7,7 +7,18 @@ rather than silently serving stale colors from a leftover tracked block.
 
 **Blocked by:** None — can start immediately.
 
-**Status:** ready-for-agent
+**Status:** ready-for-human
+
+**Implemented.** The tracked `[colors]` block was deleted outright and
+`include=~/.local/state/theme/fuzzel-colors.ini` added to the default section
+(after the last default-section key, before `[border]`; fuzzel expands the
+leading `~/`). `generate_fuzzel` writes the current-mode `[colors]` fragment as
+`RRGGBBAA` hex without `#`, every value already an exact palette slot. No apply
+code. Verified live on this machine: `fuzzel --check-config` passes with the
+fragment present, and with it removed fuzzel prints a loud `failed to open`
+error and falls back to its own defaults rather than serving stale colors
+(US-14). bats covers exact fragment contents per mode. Remaining for a human:
+confirm a launch after a toggle shows the new mode's colors.
 
 - [ ] The tracked color block in fuzzel's config is deleted outright (not shadowed or commented out).
 - [ ] An include of a generated color fragment is added to fuzzel's default/main section, positioned so

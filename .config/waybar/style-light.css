@@ -1,0 +1,10 @@
+/*
+ * Light-mode waybar stylesheet. waybar prefers this over style.css when started
+ * without -s and the desktop-portal appearance is light. It only wires the
+ * generated light color fragment to the shared structural rules: the fragment's
+ * @define-color values must be parsed before the rules that reference them, so
+ * it is imported first. The relative path resolves through stow's symlink from
+ * ~/.config/waybar/ to ~/.local/state/theme/.
+ */
+@import url("../../.local/state/theme/waybar-light.css");
+@import url("style-rules.css");

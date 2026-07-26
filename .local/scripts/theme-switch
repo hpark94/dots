@@ -185,6 +185,136 @@ generate_shell_env() {
 	)
 }
 
+# waybar is a *pull* app (ADR-0001): it re-reads its stylesheet on every
+# org.freedesktop.appearance change (which apply_gtk already writes) and, when
+# started without -s, prefers style-dark.css/style-light.css over style.css.
+# waybar, not this script, decides which one loads, so the generator writes
+# BOTH per-mode @define-color fragments on every switch and both stay on disk.
+# The values are the full Canonical Palette; the tracked style-rules.css picks
+# which slots it uses (off-palette values there resolve onto existing slots:
+# hover -> selection_bg, lock icon -> color13, active wash -> alpha(color12),
+# tooltip border -> alpha(fg)). No apply function, no signal.
+waybar_colors_block() {
+	local palette_file=$1
+	# shellcheck disable=SC1090,SC2154
+	(
+		source "$palette_file"
+		local i
+		for i in $(seq 0 15); do
+			local -n slot="color$i"
+			printf '@define-color color%d %s;\n' "$i" "$slot"
+		done
+		printf '@define-color bg %s;\n' "$bg"
+		printf '@define-color fg %s;\n' "$fg"
+		printf '@define-color selection_bg %s;\n' "$selection_bg"
+		printf '@define-color selection_fg %s;\n' "$selection_fg"
+	)
+}
+
+generate_waybar() {
+	# $1 (mode) is intentionally unused: waybar picks the mode itself, so both
+	# fragments are always written.
+	local out_dir=$2
+	mkdir -p "$out_dir"
+	waybar_colors_block "$(theme_palette_file light)" >"$out_dir/waybar-light.css"
+	waybar_colors_block "$(theme_palette_file dark)" >"$out_dir/waybar-dark.css"
+}
+
+# swaync is a *push* app with no portal awareness, so it is told explicitly on
+# every switch. The tracked style.css references named custom properties sourced
+# from this one current-mode fragment: surface -> selection_bg (the old muted
+# grey collapses here), text -> fg, plus the existing critical/link severity
+# slots. No new palette roles.
+generate_swaync() {
+	local mode=$1 out_dir=$2
+	mkdir -p "$out_dir"
+	# shellcheck disable=SC1090,SC2154
+	(
+		source "$(theme_palette_file "$mode")"
+		{
+			printf '@define-color bg %s;\n' "$bg"
+			printf '@define-color surface %s;\n' "$selection_bg"
+			printf '@define-color text %s;\n' "$fg"
+			printf '@define-color critical %s;\n' "$color1"
+			printf '@define-color link %s;\n' "$color4"
+			# color0 is dark in both palettes, so a shadow derived from it reads
+			# as a shadow in both modes (unlike @text, which inverts).
+			printf '@define-color shadow %s;\n' "$color0"
+		} >"$out_dir/swaync-colors.css"
+	)
+}
+
+# Emit "r, g, b" decimals for a #rrggbb value, for the two translucent zathura
+# highlight colors that need an rgba() with an alpha the palette can't carry.
+hex_to_rgb() {
+	local hex=${1#\#}
+	printf '%d, %d, %d' "0x${hex:0:2}" "0x${hex:2:2}" "0x${hex:4:2}"
+}
+
+# zathura is a *push* app. Every color-bearing setting moves out of the tracked
+# zathurarc into this current-mode fragment (included with a relative path,
+# since zathura's include does not expand ~). Dark mode turns recolor on with
+# palette-derived light/dark endpoints; light mode turns it off, leaving pages
+# in true color. apply_zathura re-sources it per running instance over D-Bus.
+generate_zathura() {
+	local mode=$1 out_dir=$2
+	mkdir -p "$out_dir"
+	local recolor=false
+	[[ "$mode" == "dark" ]] && recolor=true
+	# shellcheck disable=SC1090,SC2154
+	(
+		source "$(theme_palette_file "$mode")"
+		{
+			printf 'set default-bg "%s"\n' "$bg"
+			printf 'set default-fg "%s"\n' "$fg"
+			printf 'set statusbar-bg "%s"\n' "$bg"
+			printf 'set statusbar-fg "%s"\n' "$fg"
+			printf 'set inputbar-bg "%s"\n' "$bg"
+			printf 'set inputbar-fg "%s"\n' "$fg"
+			printf 'set highlight-color "rgba(%s, 0.2)"\n' "$(hex_to_rgb "$color6")"
+			printf 'set highlight-active-color "rgba(%s, 0.2)"\n' "$(hex_to_rgb "$color1")"
+			printf 'set highlight-fg "%s"\n' "$color4"
+			printf 'set notification-bg "%s"\n' "$fg"
+			printf 'set notification-fg "%s"\n' "$bg"
+			printf 'set notification-error-bg "%s"\n' "$color1"
+			printf 'set notification-error-fg "%s"\n' "$bg"
+			printf 'set notification-warning-bg "%s"\n' "$color1"
+			printf 'set notification-warning-fg "%s"\n' "$bg"
+			printf 'set completion-bg "%s"\n' "$bg"
+			printf 'set completion-fg "%s"\n' "$fg"
+			printf 'set completion-highlight-bg "%s"\n' "$bg"
+			printf 'set completion-highlight-fg "%s"\n' "$color2"
+			printf 'set recolor %s\n' "$recolor"
+			printf 'set recolor-lightcolor "%s"\n' "$bg"
+			printf 'set recolor-darkcolor "%s"\n' "$fg"
+		} >"$out_dir/zathura-colors"
+	)
+}
+
+# fuzzel is a *next-launch* app: it is spawned fresh per invocation and exits,
+# so its include is always read current and no apply step or signal exists. The
+# tracked [colors] block is deleted outright; a missing fragment fails loudly
+# onto fuzzel's own defaults rather than serving stale colors. Colors are RRGGBBAA
+# hex without a leading #.
+generate_fuzzel() {
+	local mode=$1 out_dir=$2
+	mkdir -p "$out_dir"
+	# shellcheck disable=SC1090,SC2154
+	(
+		source "$(theme_palette_file "$mode")"
+		{
+			printf '[colors]\n'
+			printf 'background=%sff\n' "${bg#\#}"
+			printf 'text=%sff\n' "${fg#\#}"
+			printf 'match=%sff\n' "${color4#\#}"
+			printf 'selection=%sff\n' "${selection_bg#\#}"
+			printf 'selection-text=%sff\n' "${fg#\#}"
+			printf 'selection-match=%sff\n' "${color4#\#}"
+			printf 'border=%sff\n' "${color11#\#}"
+		} >"$out_dir/fuzzel-colors.ini"
+	)
+}
+
 apply_foot() {
 	local mode=$1 sig=USR2
 	[[ "$mode" == "dark" ]] && sig=USR1
@@ -226,6 +356,59 @@ apply_gtk() {
 	fi
 }
 
+apply_swaync() {
+	if command -v swaync-client >/dev/null 2>&1; then
+		swaync-client -rs >/dev/null 2>&1 || true
+	fi
+}
+
+apply_zathura() {
+	command -v gdbus >/dev/null 2>&1 || return 0
+	local names name
+	names=$(gdbus call --session \
+		--dest org.freedesktop.DBus \
+		--object-path /org/freedesktop/DBus \
+		--method org.freedesktop.DBus.ListNames 2>/dev/null) || return 0
+	# ListNames returns one ('a', b, ...') tuple; pull each zathura bus name out.
+	while read -r name; do
+		gdbus call --session \
+			--dest "$name" \
+			--object-path /org/pwmt/zathura \
+			--method org.pwmt.zathura.SourceConfig >/dev/null 2>&1 || true
+	done < <(grep -oE 'org\.pwmt\.zathura\.PID-[0-9]+' <<<"$names")
+}
+
+# Concrete (non-wildcard) Host aliases from ~/.ssh/config, one per line. Skips
+# pattern entries (*, ?, !) so only real, pushable hosts come back.
+ssh_config_hosts() {
+	local cfg="$HOME/.ssh/config"
+	[[ -r "$cfg" ]] || return 0
+	awk 'tolower($1) == "host" {
+		for (i = 2; i <= NF; i++)
+			if ($i !~ /[*?!]/) print $i
+	}' "$cfg"
+}
+
+# Toggle-time Headless push. For each configured host with a currently-live
+# ControlMaster socket (ssh -O check), render the decided mode on that machine
+# via the gate-free --render entry point. Every step is timeout-bounded so a
+# stale or newly-unreachable host can never hang the local toggle; a host with
+# no live socket is skipped in the fast, non-blocking path of -O check. Only the
+# deciding (Desktop) path calls this, never --render, so a push never recurses.
+push_headless() {
+	local mode=$1 host
+	command -v ssh >/dev/null 2>&1 || return 0
+	while read -r host; do
+		[[ -n "$host" ]] || continue
+		if timeout 5 ssh -o BatchMode=yes -O check "$host" >/dev/null 2>&1; then
+			# The tilde is expanded by the remote shell, not the local one.
+			# shellcheck disable=SC2088
+			timeout 10 ssh -o BatchMode=yes "$host" \
+				"~/.local/scripts/theme-switch --render $mode" >/dev/null 2>&1 || true
+		fi
+	done < <(ssh_config_hosts)
+}
+
 notify_mode() {
 	local mode=$1
 	if command -v notify-send >/dev/null 2>&1; then
@@ -246,11 +429,17 @@ render() {
 	generate_ghostty "$mode" "$out_dir"
 	generate_tmux "$mode" "$out_dir"
 	generate_shell_env "$mode" "$out_dir"
+	generate_waybar "$mode" "$out_dir"
+	generate_swaync "$mode" "$out_dir"
+	generate_zathura "$mode" "$out_dir"
+	generate_fuzzel "$mode" "$out_dir"
 
 	apply_foot "$mode"
 	apply_sway "$mode"
 	apply_tmux "$mode"
 	apply_gtk "$mode"
+	apply_swaync "$mode"
+	apply_zathura "$mode"
 }
 
 usage() {
@@ -299,6 +488,9 @@ main() {
 	fi
 	render "$mode"
 	notify_mode "$mode"
+	# Propagate to any Headless machine with a live connection right now. Only
+	# the Desktop reaches here; --render (the remote's own path) never pushes.
+	push_headless "$mode"
 }
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then

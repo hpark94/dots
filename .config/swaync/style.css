@@ -1,12 +1,13 @@
-/* === Color definitions === */
-@define-color bg_base #f9f7f6;
-@define-color bg_muted rgba(128, 128, 128, 1);
-@define-color text_primary #4d4851;
-@define-color text_light #f9f7f6;
-@define-color accent #e5d9cd;
-@define-color accent_active #4d4851;
-@define-color critical #a63f3f;
-@define-color link #3a7292;
+/*
+ * Colors come from the generated current-mode fragment: surface -> selection_bg
+ * (the old invented muted grey collapses here), text -> fg, plus the existing
+ * critical/link severity slots and bg. No new Canonical Palette roles. Hover is
+ * softened one step off the surface with shade(); the few remaining shadow/wash
+ * literals are derived with alpha(). theme-switch's apply_swaync tells swaync to
+ * re-read this on every switch (swaync-client -rs). The relative import resolves
+ * through stow's symlink from ~/.config/swaync/ to ~/.local/state/theme/.
+ */
+@import url("../../.local/state/theme/swaync-colors.css");
 
 /* === Base === */
 * {
@@ -14,12 +15,12 @@
   font-family: "Geist", "Noto Sans", sans-serif;
   transition: 100ms;
   box-shadow: unset;
-  color: @text_primary;
+  color: @text;
 }
 
 /* === Button styles === */
 button {
-  background-color: @bg_muted;
+  background-color: @surface;
   border: unset;
   border-radius: 0.5rem;
   box-shadow: unset;
@@ -28,23 +29,23 @@ button {
 
 button label,
 button image {
-  color: @text_light;
+  color: @text;
 }
 
 button:hover {
-  background-color: @accent;
+  background-color: shade(@surface, 1.05);
 }
 button:hover label,
 button:hover image {
-  color: @text_primary;
+  color: @text;
 }
 
 button:active {
-  background-color: @accent_active;
+  background-color: @text;
 }
 button:active label,
 button:active image {
-  color: @text_light;
+  color: @bg;
 }
 
 .close-button {
@@ -59,16 +60,16 @@ button:active image {
 
 /* === Tooltip === */
 tooltip {
-  background-color: @bg_base;
+  background-color: @bg;
 }
 tooltip label,
 tooltip image {
-  color: @text_primary;
+  color: @text;
 }
 
 /* === Notifications === */
 .notification-background .notification {
-  background-color: @bg_muted;
+  background-color: @surface;
   margin-bottom: unset;
 }
 
@@ -80,7 +81,7 @@ tooltip image {
 }
 
 .notification-background .notification .notification-content {
-  background-color: @bg_base;
+  background-color: @bg;
   padding: 0.818rem;
   padding-right: unset;
   margin-right: unset;
@@ -88,7 +89,7 @@ tooltip image {
 
 .notification-background:hover .notification,
 .notification-default-action:hover {
-  background-color: @accent;
+  background-color: shade(@surface, 1.05);
   border-radius: 0.668rem;
 }
 
@@ -97,7 +98,7 @@ tooltip image {
 .notification.normal .notification-content label,
 .notification.low .notification-content .body,
 .notification.normal .notification-content .body {
-  color: @text_primary;
+  color: @text;
 }
 
 .notification.low .notification-content image,
@@ -112,7 +113,7 @@ tooltip image {
 }
 
 .notification.critical .notification-content label {
-  color: @text_light;
+  color: @bg;
 }
 
 .notification.critical .notification-content image {
@@ -144,13 +145,13 @@ tooltip image {
 /* === Control Center === */
 .control-center {
   border-radius: 1.705rem;
-  border-top: 1px solid rgba(164, 162, 167, 0.19);
-  border-left: 1px solid rgba(164, 162, 167, 0.19);
-  border-right: 1px solid rgba(128, 127, 132, 0.145);
-  border-bottom: 1px solid rgba(128, 127, 132, 0.145);
-  box-shadow: 0px 2px 3px rgba(0, 0, 0, 0.45);
+  border-top: 1px solid alpha(@text, 0.19);
+  border-left: 1px solid alpha(@text, 0.19);
+  border-right: 1px solid alpha(@text, 0.15);
+  border-bottom: 1px solid alpha(@text, 0.15);
+  box-shadow: 0px 2px 3px alpha(@shadow, 0.45);
   margin: 7px;
-  background-color: @bg_base;
+  background-color: @bg;
   padding: 1.023rem;
 }
 
@@ -172,7 +173,7 @@ tooltip image {
   border-radius: 9999px;
   min-width: 0.273rem;
   min-height: 2.045rem;
-  background-color: @bg_muted;
+  background-color: @surface;
 }
 
 /* === Notification Groups === */
@@ -182,13 +183,13 @@ tooltip image {
 }
 
 .notification-group-header.title-1 {
-  color: @text_primary;
+  color: @text;
 }
 .notification-group-icon {
   color: @link;
 }
 .control-center-list-placeholder {
-  color: @text_primary;
+  color: @text;
 }
 
 /* === Title Widget === */
@@ -216,23 +217,23 @@ tooltip image {
 
 /* === Volume Widget === */
 .widget-volume {
-  background-color: @bg_muted;
+  background-color: @surface;
   padding: 8px;
   margin: 8px;
   border-radius: 1.159rem;
 }
 
 .widget-volume label {
-  color: @text_light;
+  color: @text;
 }
 
 .widget-volume trough {
   border: unset;
-  background-color: @bg_muted;
+  background-color: @surface;
 }
 
 .widget-volume trough slider {
-  background-color: @bg_base;
+  background-color: @bg;
   border-radius: 9999px;
   min-height: 1.25rem;
 }
@@ -241,7 +242,7 @@ tooltip image {
 .widget-backlight highlight {
   padding: 3.5px;
   border-radius: 9999px;
-  background: @bg_base;
+  background: @bg;
 }
 
 /* === Mpris Widget === */
@@ -251,7 +252,7 @@ tooltip image {
 }
 
 .widget-mpris label {
-  color: @text_light;
+  color: @text;
 }
 
 .mpris-background {
@@ -261,7 +262,7 @@ tooltip image {
 
 .mpris-overlay {
   border-radius: 14px;
-  background-color: @bg_muted;
+  background-color: @surface;
   box-shadow: unset;
 }
 

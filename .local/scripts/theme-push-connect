@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+# Connect-time Headless Theme Mode push. Invoked as the LocalCommand in
+# ~/.config/ssh/config.shared after each SSH master connection from the Desktop,
+# with the connected host alias as $1. It renders the Desktop's current Theme
+# Mode on that host via theme-switch's gate-free --render entry point, so a
+# Headless machine that was offline during a prior toggle catches up the moment
+# it is reached. Best-effort and bounded: a connection must never block or fail
+# because of it. See .scratch/theme-switch-expansion/spec.md, "The Headless push".
+set -u
+
+host=${1:-}
+[[ -n "$host" ]] || exit 0
+
+# Recursion guard. The push below itself opens an SSH connection to $host; that
+# child ssh would re-fire this LocalCommand. The exported flag is inherited by
+# the child ssh and its LocalCommand shell, which short-circuits here, so the
+# push never triggers itself. (Multiplexed sessions over a live master do not
+# re-run LocalCommand either, but this guard holds regardless of that.)
+[[ -n "${THEME_PUSH_INFLIGHT:-}" ]] && exit 0
+export THEME_PUSH_INFLIGHT=1
+
+# Only a Desktop with a decided mode has anything to push.
+role_file="${XDG_CONFIG_HOME:-$HOME/.config}/dotfiles/role"
+[[ -r "$role_file" ]] || exit 0
+[[ "$(tr -d '[:space:]' <"$role_file")" == "desktop" ]] || exit 0
+
+state_file="${XDG_STATE_HOME:-$HOME/.local/state}/theme/mode"
+[[ -r "$state_file" ]] || exit 0
+mode=$(tr -d '[:space:]' <"$state_file")
+[[ "$mode" == "dark" || "$mode" == "light" ]] || exit 0
+
+# Backgrounded and timeout-bounded so connection setup returns immediately and a
+# stalled host cannot hang the shell. Reuses the just-opened master socket. The
+# tilde is expanded by the remote shell, not the local one.
+# shellcheck disable=SC2088
+(timeout 10 ssh -o BatchMode=yes "$host" \
+	"~/.local/scripts/theme-switch --render $mode" >/dev/null 2>&1 || true) &
+exit 0
