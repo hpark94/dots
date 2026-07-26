@@ -26,6 +26,24 @@ setup() {
 		printf 'selection_bg=#d00003\n'
 		printf 'selection_fg=#d00004\n'
 	} >"$XDG_CONFIG_HOME/theme/hp_dark.sh"
+
+	# Default test machine is a Desktop, so the deciding path is allowed.
+	# Tests exercising the Role gate override or remove this Marker.
+	mkdir -p "$XDG_CONFIG_HOME/dotfiles"
+	printf 'desktop' >"$XDG_CONFIG_HOME/dotfiles/role"
+}
+
+# Shadow every side-effecting external main()/render() would otherwise fire
+# against the live session (gsettings, tmux, swaymsg, pkill, notify-send) with
+# no-op stubs, so running main/--render in tests never touches the real desktop.
+stub_externals() {
+	local bin="$BATS_TEST_TMPDIR/stub-bin" cmd
+	mkdir -p "$bin"
+	for cmd in gsettings tmux swaymsg pkill notify-send; do
+		printf '#!/usr/bin/env bash\nexit 0\n' >"$bin/$cmd"
+		chmod +x "$bin/$cmd"
+	done
+	PATH="$bin:$PATH"
 }
 
 @test "resolve_mode dark returns dark" {
@@ -74,19 +92,13 @@ setup() {
 }
 
 @test "main persists state and notifies" {
-	mkdir -p "$BATS_TEST_TMPDIR/stub-bin"
-	printf '#!/usr/bin/env bash\nexit 0\n' >"$BATS_TEST_TMPDIR/stub-bin/notify-send"
-	chmod +x "$BATS_TEST_TMPDIR/stub-bin/notify-send"
-	PATH="$BATS_TEST_TMPDIR/stub-bin:$PATH"
+	stub_externals
 	main dark
 	[ "$(cat "$XDG_STATE_HOME/theme/mode")" = "dark" ]
 }
 
 @test "main toggle flips the persisted mode" {
-	mkdir -p "$BATS_TEST_TMPDIR/stub-bin"
-	printf '#!/usr/bin/env bash\nexit 0\n' >"$BATS_TEST_TMPDIR/stub-bin/notify-send"
-	chmod +x "$BATS_TEST_TMPDIR/stub-bin/notify-send"
-	PATH="$BATS_TEST_TMPDIR/stub-bin:$PATH"
+	stub_externals
 	main dark
 	main toggle
 	[ "$(cat "$XDG_STATE_HOME/theme/mode")" = "light" ]
@@ -195,4 +207,103 @@ setup() {
 	run cat "$BATS_TEST_TMPDIR/out/shell-env.sh"
 	[[ "$output" == *"export FZF_DEFAULT_OPTS='--color=fg:#d00002,bg:#d00001,hl:#d00002 --color=fg+:#d00002,bg+:#d00003,hl+:#d00002 --color=info:#100004,prompt:#100005,pointer:#100001 --color=marker:#100002,spinner:#100005,header:#100003'"* ]]
 	[[ "$output" == *"export BAT_THEME=dark"* ]]
+}
+
+@test "read_role returns the desktop Role" {
+	run read_role
+	[ "$status" -eq 0 ]
+	[ "$output" = "desktop" ]
+}
+
+@test "read_role returns the headless Role" {
+	printf 'headless' >"$XDG_CONFIG_HOME/dotfiles/role"
+	run read_role
+	[ "$status" -eq 0 ]
+	[ "$output" = "headless" ]
+}
+
+@test "read_role strips surrounding whitespace and a trailing newline" {
+	printf '  headless\n' >"$XDG_CONFIG_HOME/dotfiles/role"
+	run read_role
+	[ "$status" -eq 0 ]
+	[ "$output" = "headless" ]
+}
+
+@test "read_role errors when the Marker is absent, naming the file" {
+	rm -f "$XDG_CONFIG_HOME/dotfiles/role"
+	run read_role
+	[ "$status" -ne 0 ]
+	[[ "$output" == *"dotfiles/role"* ]]
+}
+
+@test "read_role errors on an empty Marker" {
+	: >"$XDG_CONFIG_HOME/dotfiles/role"
+	run read_role
+	[ "$status" -ne 0 ]
+}
+
+@test "read_role errors on an unrecognized word, including wrong case" {
+	printf 'Desktop' >"$XDG_CONFIG_HOME/dotfiles/role"
+	run read_role
+	[ "$status" -ne 0 ]
+}
+
+@test "direct dark invocation refuses on a headless Marker without writing state" {
+	printf 'headless' >"$XDG_CONFIG_HOME/dotfiles/role"
+	run main dark
+	[ "$status" -ne 0 ]
+	[ ! -f "$XDG_STATE_HOME/theme/mode" ]
+}
+
+@test "direct light invocation refuses on a headless Marker" {
+	printf 'headless' >"$XDG_CONFIG_HOME/dotfiles/role"
+	run main light
+	[ "$status" -ne 0 ]
+	[ ! -f "$XDG_STATE_HOME/theme/mode" ]
+}
+
+@test "direct toggle invocation refuses on a headless Marker without writing state" {
+	printf 'headless' >"$XDG_CONFIG_HOME/dotfiles/role"
+	run main toggle
+	[ "$status" -ne 0 ]
+	[ ! -f "$XDG_STATE_HOME/theme/mode" ]
+}
+
+@test "direct invocation refuses when no Role Marker is present at all" {
+	rm -f "$XDG_CONFIG_HOME/dotfiles/role"
+	run main dark
+	[ "$status" -ne 0 ]
+	[ ! -f "$XDG_STATE_HOME/theme/mode" ]
+}
+
+@test "--render writes state and runs the render pipeline with no Role Marker present" {
+	rm -f "$XDG_CONFIG_HOME/dotfiles/role"
+	stub_externals
+	run main --render dark
+	[ "$status" -eq 0 ]
+	[ "$(cat "$XDG_STATE_HOME/theme/mode")" = "dark" ]
+	[ -f "$XDG_STATE_HOME/theme/foot-colors.ini" ]
+	[ -f "$XDG_STATE_HOME/theme/sway-colors.conf" ]
+	[ -f "$XDG_STATE_HOME/theme/ghostty-theme.conf" ]
+	[ -f "$XDG_STATE_HOME/theme/tmux-colors.conf" ]
+	[ -f "$XDG_STATE_HOME/theme/shell-env.sh" ]
+}
+
+@test "--render light renders the light mode with no Role Marker present" {
+	rm -f "$XDG_CONFIG_HOME/dotfiles/role"
+	stub_externals
+	run main --render light
+	[ "$status" -eq 0 ]
+	[ "$(cat "$XDG_STATE_HOME/theme/mode")" = "light" ]
+	[ "$(cat "$XDG_STATE_HOME/theme/ghostty-theme.conf")" = 'theme = "hp_light"' ]
+}
+
+@test "--render requires an explicit mode and rejects toggle" {
+	run main --render
+	[ "$status" -ne 0 ]
+	[ ! -f "$XDG_STATE_HOME/theme/mode" ]
+
+	run main --render toggle
+	[ "$status" -ne 0 ]
+	[ ! -f "$XDG_STATE_HOME/theme/mode" ]
 }

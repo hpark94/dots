@@ -18,6 +18,33 @@ theme_palette_file() {
 	echo "$(theme_config_dir)/hp_${mode}.sh"
 }
 
+# Canonical Role Marker reader, shared byte-for-byte across the script set per
+# the script-conventions decision (.scratch/portable-dotfiles/issues/14 and 13):
+# path, contract, and error wording may not drift. Missing, unreadable, empty,
+# or unrecognized content are all one hard error; whitespace is stripped first.
+#
+# The pinned snippet read the file with `$(<"$marker" 2>/dev/null)`; under bash
+# the `2>/dev/null` cancels the special `$(<file)` fast-path and yields the
+# empty string for every file, so the reader rejected even a valid Marker. The
+# read is corrected here to an -r guard plus the bare fast-path (still no
+# subprocess); the pinned contract above is otherwise unchanged.
+read_role() {
+	local marker="${XDG_CONFIG_HOME:-$HOME/.config}/dotfiles/role" role=""
+	if [[ -r "$marker" ]]; then
+		role=$(<"$marker")
+	fi
+	role="${role//[[:space:]]/}"
+	case "$role" in
+	desktop | headless)
+		printf '%s' "$role"
+		;;
+	*)
+		echo "Error: ${marker} must contain exactly 'desktop' or 'headless'. Fix: printf '%s' desktop > ${marker} (or headless)." >&2
+		return 1
+		;;
+	esac
+}
+
 resolve_mode() {
 	local requested=$1
 	case "$requested" in
@@ -206,12 +233,14 @@ notify_mode() {
 	fi
 }
 
-main() {
-	local mode out_dir
-	mode=$(resolve_mode "${1:-toggle}")
+# Render a given mode: persist it and run every generator and apply step. This
+# is the Role-agnostic half (see script-conventions / theme-switch-expansion
+# spec) and is invoked both by the deciding path and by --render.
+render() {
+	local mode=$1 out_dir
+	out_dir=$(theme_state_dir)
 	write_state "$mode"
 
-	out_dir=$(theme_state_dir)
 	generate_foot "$mode" "$out_dir"
 	generate_sway "$mode" "$out_dir"
 	generate_ghostty "$mode" "$out_dir"
@@ -222,7 +251,53 @@ main() {
 	apply_sway "$mode"
 	apply_tmux "$mode"
 	apply_gtk "$mode"
+}
 
+usage() {
+	cat >&2 <<-'EOF'
+		usage:
+		  theme-switch dark|light|toggle    decide and apply the Theme Mode (Desktop only)
+		  theme-switch --render dark|light  apply a mode decided elsewhere, skipping the Role gate
+	EOF
+}
+
+main() {
+	local arg=${1:-toggle}
+	case "$arg" in
+	-h | --help)
+		usage
+		return 0
+		;;
+	--render)
+		local render_mode=${2:-}
+		case "$render_mode" in
+		dark | light) ;;
+		*)
+			echo "Error: --render requires an explicit mode: dark or light." >&2
+			usage
+			return 1
+			;;
+		esac
+		render "$render_mode"
+		return 0
+		;;
+	esac
+
+	# Deciding path: only a Desktop has authority to choose the Theme Mode, so
+	# refuse before writing or generating anything if the Role is not desktop.
+	local role mode
+	if ! role=$(read_role); then
+		return 1
+	fi
+	if [[ "$role" == "headless" ]]; then
+		echo "Error: this machine's Role is 'headless'; it has no authority to decide the Theme Mode. To apply a mode decided by the Desktop, run: theme-switch --render <dark|light>." >&2
+		return 1
+	fi
+
+	if ! mode=$(resolve_mode "$arg"); then
+		return 1
+	fi
+	render "$mode"
 	notify_mode "$mode"
 }
 
