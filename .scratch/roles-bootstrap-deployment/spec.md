@@ -177,6 +177,13 @@ Mode state at all).
    than on first interactive use.
 10. **`zinit`, forced**: trigger its self-install the same way, rather than leaving it for the first
     interactive shell.
+10b. **`bat cache --build`**: rebuild bat's theme cache so the tracked custom themes (`hp_dark` /
+    `hp_light` under `.config/bat/themes/`) are registered. The stowed bat config selects them via
+    `--theme-dark`/`--theme-light`, but bat only reads custom themes from its cache, so without this a
+    freshly deployed machine warns `Unknown theme 'hp_dark', using default` and silently falls back to
+    a built-in theme. Same "make a tracked asset actually take effect" category as the tpm/nvim/zinit
+    steps, and idempotent to re-run. Numbered 10b to keep step 11 (Theme Mode) stable for the ticket
+    cross-references.
 11. **Theme Mode**: write the default state file only if one doesn't already exist (never resets a
     Theme Mode already in effect on a retrofit run; renders light on a genuinely cold machine, matching
     nvim's own fallback). Then, **unconditionally, every run**, invoke `theme-switch`'s render-only

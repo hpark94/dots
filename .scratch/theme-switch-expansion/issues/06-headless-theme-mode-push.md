@@ -9,7 +9,7 @@ on the target.
 
 **Blocked by:** [05 — `theme-switch` Role gate + render-only entry point](05-role-gate-render-entrypoint.md).
 
-**Status:** ready-for-human
+**Status:** done
 
 **Implemented.** Tracked, stowed `.config/ssh/config.shared` holds a host-name-free
 `Host *` block (`ControlMaster auto`, `ControlPath ~/.ssh/.cm-%C`,
@@ -33,33 +33,33 @@ the spec's implementation-time verification items: `LocalCommand` is used on the
 documented "fires once per master" basis, backed additionally by the recursion
 guard so it is safe even if that does not hold.
 
-- [ ] A new tracked, stowed SSH config fragment exists holding only a fully generic default block:
+- [x] A new tracked, stowed SSH config fragment exists holding only a fully generic default block:
       connection multiplexing settings (a control socket that persists across reconnects) and whatever
       connect-time hook the push needs. It names no concrete hostname, IP, or username — this is a
       public repo, and the operator's real hosts are never tracked, genericized or not.
-- [ ] The fragment is not wired into the operator's real SSH config by any script — this is documented
+- [x] The fragment is not wired into the operator's real SSH config by any script — this is documented
       as a one-time manual step (a single include line, added at the bottom of the real config so
       host-specific declarations still take precedence). No automation, including any install/bootstrap
       step, ever edits that file.
-- [ ] On toggle, the Desktop enumerates its known concrete SSH hosts, checks each for a currently-live
+- [x] On toggle, the Desktop enumerates its known concrete SSH hosts, checks each for a currently-live
       connection (bounded by a timeout so an unreachable host can never hang the toggle), and pushes the
       new mode via the render-only entry point only to hosts that are actually live right now.
-- [ ] At connect time, reaching any host again triggers the same push, so a host that was offline
+- [x] At connect time, reaching any host again triggers the same push, so a host that was offline
       during a prior toggle catches up immediately rather than staying stale indefinitely. The specific
       SSH hook used for this is chosen by observing this SSH client's actual behavior, not assumed from
       documentation alone.
-- [ ] The pushed mode is written to the target's own persisted state file (a machine fact), so it's
+- [x] The pushed mode is written to the target's own persisted state file (a machine fact), so it's
       still correct for a detached tmux server or a cron job on that machine without needing another
       push.
-- [ ] A Headless machine that has never received a push (and has no state file for any other reason)
+- [x] A Headless machine that has never received a push (and has no state file for any other reason)
       renders light by default, matching what nvim already falls back to in the same situation.
-- [ ] tmux's theme-fragment include no longer errors on a machine with no state file yet — this is a
+- [x] tmux's theme-fragment include no longer errors on a machine with no state file yet — this is a
       live, present-day bug on a real deployed Headless host, not just a future edge case.
-- [ ] Manually verified against this repo's established SSH test target (not the full host list):
+- [x] Manually verified against this repo's established SSH test target (not the full host list):
       toggling the Desktop's mode while connected updates that host's live tmux session; a connection to
       it with no prior push renders light; and neither the toggle-time nor the connect-time push hangs
       when that host is made unreachable mid-check.
-- [ ] `theme-switch.bats` gains a guard-path smoke test for the push function itself ("does not error
+- [x] `theme-switch.bats` gains a guard-path smoke test for the push function itself ("does not error
       when no control socket is live" / "does not error when no SSH hosts are configured"), but the live
       SSH behavior above is verified manually, not in bats, per the existing `apply_*` external-dependency
       precedent.
@@ -68,3 +68,7 @@ guard so it is safe even if that does not hold.
 Headless push" and "`~/.ssh/config` gains a tracked, generic block." The exact connect-time hook and
 the push's timeout bounds are explicitly left as implementation-time verification in the spec, not
 fixed in advance — confirm both against observed behavior while building this.
+
+## Comments
+
+**2026-07-26 (owner):** Manually verified against ubuntu-server. Test A (live toggle over open ControlMaster updates the remote tmux session), Test B (cold connect / catch-up renders the pushed mode, no-state-file falls back to light with no tmux error), and Test C (neither push path hangs when the host is unreachable) all pass with no errors.

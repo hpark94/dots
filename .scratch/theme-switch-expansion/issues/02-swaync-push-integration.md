@@ -6,7 +6,7 @@ waybar it must be told explicitly on every switch.
 
 **Blocked by:** None — can start immediately.
 
-**Status:** ready-for-human
+**Status:** done
 
 **Implemented.** `style.css` rewritten onto fragment-local custom properties
 (`surface` -> `selection_bg`, `text` -> `fg`, `bg`, `critical` -> `color1`,
@@ -21,22 +21,26 @@ the stow symlink with no parsing errors; bats covers exact fragment contents and
 the `apply_swaync` guard path. Remaining for a human: toggle with the
 notification center open and confirm it re-themes immediately.
 
-- [ ] swaync's stylesheet is rewritten so its surfaces and text reuse existing Canonical Palette roles
+- [x] swaync's stylesheet is rewritten so its surfaces and text reuse existing Canonical Palette roles
       (a shared "surface" and "text" role, matching the same values waybar's hover state resolves to)
       instead of the hardcoded light-only literals and independently-invented colors it has today. No
       new palette roles are introduced — the previously-distinct muted-surface look is deliberately
       collapsed into the shared surface role, per the spec's resolution table.
-- [ ] The stylesheet imports one generated fragment holding the current mode's values; `theme-switch`'s
+- [x] The stylesheet imports one generated fragment holding the current mode's values; `theme-switch`'s
       generator writes it on every switch.
-- [ ] `theme-switch` applies the change by telling swaync to re-read its stylesheet, on every switch.
-- [ ] `config.json` is untouched — no color data or include mechanism lives there.
-- [ ] Manually verified: toggling dark/light with swaync's notification center open (or a live
+- [x] `theme-switch` applies the change by telling swaync to re-read its stylesheet, on every switch.
+- [x] `config.json` is untouched — no color data or include mechanism lives there.
+- [x] Manually verified: toggling dark/light with swaync's notification center open (or a live
       notification showing) actually re-themes it immediately, without needing to trigger a new
       notification first.
-- [ ] `theme-switch.bats` gains coverage for the new generator function (exact fragment contents per
+- [x] `theme-switch.bats` gains coverage for the new generator function (exact fragment contents per
       mode) and a guard-path smoke test for the new apply function ("does not error when the reload
       command is unavailable"), matching the existing `apply_foot`/`apply_sway` pattern.
 
 **Further Notes:** See `.scratch/theme-switch-expansion/spec.md`, Implementation Decisions → "swaync:
 push, one imported current-mode fragment," and the Canonical Palette resolution table for exactly
 which values collapse onto which existing roles.
+
+## Comments
+
+**2026-07-26 (owner):** Manually verified on the live desktop, works flawlessly.

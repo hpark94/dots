@@ -33,6 +33,12 @@ writes is only meaningful once the tracked shared file it includes actually exis
 - [ ] `tpm` is cloned only if missing, followed by its plugin-install step, every run.
 - [ ] nvim's plugin manager is run to completion non-interactively, and zinit's self-install is
       triggered the same way, every run (both are safe to re-run upstream).
+- [ ] `bat cache --build` runs every run, so bat registers the tracked custom themes (`hp_dark` /
+      `hp_light` under `.config/bat/themes/`) instead of warning `Unknown theme 'hp_dark', using
+      default` and falling back to a built-in theme. Without this, `--theme-dark`/`--theme-light` in the
+      stowed bat config point at themes bat has never cached, so a freshly deployed machine (Desktop or
+      Headless) never renders the intended bat colors until a manual cache build. Safe and idempotent to
+      re-run, same as the tpm/nvim/zinit steps.
 - [ ] Manually verified: running the script twice in a row on the same machine produces no errors and
       no unwanted changes on the second run.
 - [ ] Manually verified against a machine simulating the "already deployed, no Marker, no state" case:
@@ -41,8 +47,12 @@ writes is only meaningful once the tracked shared file it includes actually exis
       backup, Role Marker write-or-skip and its error case, gitconfig stub write-or-skip, `mise`/`tpm`
       presence checks) against a faked `$HOME`/`$XDG_*` tree, following the same pattern established for
       other scripts in this repo. The actual `mise install`, its installer's `curl | sh`, the nvim
-      plugin sync, and `tpm`'s install step get no bats coverage — there's no throwaway machine in this
-      loop to run them against safely.
+      plugin sync, `tpm`'s install step, and `bat cache --build` get no bats coverage: there's no
+      throwaway machine in this loop to run them against safely.
 
 **Further Notes:** See `.scratch/roles-bootstrap-deployment/spec.md`, Implementation Decisions → "The
-ordered sequence" (steps 1-10; step 11, Theme Mode and fragment generation, is a separate ticket).
+ordered sequence" (steps 1-10b; step 11, Theme Mode and fragment generation, is a separate ticket).
+
+## Comments
+
+**2026-07-26 (owner):** Discovered on a freshly cloned Headless host (ubuntu-server): `bat` emitted `[bat warning]: Unknown theme 'hp_dark', using default.` because bootstrap never runs `bat cache --build`, so the tracked `hp_dark`/`hp_light` themes are not registered on a fresh machine. Worked around manually with `bat cache --build`. Captured here as a bootstrap requirement so it is not lost.
