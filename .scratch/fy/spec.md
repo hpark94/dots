@@ -1,6 +1,6 @@
 # Spec: `fy` - File to Clipboard Copy Script
 
-Status: ready-for-agent
+Status: implemented
 
 ## Problem Statement
 
