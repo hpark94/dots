@@ -288,6 +288,13 @@ stub_externals() {
 	[[ "$output" == *"export BAT_THEME=light"* ]]
 }
 
+@test "generate_shell_env leaves no stray temp file in the output dir" {
+	generate_shell_env dark "$BATS_TEST_TMPDIR/out"
+	[ -f "$BATS_TEST_TMPDIR/out/shell-env.sh" ]
+	run bash -c 'ls "$1"/shell-env.sh.tmp* 2>/dev/null' _ "$BATS_TEST_TMPDIR/out"
+	[ -z "$output" ]
+}
+
 @test "generate_shell_env writes FZF_DEFAULT_OPTS and BAT_THEME for the dark palette" {
 	generate_shell_env dark "$BATS_TEST_TMPDIR/out"
 	run cat "$BATS_TEST_TMPDIR/out/shell-env.sh"

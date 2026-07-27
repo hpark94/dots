@@ -7,7 +7,7 @@ Rather than forcing one uniform mechanism, each app gets the strategy that match
 - **foot, tmux, sway**: generated, gitignored config fragments (`~/.local/state/theme/`) included/sourced by the tracked config, plus a live signal/command for instant effect on already-running instances.
 - **ghostty**: generated, gitignored include fragment containing just a theme name (no signal/CLI reload exists); applied on next window or restart.
 - **nvim**: reads the shared Theme Mode state file directly at startup — no generated fragment needed, since Lua can read a file.
-- **bat, fzf**: driven by env vars (`BAT_THEME`, `FZF_DEFAULT_OPTS`) exported from a generated shell snippet sourced by `.zshrc`/`.bashrc`; applied on next shell.
+- **bat, fzf**: driven by env vars (`BAT_THEME`, `FZF_DEFAULT_OPTS`) exported from a generated shell snippet sourced by `.zshrc`/`.bashrc`; applied on next shell. (Already-open shells were promoted from next-launch to live by ADR-0003, via a prompt hook that re-sources the snippet; the per-app shape here is unchanged.)
 - **nvim and bat** additionally get hand-authored Selected Themes (mirroring nvim's existing semantic HSL palette) instead of being derived from the flat 16-color Canonical Palette, since syntax highlighting needs more semantic roles than 16 ANSI slots provide.
 
 A fourth shape was added later, when the roster grew to waybar, swaync, fuzzel and zathura (see

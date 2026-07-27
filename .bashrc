@@ -21,7 +21,10 @@ HISTCONTROL=ignoreboth:erasedups
 source "$HOME/.envs.sh"
 _has mise && eval "$(~/.local/bin/mise activate bash)"
 
-[ -f "$HOME/.local/state/theme/shell-env.sh" ] && source "$HOME/.local/state/theme/shell-env.sh"
+_theme_reload() {
+	[ -f "$HOME/.local/state/theme/shell-env.sh" ] && source "$HOME/.local/state/theme/shell-env.sh"
+}
+_theme_reload
 
 source "$HOME/.aliases.sh"
 _has fzf && _has tmux && source "$HOME/.shell_functions.sh"
@@ -29,3 +32,5 @@ _has fzf && _has tmux && source "$HOME/.shell_functions.sh"
 _has fzf && eval "$(fzf --bash)"
 _has zoxide && eval "$(zoxide init --cmd cd bash)"
 _has direnv && eval "$(direnv hook bash)"
+
+PROMPT_COMMAND="${PROMPT_COMMAND:+$PROMPT_COMMAND; }_theme_reload"

@@ -199,6 +199,9 @@ generate_tmux() {
 generate_shell_env() {
 	local mode=$1 out_dir=$2
 	mkdir -p "$out_dir"
+	# Write atomically: a same-directory temp file plus mv, so a shell sourcing
+	# the fragment mid-switch reads either the whole old or the whole new file.
+	local tmp="$out_dir/shell-env.sh.tmp.$$"
 	# shellcheck disable=SC1090,SC2154
 	(
 		source "$(theme_palette_file "$mode")"
@@ -207,8 +210,9 @@ generate_shell_env() {
 			printf "export FZF_DEFAULT_OPTS='--color=fg:%s,bg:%s,hl:%s --color=fg+:%s,bg+:%s,hl+:%s --color=info:%s,prompt:%s,pointer:%s --color=marker:%s,spinner:%s,header:%s'\n" \
 				"$fg" "$bg" "$fg" "$fg" "$selection_bg" "$fg" "$color4" "$color5" "$color1" "$color2" "$color5" "$color3"
 			printf 'export BAT_THEME=%s\n' "$mode"
-		} >"$out_dir/shell-env.sh"
+		} >"$tmp"
 	)
+	mv -f "$tmp" "$out_dir/shell-env.sh"
 }
 
 # waybar is a *pull* app (ADR-0001): it re-reads its stylesheet on every
