@@ -27,6 +27,7 @@ _darcs
 ^/\.scratch
 ^/CONTEXT.md
 ^/docs
+^/templates
 
 # Accidental nvim runtime state (logs/shada/plugin cache) that leaked into
 # the repo root from a misconfigured XDG path - not a stow package
