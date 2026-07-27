@@ -37,7 +37,7 @@ Role: Reviewer. You did NOT write this code.
 Original task: <one sentence>.
 Review this change: <the diff, or the changed files>.
 Check: does it work; does it match the task; does it follow AGENTS.md style; is the diff minimal; is there dead code.
-Report: list each problem as file:line plus a fix. If none, write "no problems found".
+Report: list each problem as file:line plus a fix. If none, write "no problems found"
 ```
 
 ## Step 5: Fix loop (max two rounds)
@@ -54,19 +54,21 @@ What changed, what the review found, what is still open.
 - **Role Marker**: `$XDG_CONFIG_HOME/dotfiles/role` contains `desktop` or `headless`. Never branch code on it; prefer capability probes (`command -v swaymsg`, `$SWAYSOCK`).
 - **Theme Mode**: Global `light` or `dark` state in `$XDG_STATE_HOME/theme/mode`. Desktop owns it via `theme-switch`; Headless only consumes via `theme-switch --render <mode>`.
 - **Write-Back Config**: `~/.gitconfig` must be a real file (not symlink) that `[include]`s `.gitconfig.shared`.
-- **Stow exclusions**: `.stow-local-ignore` keeps AGENTS.md, CLAUDE.md, .scratch, docs, templates, nvim, .gitconfig,bootstrap.sh out of `$HOME`.
+- **Stow exclusions**: `.stow-local-ignore` keeps AGENTS.md, CLAUDE.md, .scratch, docs, templates, nvim, .gitconfig, bootstrap.sh out of `$HOME`.
 
 ## Commands
 
 - `mise install`: Sync toolchain from `.config/mise/config.toml`.
-- `bats .local/scripts/tests/`: Run tests for bootstrap.sh and theme-switch.
+- `bats .local/scripts/tests/` or `bats .local/scripts/tests/<test-file>.bats`: Run tests for bootstrap.sh, theme-switch, envs, and fy.
 - `nvim --headless '"+Lazy! sync' +qa`: Force nvim plugin sync.
 - `theme-switch dark|light|toggle`: Desktop-only; decides and applies Theme Mode.
 - `theme-switch --render dark|light`: Role-agnostic; applies a mode decided elsewhere.
+- `fy <file>`: Copy file to Wayland clipboard with MIME type detection.
+- `fp [dir]`: Paste file from Wayland clipboard to directory.
 
 ## Style rules
 
-- Formatting: biome for JS/JSON, editorconfig for general, prettier for markdown at 80 chars.
+- Formatting: biome for JS/JSON, editorconfig for general.
 - Simplicity: build the simplest thing that works.
 - Small changes: change only what the task needs. Do not reformat untouched lines.
 - Comments: write code that explains itself. Few comments. A comment says WHY, not WHAT.
