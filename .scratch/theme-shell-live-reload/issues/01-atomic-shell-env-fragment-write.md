@@ -12,7 +12,7 @@ prompt (ticket 02).
 
 **Blocked by:** None — can start immediately.
 
-**Status:** ready-for-agent
+**Status:** implemented
 
 - [ ] The shell-env fragment is produced via a same-directory temp file plus `mv`, not truncate-in-place.
 - [ ] The existing `generate_shell_env` assertions still hold: `FZF_DEFAULT_OPTS` and `BAT_THEME` are correct for both the light and dark palettes.
