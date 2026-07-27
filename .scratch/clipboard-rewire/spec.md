@@ -211,9 +211,8 @@ real-machine, real-file changes outside what a repo checkout can safely reach in
     exercised over an actual SSH connection to this repo's established test target (not the full host
     list).
   - ghostty no longer prompts on a clipboard read.
-- No test framework exists for nvim Lua in this repo (same situation the notetaking-rewrite spec
-  documented); the `$WAYLAND_DISPLAY` branch is simple enough that manual verification of both branches
-  is sufficient.
+- No test framework exists for nvim Lua in this repo; the `$WAYLAND_DISPLAY` branch is simple enough
+  that manual verification of both branches is sufficient.
 
 ## Out of Scope
 

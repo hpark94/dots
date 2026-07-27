@@ -315,9 +315,8 @@ stays genuinely gate-free.
 - `apply_swaync` and `apply_zathura` get the same guard-path smoke test as `apply_foot`/`apply_sway`/
   `apply_gtk` ("does not error when `swaync-client`/`gdbus` is unavailable") — no attempt to verify the
   real IPC effect in bats, since that requires the actual app running.
-- The Role gate addition to `theme-switch` gets the same `read_role` coverage the notetaking-rewrite
-  spec's `note.bats` establishes (present/absent/malformed/whitespace-padded Marker file) — do not
-  duplicate the test logic, mirror its shape.
+- The Role gate addition to `theme-switch` gets `read_role` coverage over the present/absent/
+  malformed/whitespace-padded Marker cases, landing in `theme-switch.bats`.
 - `theme-switch --render <mode>` gets a bats test confirming it writes state and runs the render
   pipeline **without** requiring `read_role` to succeed (e.g. with no Role Marker file present at all),
   proving the render path is genuinely gate-free. Once clipboard-rewire's Role-keyed `generate_tmux`

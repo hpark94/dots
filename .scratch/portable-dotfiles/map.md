@@ -60,7 +60,7 @@ The four threads are not independent. The split cuts through each of the others:
   where the session *came from*. Assigns `.envs.sh:4` (wrong in both directions today), makes the
   Desktop sole authority for Theme Mode with `theme-switch` role-gated internally, and makes
   `note`/`scratch` Desktop-only while their config still ships everywhere.
-- [Restructure `note`](issues/04-note-restructure-prototype.md): **stays bash, python is deleted**.
+- [Restructure `note`](issues/04-note-restructure-prototype.md) *(superseded 2026-07-27, being re-grilled from scratch)*: **stays bash, python is deleted**.
   The whole reason for python was Korean filename sanitizing, and locale-aware `[[:alnum:]]` does it
   without the hardcoded codepoint ranges, keeping Japanese and Cyrillic that the python silently
   dropped. Roster cut from 14 flags to 7 (`-z`, `-d [N]`, `-sn`, `-sl`, `-x`, `-f`, `-u`); `scratch`
@@ -83,7 +83,7 @@ The four threads are not independent. The split cuts through each of the others:
   rewrites must not be a symlink into the repo** (`gh auth` dirties `~/.gitconfig`), so
   `.gitconfig.shared` is tracked and `~/.gitconfig` is an untracked stub that `[include]`s it.
 
-- [Shape of the shared note config](issues/06-shared-note-config-shape.md): **JSON**, one key
+- [Shape of the shared note config](issues/06-shared-note-config-shape.md) *(superseded 2026-07-27, being re-grilled from scratch)*: **JSON**, one key
   (`vault`), tracked and stowed at `.config/notes/config.json`. Decided on verified dependency facts:
   nvim decodes JSON natively and `jq` is already pinned, while nothing on this machine can read TOML
   at all (no `yq`/`taplo`/`dasel`, no Lua module, and treesitter installs `json` but not `toml`), so
@@ -143,7 +143,7 @@ The four threads are not independent. The split cuts through each of the others:
   are deleted; a distinguishable remote status bar becomes **Role-keyed** inside `generate_tmux`, so
   it follows dark/light instead of overriding it and needs no condition that can go stale.
 
-- [Migrating the existing vault to the flat layout](issues/10-vault-flattening-migration.md): the
+- [Migrating the existing vault to the flat layout](issues/10-vault-flattening-migration.md) *(superseded 2026-07-27, being re-grilled from scratch)*: the
   survey inverted the ticket. **Zero basename collisions** across the 658 notes, and no zettel matches
   the daily or scratch exclusion patterns, so the risk it was written around is empty; the item it
   listed as needing a survey is the entire job, **436 `../assets/` references in 205 files** that
@@ -156,9 +156,10 @@ The four threads are not independent. The split cuts through each of the others:
   the operator does it by hand**, because the vault is a live Syncthing folder shared with another
   device and a 658-file rename is a sync event that only they can sequence. `.obsidian/` needs
   nothing: its `daily-notes` and `templates` plugins have no folder configured, so both already
-  default to the vault root. With this closed, the notetaking rewrite is fully specified across
+  default to the vault root. With this closed, the notetaking rewrite was fully specified across
   [04](issues/04-note-restructure-prototype.md), [06](issues/06-shared-note-config-shape.md) and this
-  ticket, and is ready to hand off.
+  ticket. **Superseded 2026-07-27:** that write-up has since been dropped and the rewrite is being
+  re-grilled from scratch, so these three decisions are historical input, not a live hand-off.
 
 - [How a script reads the Role Marker](issues/13-role-marker-reader.md): **there is no default
   Role.** Missing, empty, unreadable and unrecognized are one hard error naming the file and the fix;
@@ -251,10 +252,10 @@ fresh effort.
 - **Qt/KDE app theming.** Attempted and abandoned before this map existed; see
   `.scratch/theme-switch/spec.md` and ADR-0001.
 - **Implementing any decision this map makes.** Planning only, per Notes. The notetaking rewrite
-  decided by [04](issues/04-note-restructure-prototype.md),
-  [06](issues/06-shared-note-config-shape.md) and [10](issues/10-vault-flattening-migration.md) is
-  now written up as [`.scratch/notetaking-rewrite/spec.md`](../notetaking-rewrite/spec.md)
-  (`ready-for-agent`), but building it is not this map's work. The theme-switch expansion and Headless
+  once decided by [04](issues/04-note-restructure-prototype.md),
+  [06](issues/06-shared-note-config-shape.md) and [10](issues/10-vault-flattening-migration.md) was
+  written up as a dedicated `notetaking-rewrite` spec, but that spec and its tickets have since been
+  removed and the rewrite is being re-grilled from scratch, so those three decisions are superseded. The theme-switch expansion and Headless
   propagation decided by [03](issues/03-theme-capability-survey.md),
   [07](issues/07-theme-switch-app-roster.md) and [08](issues/08-theme-mode-propagation.md) — plus
   [12](issues/12-ssh-config-ownership.md), folded in because its only consumer is this work — is now

@@ -1,5 +1,7 @@
 # 06 Shape of the shared note config
 
+> **Superseded 2026-07-27:** the notetaking rewrite is being re-grilled from scratch. The dedicated `.scratch/notetaking-rewrite/` spec and tickets were removed, and this ticket's decisions are kept only as historical input, no longer authoritative.
+
 **Type:** `grilling`
 
 **Status:** resolved

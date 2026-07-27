@@ -25,8 +25,8 @@ mechanism survey](../portable-dotfiles/issues/02-deployment-mechanism-survey.md)
 re-decide the Role/Headless/Desktop split itself, the Role Marker's file format, or the canonical
 Role-reading contract — those are already settled by [Name the
 split](../portable-dotfiles/issues/01-name-the-split.md) and [How a script reads the Role
-Marker](../portable-dotfiles/issues/13-role-marker-reader.md), and already implemented as consumers in
-the notetaking-rewrite and theme-switch-expansion specs. This spec is about **writing** the Marker for
+Marker](../portable-dotfiles/issues/13-role-marker-reader.md), and already implemented as a consumer in
+the theme-switch-expansion spec. This spec is about **writing** the Marker for
 the first time and everything else that has to happen once, in order, for either Role to go from a bare
 clone to a working machine.
 
@@ -246,7 +246,7 @@ from nothing documented to three lines that are actually true.
   argument, whether it writes the `~/.gitconfig` stub only when absent, whether it skips `mise`
   install when the binary is already present, whether it skips cloning `tpm` when already present,
   whether it writes the Theme Mode default only when absent — gets tests, using the same
-  sourcing-plus-fake-`$XDG_*`-dirs pattern `theme-switch.bats` and `note.bats` already establish.
+  sourcing-plus-fake-`$XDG_*`-dirs pattern `theme-switch.bats` already establishes.
 - The actual `mise install`, the installer's `curl | sh`, `nvim --headless` plugin sync, and `tpm`'s
   install step get **no** bats coverage — there is no throwaway machine in this loop to run them
   against safely, matching the same limitation already named for these exact steps.
@@ -260,8 +260,8 @@ from nothing documented to three lines that are actually true.
 ## Out of Scope
 
 - **Re-deciding the Role/Headless/Desktop split, the Role Marker's file format, or the canonical
-  Role-reading contract.** All settled elsewhere and already implemented as consumers by the
-  notetaking-rewrite and theme-switch-expansion specs; this spec only writes the Marker for the first
+  Role-reading contract.** All settled elsewhere and already implemented as a consumer by the
+  theme-switch-expansion spec; this spec only writes the Marker for the first
   time.
 - **A shared script library.** Confirmed in the source ticket: no library is placed by install, and
   none is introduced here. Each script that needs to read the Marker hand-rolls the canonical

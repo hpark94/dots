@@ -28,8 +28,9 @@ not the machine rendering.
 
 **Further Notes:** See `.scratch/theme-switch-expansion/spec.md`, Implementation Decisions → "Role
 gate added to `theme-switch` itself" and "The Headless push" (for how the render-only entry point gets
-used). The Role-read contract is the same one already established for `note` in the notetaking-rewrite
-spec. Match its shape rather than inventing a new one.
+used). The Role-read contract is the canonical one pinned in [How a script reads the Role
+Marker](../../portable-dotfiles/issues/13-role-marker-reader.md) (snippet in ticket 14). Match its
+shape rather than inventing a new one.
 
 ## Comments
 
