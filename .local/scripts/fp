@@ -1,49 +1,118 @@
 #!/usr/bin/env bash
-available_types=$(wl-paste --list-types 2>/dev/null)
+set -euo pipefail
 
-if [[ $# -eq 1 ]]; then
-	target_dir="$1"
-else
-	target_dir="."
-fi
+target_dir="${1:-.}"
 
-filename=""
-result_path=""
-
-if echo "$available_types" | grep -q "image/png"; then
-	filename="image_$(date +%Y%m%d_%H%M%S).png"
-	result_path="$target_dir/$filename"
-	wl-paste --type image/png >"$result_path" 2>/dev/null
-elif echo "$available_types" | grep -q "image/jpeg"; then
-	filename="image_$(date +%Y%m%d_%H%M%S).jpg"
-	result_path="$target_dir/$filename"
-	wl-paste --type image/jpeg >"$result_path" 2>/dev/null
-elif echo "$available_types" | grep -q "text/uri-list"; then
-	filepath=$(wl-paste --type text/uri-list 2>/dev/null | sed "s|file://||" | tr -d "\r\n")
-	filename=$(basename "$filepath")
-	result_path="$target_dir/$filename"
-	cp "$filepath" "$result_path" 2>/dev/null
-elif echo "$available_types" | grep -q "text/html"; then
-	html_content=$(wl-paste --type text/html 2>/dev/null)
-	url=$(echo "$html_content" | grep -o "src="[^"]*" | head -1 | sed "s/src='//;s/'//")
-	if [[ -n "$url" ]]; then
-		filename=$(basename "$url")
-		result_path="$target_dir/$filename"
-		wget "$url" -O "$result_path" 2>/dev/null
-		echo "File downloaded from url: $result_path" >&2
-	fi
-else
-	echo "File type not available." >&2
-	echo "Available file types:" >&2
-	echo "$available_types" >&2
+if [[ ! -d "$target_dir" ]]; then
+	echo "fp: target directory does not exist: $target_dir" >&2
 	exit 1
 fi
 
-if [[ -n "$result_path" ]] && [[ -f "$result_path" ]]; then
-	absolute_path=$(realpath "$result_path")
-	if [[ "$absolute_path" == "$HOME"* ]]; then
-		echo "~${absolute_path#"$HOME"}"
-	else
-		echo "$absolute_path"
-	fi
+mapfile -t available_types < <(wl-paste --list-types 2>/dev/null || true)
+
+if [[ ${#available_types[@]} -eq 0 ]]; then
+	echo "fp: clipboard is empty or unavailable." >&2
+	exit 1
 fi
+
+has_type() {
+	local needle="$1" type
+	for type in "${available_types[@]}"; do
+		[[ "$type" == "$needle" ]] && return 0
+	done
+	return 1
+}
+
+# Print the target path with $HOME collapsed to ~, as the sole stdout line.
+print_result() {
+	local absolute_path
+	absolute_path=$(realpath "$1")
+	if [[ "$absolute_path" == "$HOME"* ]]; then
+		printf '~%s\n' "${absolute_path#"$HOME"}"
+	else
+		printf '%s\n' "$absolute_path"
+	fi
+}
+
+# Return a collision-free path inside target_dir for the given basename.
+unique_path() {
+	local base="$1" stem ext candidate n=1
+	if [[ "$base" == *.* ]]; then
+		stem="${base%.*}"
+		ext=".${base##*.}"
+	else
+		stem="$base"
+		ext=""
+	fi
+	candidate="$target_dir/$base"
+	while [[ -e "$candidate" ]]; do
+		candidate="$target_dir/${stem}_${n}${ext}"
+		((n++))
+	done
+	printf '%s' "$candidate"
+}
+
+# Map a MIME subtype to a file extension. jpeg is the only special case;
+# every other subtype is already a sensible extension (png, gif, webp, pdf, ...).
+mime_extension() {
+	local subtype="${1##*/}"
+	subtype="${subtype%%;*}"
+	subtype="${subtype%%+*}"
+	if [[ "$subtype" == "jpeg" ]]; then
+		printf 'jpg'
+	else
+		printf '%s' "$subtype"
+	fi
+}
+
+# Pick the first concrete non-text type on offer, so binary assets win over
+# any text/* alternative representation. Source apps list their preferred image
+# type first, so this order is set by the source, not a richness ranking.
+pick_binary_type() {
+	local type
+	for type in "${available_types[@]}"; do
+		case "$type" in
+		text/* | TEXT | STRING | UTF8_STRING) continue ;;
+		*) printf '%s' "$type"; return 0 ;;
+		esac
+	done
+	return 1
+}
+
+if has_type "text/uri-list"; then
+	source_file=$(wl-paste --type text/uri-list 2>/dev/null | tr -d '\r' | grep -m1 '^file://' || true)
+	if [[ -n "$source_file" ]]; then
+		source_file="${source_file#file://}"
+		# Decode common percent-encoded characters in file URIs (spaces at minimum).
+		# Assumes RFC-compliant URIs (literal % and backslash are percent-encoded);
+		# malformed input fails safely via the existence check below.
+		source_file=$(printf '%b' "${source_file//%/\\x}")
+		if [[ -f "$source_file" ]]; then
+			dest=$(unique_path "$(basename "$source_file")")
+			cp "$source_file" "$dest"
+			print_result "$dest"
+			exit 0
+		fi
+	fi
+	# No usable local file:// entry: fall through to the binary branch. A browser
+	# "copy image" offers a text/uri-list (http:// URL) alongside an image/png, so
+	# we must save the image bytes rather than error out here.
+fi
+
+if binary_type=$(pick_binary_type); then
+	ext=$(mime_extension "$binary_type")
+	dest=$(unique_path "paste_$(date +%Y%m%d_%H%M%S).${ext}")
+	# Remove the partial file if we exit before confirming a good write.
+	trap 'rm -f "$dest"' EXIT
+	wl-paste --type "$binary_type" >"$dest" 2>/dev/null || true
+	if [[ ! -s "$dest" ]]; then
+		echo "fp: failed to read clipboard contents for type $binary_type." >&2
+		exit 1
+	fi
+	trap - EXIT
+	print_result "$dest"
+	exit 0
+fi
+
+echo "fp: clipboard holds only text, not a file or asset." >&2
+exit 1
