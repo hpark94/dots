@@ -1,11 +1,12 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# fy - File to Clipboard Copy Script
-# Copies a single file's contents to the Wayland clipboard with MIME type detection.
-
-# Configurable limits
-MAX_FILE_SIZE_BYTES=$((25 * 1024 * 1024)) # 25MB
+# fy - Copy a file reference to the Wayland clipboard.
+# Emits a file:// URI in the text/uri-list target. Browser chats (Claude web),
+# fp, and the terminal then receive the file, not its bytes. wl-copy advertises
+# only one type per invocation; text/uri-list is the browser-compatible one, so
+# a fy-copied file does not paste into Thunar (which needs
+# x-special/gnome-copied-files). See .scratch/fy/spec.md for that tradeoff.
 
 # Print the file path with $HOME collapsed to ~, as the sole stdout line.
 print_result() {
@@ -18,78 +19,24 @@ print_result() {
 	fi
 }
 
-# Detect MIME type for a file.
-# First tries `file --mime-type`, falls back to extension heuristics.
-detect_mime_type() {
-	local filepath="$1"
-
-	# Try file command first
-	if command -v file >/dev/null 2>&1; then
-		local mime
-		mime=$(file --mime-type -b "$filepath" 2>/dev/null || true)
-		if [[ -n "$mime" ]]; then
-			printf '%s' "$mime"
-			return 0
-		fi
-	fi
-
-	# Fallback: extension-based heuristics
-	local ext="${filepath##*.}"
-	case "$ext" in
-	png) printf 'image/png' ;;
-	jpg | jpeg) printf 'image/jpeg' ;;
-	gif) printf 'image/gif' ;;
-	webp) printf 'image/webp' ;;
-	svg) printf 'image/svg+xml' ;;
-	pdf) printf 'application/pdf' ;;
-	txt | md | sh | bash | zsh | py | js | ts | json | yaml | yml | xml | html | css) printf 'text/plain' ;;
-	*) printf 'application/octet-stream' ;;
-	esac
-}
-
-# Check if clipboard is available
-clipboard_available() {
-	command -v wl-copy >/dev/null 2>&1
-}
-
-# Main copy function with metadata preservation
-copy_with_metadata() {
-	local filepath="$1"
-	local mime_type="$2"
-
-	# Try to copy with Nautilus-style metadata first
-	# Format: copy both the file data and the filename metadata
-	if wl-copy --type "$mime_type" --type "x-special/nautilus-clipboard" <"$filepath" 2>/dev/null; then
-		# If metadata copy succeeded, we're done
-		return 0
-	fi
-
-	# Fall back to raw copy with MIME type only
-	if ! wl-copy --type "$mime_type" <"$filepath" 2>/dev/null; then
-		echo "fy: failed to copy file to clipboard. Is wl-copy available and Wayland running?" >&2
-		return 1
-	fi
-}
-
-# Copy file to clipboard with MIME type
-copy_to_clipboard() {
-	local filepath="$1"
-	local mime_type="$2"
-
-	# Copy the raw file data with its MIME type
-	# Also copy to text/plain for compatibility with text-based paste operations
-	wl-copy --type "$mime_type" <"$filepath" 2>/dev/null
-	local copy_exit=$?
-
-	# If the primary copy failed, try without explicit type (wl-copy will infer)
-	if [[ $copy_exit -ne 0 ]]; then
-		wl-copy <"$filepath" 2>/dev/null || {
-			echo "fy: failed to copy file to clipboard. Is wl-copy available and Wayland running?" >&2
-			return 1
-		}
-	fi
-
-	return 0
+# Percent-encode a path into an RFC 3986 file:// path. Keep unreserved bytes and
+# the path separator literal; encode everything else (%, space, non-ASCII) so the
+# result round-trips through fp's `printf '%b' "${uri//%/\\x}"` decoder. Encode by
+# raw byte under LC_ALL=C so multibyte filenames survive.
+percent_encode() {
+	local string="$1" out="" i c hex
+	local LC_ALL=C
+	for ((i = 0; i < ${#string}; i++)); do
+		c="${string:i:1}"
+		case "$c" in
+		[a-zA-Z0-9._~/-]) out+="$c" ;;
+		*)
+			printf -v hex '%%%02X' "$(($(printf '%d' "'$c") & 0xFF))"
+			out+="$hex"
+			;;
+		esac
+	done
+	printf '%s' "$out"
 }
 
 main() {
@@ -101,53 +48,25 @@ main() {
 
 	local filepath="$1"
 
-	# Resolve to absolute path for checks
 	if [[ ! -f "$filepath" ]]; then
 		echo "fy: file does not exist: $filepath" >&2
 		exit 1
 	fi
 
-	# Resolve symlinks to get actual file
-	local real_path
-	real_path=$(realpath "$filepath")
-
-	# Check file size
-	local file_size
-	file_size=$(stat -c %s "$real_path" 2>/dev/null || stat -f %z "$real_path" 2>/dev/null)
-	if [[ "$file_size" -gt "$MAX_FILE_SIZE_BYTES" ]]; then
-		echo "fy: file too large (${file_size} bytes > ${MAX_FILE_SIZE_BYTES} bytes limit)" >&2
-		exit 1
-	fi
-
-	# Check clipboard availability
-	if ! clipboard_available; then
+	if ! command -v wl-copy >/dev/null 2>&1; then
 		echo "fy: wl-copy not available. Is Wayland running?" >&2
 		exit 1
 	fi
 
-	# Detect MIME type
-	local mime_type
-	mime_type=$(detect_mime_type "$real_path")
+	local real_path encoded
+	real_path=$(realpath "$filepath")
+	encoded=$(percent_encode "$real_path")
 
-	# Copy the file content with its MIME type
-	if ! copy_to_clipboard "$real_path" "$mime_type"; then
+	if ! printf 'file://%s\r\n' "$encoded" | wl-copy --type text/uri-list; then
+		echo "fy: failed to copy file to clipboard. Is wl-copy available and Wayland running?" >&2
 		exit 1
 	fi
 
-	# For text files, also copy as text/uri-list with file:// URL for fp compatibility
-	# This allows fp to reconstruct the file from the clipboard
-	# Copy this AFTER the content so it's available as a fallback
-	case "$mime_type" in
-	text/*)
-		local file_uri
-		file_uri="file://$(realpath "$real_path")"
-		# Only URL encode spaces, not slashes (fp expects file:// with real slashes)
-		file_uri=$(printf '%s' "$file_uri" | sed 's| |%20|g')
-		printf 'copy\n%s\n' "$file_uri" | wl-copy --type text/uri-list 2>/dev/null || true
-		;;
-	esac
-
-	# Output success message - the user-friendly path
 	print_result "$real_path"
 }
 
