@@ -84,4 +84,4 @@ Say in a few lines: what changed, what the review found, what is still open.
   in the user's language. Keep the project's domain words as they are.
 - Prose: no em-dashes. Use comma, period, semicolon, colon.
 - Commits: use `type(scope): description` format (e.g., `feat(agents):`,
-  `docs(tickets):`, `style(theme-switch):`).
+  `docs(tickets):`, `style(theme-switch):`). Omit trailing Co-Authored-By lines.

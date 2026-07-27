@@ -69,4 +69,5 @@ Enforceable formatting is the tools' job; judgment is yours.
   Delete rather than comment out; the history is in git.
 - **Language**: English for code, identifiers, comments, and commit messages.
   Converse in my language. Domain terms stay as the project uses them.
+- **Commits**: `type(scope): description`. No trailing `Co-Authored-By` lines.
 - **Prose**: no em-dashes. Use commas, periods, semicolons, colons.

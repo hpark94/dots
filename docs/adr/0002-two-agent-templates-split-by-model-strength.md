@@ -17,6 +17,13 @@ style rules. The tools partition themselves, so no guard instruction is needed:
 Claude Code never reads `AGENTS.md`, and OpenCode uses `AGENTS.md` in preference
 to `CLAUDE.md` when both are present.
 
+Because the two files duplicate one operating model, any change to a shared
+element (the Supervisor role, the bright line, the plan-gate, the Builder and
+Reviewer roles, the review loop, or the style and commit rules) must land in both
+files in the same change, each in its own register. When only one is updated the
+twins drift and silently disagree, which is the exact failure this split is meant
+to avoid.
+
 Both templates use a real, separate subagent for the Reviewer even on weak models.
 This is deliberate: a weak model reviewing its own output in the same context
 rubber-stamps it, so fresh-context isolation matters more for weak models, not
