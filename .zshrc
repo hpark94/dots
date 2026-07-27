@@ -56,8 +56,9 @@ _theme_reload() {
     [ -f "$HOME/.local/state/theme/shell-env.sh" ] && source "$HOME/.local/state/theme/shell-env.sh"
 }
 _theme_reload
-autoload -Uz add-zsh-hook
-add-zsh-hook precmd _theme_reload
+autoload -Uz add-zsh-hook add-zle-hook-widget
+add-zsh-hook preexec _theme_reload
+add-zle-hook-widget line-init _theme_reload
 
 # History
 HIST_STAMPS="dd.mm.yyyy"

@@ -81,12 +81,19 @@ script contributes no new code to make it happen.
   trap, endangering non-interactive shells and subshells; Pull avoids this by
   construction because the hook exists only in the interactive init files.
 
-- **Trigger: a prompt hook.** zsh registers a `precmd` hook via `add-zsh-hook`;
-  bash appends a call to `PROMPT_COMMAND`. Both run a shared `_theme_reload`
-  function that re-sources the shell-env fragment. The bash registration must be
-  placed after the direnv/mise/zoxide `eval` lines and must append to
-  `PROMPT_COMMAND` rather than overwrite it, so those existing per-prompt hooks
-  keep firing.
+- **Trigger: a per-command hook.** zsh registers a `preexec` hook via
+  `add-zsh-hook` and a `line-init` widget via `add-zle-hook-widget`; bash sets a
+  `DEBUG` trap. Both run a shared `_theme_reload` function that re-sources the
+  shell-env fragment *before each command* rather than on the prompt. Firing on
+  the prompt (`precmd`/`PROMPT_COMMAND`) runs after the just-accepted command, so
+  the first `bat` or `fzf` right after a switch still saw the old mode (an
+  off-by-one); firing before each command removes that lag. The zsh `line-init`
+  hook additionally re-themes tools spawned by editor widgets (fzf-tab, Ctrl-R,
+  Ctrl-T), since it fires once per prompt line and the fragment `export`s
+  propagate to those children. The bash `DEBUG` trap is placed after the
+  direnv/mise/zoxide `eval` lines and replaces the earlier `PROMPT_COMMAND`
+  append; because it leaves `PROMPT_COMMAND` untouched, those integrations' own
+  per-prompt hooks keep firing.
 
 - **Scope: the shell-env fragment only.** The hook re-sources only the generated
   fragment carrying `FZF_DEFAULT_OPTS` and `BAT_THEME`, never the full shell init.
@@ -94,26 +101,26 @@ script contributes no new code to make it happen.
   ulimit, and tmux auto-attach, which is out of proportion to recoloring two
   tools.
 
-- **No change-detection gate.** The hook re-sources unconditionally on every
-  prompt. The guarded work is two `export`s reading a two-line file; a gate cheap
+- **No change-detection gate.** The hook re-sources unconditionally before every
+  command. The guarded work is two `export`s reading a two-line file; a gate cheap
   enough to help costs about what it saves, and a `stat`-based gate forks a
-  process every prompt and costs more than the work it guards.
+  process every command and costs more than the work it guards.
 
 - **Single source of truth for the shell side.** The existing inline
   startup-source line in each interactive init is replaced by defining
-  `_theme_reload` once, calling it at startup, and registering it as the prompt
-  hook, so startup theming and live re-theming share one definition.
+  `_theme_reload` once, calling it at startup, and registering it as the
+  per-command hook, so startup theming and live re-theming share one definition.
 
-- **Atomic fragment write.** Because the fragment is now sourced on every prompt,
-  the switch script's shell-env generator (`generate_shell_env`) writes the
-  fragment atomically: to a temporary file in the same directory, then `mv` into
-  place, so a prompt firing mid-switch either reads the complete old fragment or
-  the complete new one, never a truncated file. This is the only change to the
-  switch script.
+- **Atomic fragment write.** Because the fragment is now sourced before every
+  command, the switch script's shell-env generator (`generate_shell_env`) writes
+  the fragment atomically: to a temporary file in the same directory, then `mv`
+  into place, so a re-source firing mid-switch either reads the complete old
+  fragment or the complete new one, never a truncated file. This is the only
+  change to the switch script.
 
 - **Cross-role behavior falls out for free.** Because the interactive init files
   are shared across Roles, an already-open SSH shell on a Headless machine
-  re-themes at its next prompt when the Desktop renders a mode via `--render`. No
+  re-themes at its next command when the Desktop renders a mode via `--render`. No
   Headless-specific code is added.
 
 ## Testing Decisions
@@ -139,7 +146,7 @@ script contributes no new code to make it happen.
   palettes, and the pattern of the other `generate_*` tests, which call a
   generator against `$BATS_TEST_TMPDIR/out` and match the resulting file.
 
-- **The prompt hook is verified by manual smoke, not automated.** Its body is a
+- **The per-command hook is verified by manual smoke, not automated.** Its body is a
   trivial `[ -f ] && source`; the risk lives in the interactive wiring
   (`add-zsh-hook`, `PROMPT_COMMAND` append), which cannot be exercised without
   standing up a full interactive shell with the plugin stack, and which would
@@ -158,7 +165,7 @@ script contributes no new code to make it happen.
 - Auto-following the desktop or OS light/dark preference. Switching stays an
   explicit user action; the shell only learns about a switch the user already
   made, consistent with ADR-0001.
-- Any change-detection or debouncing of the per-prompt re-source.
+- Any change-detection or debouncing of the per-command re-source.
 - Teaching the switch script to enumerate, signal, or otherwise reach out to
   running shells.
 

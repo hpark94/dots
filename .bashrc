@@ -33,4 +33,4 @@ _has fzf && eval "$(fzf --bash)"
 _has zoxide && eval "$(zoxide init --cmd cd bash)"
 _has direnv && eval "$(direnv hook bash)"
 
-PROMPT_COMMAND="${PROMPT_COMMAND:+$PROMPT_COMMAND; }_theme_reload"
+[[ $- == *i* ]] && trap '_theme_reload' DEBUG
