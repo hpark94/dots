@@ -59,11 +59,11 @@ What changed, what the review found, what is still open.
 ## Commands
 
 - `mise install`: Sync toolchain from `.config/mise/config.toml`.
-- `bats .local/scripts/tests/` or `bats .local/scripts/tests/<test-file>.bats`: Run tests for bootstrap.sh, theme-switch, envs, and fy.
+- `bats .local/scripts/tests/` or `bats .local/scripts/tests/<test-file>.bats`: Run tests for bootstrap.sh, theme-switch, envs, fy, and fp.
 - `nvim --headless '"+Lazy! sync' +qa`: Force nvim plugin sync.
 - `theme-switch dark|light|toggle`: Desktop-only; decides and applies Theme Mode.
 - `theme-switch --render dark|light`: Role-agnostic; applies a mode decided elsewhere.
-- `fy <file>`: Copy file to Wayland clipboard with MIME type detection.
+- `fy <file>`: Copy a file reference (`file://` URI in `text/uri-list`) to the Wayland clipboard; pasteable via `fp`, in terminals, and into browser chats.
 - `fp [dir]`: Paste file from Wayland clipboard to directory.
 
 ## Style rules

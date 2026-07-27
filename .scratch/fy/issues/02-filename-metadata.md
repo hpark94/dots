@@ -1,11 +1,9 @@
 # 02 — Filename Metadata Preservation
 
-**What to build:** Extend `fy` to attempt preserving the original filename in the clipboard metadata using the `x-special/nautilus-clipboard` format. If this format is unsupported by the compositor, the script should fall back to copying raw bytes with MIME type only (already implemented in ticket 01).
+**What to build:** (Obsolete — satisfied by 01.) The original filename is inherent in the `file://` path that ticket 01 emits: it is the last path segment, so the receiver reconstructs the file under its real name with no separate metadata target. The earlier `x-special/nautilus-clipboard` raw-bytes approach no longer applies now that `fy` copies a reference, not bytes.
 
 **Blocked by:** 01 — Core fy Script
 
-**Status:** ready-for-agent
+**Status:** obsolete — implemented by reference in 01
 
-- [ ] `fy` attempts to include filename using `x-special/nautilus-clipboard` format
-- [ ] Falls back gracefully to raw bytes + MIME type if metadata format fails
-- [ ] No change to existing success/error behavior from ticket 01
+- [x] Filename preserved via the `file://` path segment (no separate metadata target needed)

@@ -1,12 +1,9 @@
 # 03 — File Size Limit
 
-**What to build:** Add a 25MB size check to `fy`. If the file exceeds this limit, the script should fail with a clear error message before attempting to copy.
+**What to build:** (Obsolete — removed.) `fy` now copies a file *reference* (`file://` URI), not the file's bytes, so there is nothing on the clipboard to size-limit. This matches a file manager's Ctrl+C, which imposes no size limit. The 25MB check and `MAX_FILE_SIZE_BYTES` variable have been removed.
 
 **Blocked by:** 01 — Core fy Script
 
-**Status:** ready-for-agent
+**Status:** obsolete — removed (no bytes on the clipboard, so no size limit)
 
-- [ ] `fy` checks file size before copying
-- [ ] Errors with clear message to stderr if file exceeds 25MB
-- [ ] Size limit is configurable via a variable at the top of the script
-- [ ] Uses efficient check (stat, not reading entire file)
+- [x] Size limit removed along with the bytes-on-clipboard approach
