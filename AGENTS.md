@@ -68,20 +68,39 @@ Report: list each problem as file:line plus a fix. If there are none, write
 
 Say in a few lines: what changed, what the review found, what is still open.
 
+## Architecture
+
+- **Deployment**: `bootstrap.sh <desktop|headless>` handles stow, mise, plugins,
+  theme. Idempotent; safe to re-run.
+- **Role Marker**: `$XDG_CONFIG_HOME/dotfiles/role` contains `desktop` or
+  `headless`.Never branch code on it; prefer capability probes
+  (`command -v swaymsg`, `$SWAYSOCK`).
+- **Theme Mode**: Global `light` or `dark` state in
+  `$XDG_STATE_HOME/theme/mode`. Desktop owns it; Headless only consumes.
+- **Write-Back Config**: `~/.gitconfig` must be a real file (not symlink) that
+  `[include]`s `.gitconfig.shared`.
+- **Stow exclusions**: `.stow-local-ignore` keeps AGENTS.md, CLAUDE.md,
+  .scratch, docs, templates, nvim out of `$HOME`.
+
+## Commands
+
+- `mise install`: Sync toolchain from `.config/mise/config.toml`.
+- `bats .local/scripts/tests/`: Run tests for bootstrap.sh and theme-switch.
+- `nvim --headless '"+Lazy! sync' +qa`: Force nvim plugin sync.
+
 ## Style rules
 
-- Formatting: run the project's formatter and linter before you finish. Do not
-  argue with them.
+- Formatting: biome for JS/JSON, editorconfig for general, prettier for markdown
+  at 80 chars.
 - Simplicity: build the simplest thing that works. No extra options, no extra
   abstraction.
 - Small changes: change only what the task needs. Do not reformat untouched
-  lines. Keep formatter-only changes in a separate commit.
+  lines.
 - Comments: write code that explains itself. Few comments. A comment says WHY,
   not WHAT.
-- Clean up: no commented-out code, no debug prints, no dead code. Delete it; git
-  has the history.
+- Clean up: no commented-out code, no debug prints, no dead code.
 - Language: English for code, names, comments, commit messages. Talk to the user
-  in the user's language. Keep the project's domain words as they are.
+  in the user's language.
 - Prose: no em-dashes. Use comma, period, semicolon, colon.
 - Commits: use `type(scope): description` format (e.g., `feat(agents):`,
   `docs(tickets):`, `style(theme-switch):`).
