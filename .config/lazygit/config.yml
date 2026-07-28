@@ -2,6 +2,6 @@ gui:
   showNumstatInFilesView: true
   showBottomLine: false
   showPanelJumps: false
-  screenMode: full
+  screenMode: half
   expandFocusedSidePanel: true
   border: single
