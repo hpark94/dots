@@ -158,8 +158,9 @@ script contributes no new code to make it happen.
 
 ## Out of Scope
 
-- Any live re-theme for the other Next-launch apps (ghostty, nvim, GTK). Their
-  reload stories are unchanged by this spec.
+- Any live re-theme for the remaining Next-launch apps, nvim and GTK. Their
+  reload stories are unchanged by this spec. (ghostty was later promoted from
+  Next-launch to live-switch via a `SIGUSR2` config reload; see ADR-0004.)
 - Re-sourcing the full shell init, aliases, functions, or prompt on a switch.
   Only the shell-env fragment is re-read.
 - Auto-following the desktop or OS light/dark preference. Switching stays an
