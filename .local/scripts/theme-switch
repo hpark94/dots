@@ -139,6 +139,16 @@ generate_ghostty() {
 	printf 'theme = "hp_%s"\n' "$mode" >"$out_dir/ghostty-theme.conf"
 }
 
+# delta reads BAT_THEME too, but unlike bat it implements neither the
+# light/dark aliases nor bat's --theme-light/--theme-dark config, so it needs
+# the resolved theme name. Write the syntax-theme into an included gitconfig
+# fragment so delta themes the next diff correctly.
+generate_delta() {
+	local mode=$1 out_dir=$2
+	mkdir -p "$out_dir"
+	printf '[delta]\n\tsyntax-theme = hp_%s\n' "$mode" >"$out_dir/delta.gitconfig"
+}
+
 # Name of the palette slot the tmux status bar uses as its accent, keyed on this
 # machine's own Role. A Headless machine swaps the normal accent (color4) for a
 # distinct, already-existing slot (color1) so its status bar is unmistakable from
@@ -457,6 +467,7 @@ render() {
 	generate_foot "$mode" "$out_dir"
 	generate_sway "$mode" "$out_dir"
 	generate_ghostty "$mode" "$out_dir"
+	generate_delta "$mode" "$out_dir"
 	generate_tmux "$mode" "$out_dir"
 	generate_shell_env "$mode" "$out_dir"
 	generate_waybar "$mode" "$out_dir"

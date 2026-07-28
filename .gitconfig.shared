@@ -4,7 +4,17 @@
 [core]
 	excludesFile = ~/.gitignore
 	editor = nvim
+	pager = delta-auto
 [init]
 	defaultBranch = main
 [pull]
 	rebase = true
+[interactive]
+	diffFilter = delta --color-only
+[delta]
+	navigate = true
+	line-numbers = true
+[merge]
+	conflictStyle = zdiff3
+[include]
+	path = ~/.local/state/theme/delta.gitconfig

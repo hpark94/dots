@@ -156,6 +156,18 @@ stub_externals() {
 	[ "$(cat "$BATS_TEST_TMPDIR/out/ghostty-theme.conf")" = 'theme = "hp_light"' ]
 }
 
+@test "generate_delta writes the light syntax-theme" {
+	generate_delta light "$BATS_TEST_TMPDIR/out"
+	run cat "$BATS_TEST_TMPDIR/out/delta.gitconfig"
+	[[ "$output" == *"syntax-theme = hp_light"* ]]
+}
+
+@test "generate_delta writes the dark syntax-theme" {
+	generate_delta dark "$BATS_TEST_TMPDIR/out"
+	run cat "$BATS_TEST_TMPDIR/out/delta.gitconfig"
+	[[ "$output" == *"syntax-theme = hp_dark"* ]]
+}
+
 @test "apply_foot does not error when no foot process is running" {
 	run apply_foot dark
 	[ "$status" -eq 0 ]
@@ -378,6 +390,7 @@ stub_externals() {
 	[ -f "$XDG_STATE_HOME/theme/foot-colors.ini" ]
 	[ -f "$XDG_STATE_HOME/theme/sway-colors.conf" ]
 	[ -f "$XDG_STATE_HOME/theme/ghostty-theme.conf" ]
+	[ -f "$XDG_STATE_HOME/theme/delta.gitconfig" ]
 	[ -f "$XDG_STATE_HOME/theme/tmux-colors.conf" ]
 	[ -f "$XDG_STATE_HOME/theme/shell-env.sh" ]
 }
