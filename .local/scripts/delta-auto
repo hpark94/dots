@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# delta-auto - width-adaptive delta pager. delta has no "side-by-side only when
+# wide enough" option: split view is nice in a full-width terminal but wraps
+# badly in a narrow one, where unified reads better. As a git pager, stdout is
+# the terminal, so `tput cols` reports the real width; we enable --side-by-side
+# at or above the threshold and delegate to plain delta below it. Extra args
+# pass through so callers can still add flags.
+
+readonly WIDE_THRESHOLD=100
+
+cols=$(tput cols 2>/dev/null || true)
+if [[ ! "$cols" =~ ^[0-9]+$ ]]; then
+	cols=${COLUMNS:-0}
+fi
+if [[ ! "$cols" =~ ^[0-9]+$ ]]; then
+	cols=0
+fi
+
+if ((cols >= WIDE_THRESHOLD)); then
+	exec delta --side-by-side "$@"
+fi
+
+exec delta "$@"
