@@ -24,6 +24,10 @@ if [[ -f "${HOME}/.env" ]]; then
     source "${HOME}/.env"
 fi
 
+# Base config first, generated theme fragment second, so the fragment's
+# mode-aware selection color wins while the rest of the base config is preserved.
+export LG_CONFIG_FILE="${XDG_CONFIG_HOME:-$HOME/.config}/lazygit/config.yml,${XDG_STATE_HOME:-$HOME/.local/state}/theme/lazygit-theme.yml"
+
 _has() { command -v "$1" >/dev/null 2>&1; }
 _has nvim && export EDITOR=nvim
 _has librewolf && export BROWSER=librewolf

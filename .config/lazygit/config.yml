@@ -1,7 +1,7 @@
 gui:
-  theme:
-    activeBorderColor:
-      - "#3a7292"
-      - bold
-    selectedLineBgColor:
-      - default
+  showNumstatInFilesView: true
+  showBottomLine: false
+  showPanelJumps: false
+  screenMode: full
+  expandFocusedSidePanel: true
+  border: single

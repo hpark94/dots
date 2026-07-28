@@ -149,6 +149,25 @@ generate_delta() {
 	printf '[delta]\n\tsyntax-theme = hp_%s\n' "$mode" >"$out_dir/delta.gitconfig"
 }
 
+# lazygit exposes only a selection *background*, no foreground, so the selected
+# row's text keeps its own colors. dark uses the mode's selection_bg; light uses a
+# distinct indigo bar instead, because light's selection_bg (#e4ded7) barely stands
+# out from the diff's red/green. Injected as a Generated Config fragment merged over
+# the tracked config. lazygit's theme colors are lists, not scalars: the value must
+# be a single-item YAML sequence, and the hex quoted (a bare #... is a YAML comment).
+generate_lazygit() {
+	local mode=$1 out_dir=$2
+	mkdir -p "$out_dir"
+	# shellcheck disable=SC1090,SC2154
+	(
+		source "$(theme_palette_file "$mode")"
+		local sel="$selection_bg"
+		[[ "$mode" == "light" ]] && sel="$color6"
+		printf 'gui:\n  theme:\n    selectedLineBgColor:\n      - "%s"\n' "$sel" \
+			>"$out_dir/lazygit-theme.yml"
+	)
+}
+
 # Name of the palette slot the tmux status bar uses as its accent, keyed on this
 # machine's own Role. A Headless machine swaps the normal accent (color4) for a
 # distinct, already-existing slot (color1) so its status bar is unmistakable from
@@ -468,6 +487,7 @@ render() {
 	generate_sway "$mode" "$out_dir"
 	generate_ghostty "$mode" "$out_dir"
 	generate_delta "$mode" "$out_dir"
+	generate_lazygit "$mode" "$out_dir"
 	generate_tmux "$mode" "$out_dir"
 	generate_shell_env "$mode" "$out_dir"
 	generate_waybar "$mode" "$out_dir"

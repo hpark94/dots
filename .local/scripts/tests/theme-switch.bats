@@ -168,6 +168,22 @@ stub_externals() {
 	[[ "$output" == *"syntax-theme = hp_dark"* ]]
 }
 
+# light uses a distinct indigo (color6) instead of its subtle selection_bg; the
+# fixtures set color6=#000006 (light) and selection_bg=#d00003 (dark).
+@test "generate_lazygit writes color6 as the light selectedLineBgColor" {
+	generate_lazygit light "$BATS_TEST_TMPDIR/out"
+	run cat "$BATS_TEST_TMPDIR/out/lazygit-theme.yml"
+	[[ "$output" == *'selectedLineBgColor:'* ]]
+	[[ "$output" == *'- "#000006"'* ]]
+}
+
+@test "generate_lazygit writes selection_bg as the dark selectedLineBgColor" {
+	generate_lazygit dark "$BATS_TEST_TMPDIR/out"
+	run cat "$BATS_TEST_TMPDIR/out/lazygit-theme.yml"
+	[[ "$output" == *'selectedLineBgColor:'* ]]
+	[[ "$output" == *'- "#d00003"'* ]]
+}
+
 @test "apply_foot does not error when no foot process is running" {
 	run apply_foot dark
 	[ "$status" -eq 0 ]
@@ -391,6 +407,7 @@ stub_externals() {
 	[ -f "$XDG_STATE_HOME/theme/sway-colors.conf" ]
 	[ -f "$XDG_STATE_HOME/theme/ghostty-theme.conf" ]
 	[ -f "$XDG_STATE_HOME/theme/delta.gitconfig" ]
+	[ -f "$XDG_STATE_HOME/theme/lazygit-theme.yml" ]
 	[ -f "$XDG_STATE_HOME/theme/tmux-colors.conf" ]
 	[ -f "$XDG_STATE_HOME/theme/shell-env.sh" ]
 }
