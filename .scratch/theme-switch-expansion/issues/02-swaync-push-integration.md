@@ -1,10 +1,10 @@
-# 02 — swaync: push integration
+# 02: swaync: push integration
 
 **What to build:** Toggling Theme Mode changes swaync's notification center immediately, instead of
 it staying permanently hardcoded to light. swaync has no portal awareness of its own, so unlike
 waybar it must be told explicitly on every switch.
 
-**Blocked by:** None — can start immediately.
+**Blocked by:** None, can start immediately.
 
 **Status:** done
 
@@ -24,12 +24,12 @@ notification center open and confirm it re-themes immediately.
 - [x] swaync's stylesheet is rewritten so its surfaces and text reuse existing Canonical Palette roles
       (a shared "surface" and "text" role, matching the same values waybar's hover state resolves to)
       instead of the hardcoded light-only literals and independently-invented colors it has today. No
-      new palette roles are introduced — the previously-distinct muted-surface look is deliberately
+      new palette roles are introduced, the previously-distinct muted-surface look is deliberately
       collapsed into the shared surface role, per the spec's resolution table.
 - [x] The stylesheet imports one generated fragment holding the current mode's values; `theme-switch`'s
       generator writes it on every switch.
 - [x] `theme-switch` applies the change by telling swaync to re-read its stylesheet, on every switch.
-- [x] `config.json` is untouched — no color data or include mechanism lives there.
+- [x] `config.json` is untouched, no color data or include mechanism lives there.
 - [x] Manually verified: toggling dark/light with swaync's notification center open (or a live
       notification showing) actually re-themes it immediately, without needing to trigger a new
       notification first.

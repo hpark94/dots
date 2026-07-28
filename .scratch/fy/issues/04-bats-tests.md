@@ -1,8 +1,8 @@
-# 04 — BATS Test Suite for fy and fp
+# 04: BATS Test Suite for fy and fp
 
 **What to build:** BATS suites for `fy` (`.local/scripts/tests/fy.bats`) and for `fp`'s new reference branch (`.local/scripts/tests/fp.bats`). Stub `wl-copy`/`wl-paste` on PATH using the `bootstrap.bats` pattern. The `wl-copy` stub records its args and stdin to files on disk so assertions survive the `run bash "$SCRIPT"` subshell and can inspect the exact clipboard payload.
 
-**Blocked by:** 01 — Core fy Script
+**Blocked by:** 01, Core fy Script
 
 **Status:** ready-for-agent
 

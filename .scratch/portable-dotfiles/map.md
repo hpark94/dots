@@ -257,8 +257,8 @@ fresh effort.
   written up as a dedicated `notetaking-rewrite` spec, but that spec and its tickets have since been
   removed and the rewrite is being re-grilled from scratch, so those three decisions are superseded. The theme-switch expansion and Headless
   propagation decided by [03](issues/03-theme-capability-survey.md),
-  [07](issues/07-theme-switch-app-roster.md) and [08](issues/08-theme-mode-propagation.md) — plus
-  [12](issues/12-ssh-config-ownership.md), folded in because its only consumer is this work — is now
+  [07](issues/07-theme-switch-app-roster.md) and [08](issues/08-theme-mode-propagation.md), plus
+  [12](issues/12-ssh-config-ownership.md), folded in because its only consumer is this work, is now
   written up as [`.scratch/theme-switch-expansion/spec.md`](../theme-switch-expansion/spec.md)
   (`ready-for-agent`), same caveat.
 - **Migrating the vault data itself.** [10](issues/10-vault-flattening-migration.md) decided the

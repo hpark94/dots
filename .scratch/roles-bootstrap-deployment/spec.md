@@ -6,7 +6,7 @@ Status: done
 
 This repo has no documented install procedure at all today, on either target: a fresh Fedora/sway
 Desktop or a headless Linux SSH remote. `stow .` is the only step written down anywhere, and it isn't
-even written down correctly — a fresh Fedora `$HOME` ships `/etc/skel` files that make the first `stow`
+even written down correctly, a fresh Fedora `$HOME` ships `/etc/skel` files that make the first `stow`
 abort entirely, with no pre-step documented. Past that point, nothing coordinates the rest: `zinit` and
 lazy.nvim self-install on first use, `mise` (which provides most of the toolchain the rest of the
 config assumes exists) isn't installed by anything, and `tpm` is never cloned by anything at all, so
@@ -23,7 +23,7 @@ holds, and whether `.envs.sh` needs the Role Marker](../portable-dotfiles/issues
 on the [Portable dotfiles map](../portable-dotfiles/map.md), informed by the survey in [Deployment
 mechanism survey](../portable-dotfiles/issues/02-deployment-mechanism-survey.md). It does **not**
 re-decide the Role/Headless/Desktop split itself, the Role Marker's file format, or the canonical
-Role-reading contract — those are already settled by [Name the
+Role-reading contract, those are already settled by [Name the
 split](../portable-dotfiles/issues/01-name-the-split.md) and [How a script reads the Role
 Marker](../portable-dotfiles/issues/13-role-marker-reader.md), and already implemented as a consumer in
 the theme-switch-expansion spec. This spec is about **writing** the Marker for
@@ -33,14 +33,14 @@ clone to a working machine.
 ## Solution
 
 A single tracked, idempotent `bootstrap.sh <desktop|headless>` owns the entire sequence from just
-after `git clone` to a fully built machine, with no Role branch in its own behavior — the Role is an
+after `git clone` to a fully built machine, with no Role branch in its own behavior, the Role is an
 input it records, not something it decides differently for. It pre-creates the container directories
 `stow` must not be allowed to fold, neutralizes the `/etc/skel` conflict that aborts a fresh machine's
 first `stow`, runs `stow .`, writes the Role Marker and a `~/.gitconfig` stub (both create-if-absent,
 never clobbering an already-provisioned machine), installs `mise` and activates it in-process, runs
 `mise install`, clones and installs `tpm` (the one outright gap today), forces `lazy.nvim` and `zinit`
 to complete their self-installs rather than leaving them lazy, and generates the Theme Mode state and
-every app's Generated Config fragment via `theme-switch`'s own render entry point — so a Desktop never
+every app's Generated Config fragment via `theme-switch`'s own render entry point, so a Desktop never
 launches `sway` for the first time missing the fragments waybar's tracked stylesheets hard-require.
 Every step guards itself, so re-running is always safe, which is also what makes bootstrap **retrofit**
 a machine that already has the dotfiles deployed by hand with no Marker and no state, not just bring up
@@ -96,8 +96,8 @@ diagnosis. The README shrinks to three lines: install `git`/`stow`, clone, run `
     resetting a Theme Mode that's already active, so that a fresh machine renders something sensible
     and a retrofit run never flips my current theme.
 15. As the dotfiles owner, I want every app's Generated Config fragment to exist before I ever launch
-    `sway` on a freshly bootstrapped Desktop, so that waybar and zathura's tracked configs — which
-    hard-fail to parse when their `@import`/`include` target is missing — don't break on first launch.
+    `sway` on a freshly bootstrapped Desktop, so that waybar and zathura's tracked configs, which
+    hard-fail to parse when their `@import`/`include` target is missing, don't break on first launch.
 16. As the dotfiles owner, I want `~/.gitconfig`'s shared settings to propagate to every machine
     automatically when I change them, so that they aren't frozen at whatever they were the day a
     machine was first set up.
@@ -113,7 +113,7 @@ diagnosis. The README shrinks to three lines: install `git`/`stow`, clone, run `
 20. As the dotfiles owner, I want `.envs.sh` to need no Role Marker at all, so that a shared, tracked
     file that ships identically to both Roles never depends on install having already run.
 21. As the dotfiles owner, I want `~/.env`'s scope (machine-local secrets only) documented at its
-    source, so that a future me — or a public user — knows what does and doesn't belong there without
+    source, so that a future me, or a public user, knows what does and doesn't belong there without
     having to ask.
 22. As the dotfiles owner, I want the README to say only what's needed to get from zero to a working
     machine, so that it stays accurate instead of drifting from whatever the bootstrap script actually
@@ -134,7 +134,7 @@ diagnosis. The README shrinks to three lines: install `git`/`stow`, clone, run `
 Lives alongside the other scripts, follows the same conventions already established for them: opens
 with strict mode, has a `usage()` function, reports errors with a consistent prefix and a non-zero
 exit, and does not silently fall back on bad input. Its one argument is validated against exactly
-`desktop`/`headless`; anything else is a hard usage error. The Role is **recorded**, not branched on —
+`desktop`/`headless`; anything else is a hard usage error. The Role is **recorded**, not branched on:
 every step of the sequence below runs identically regardless of which Role was passed, with the sole
 exception of what gets written into the Marker itself.
 
@@ -148,29 +148,29 @@ Mode state at all).
 1. **Pre-create real container directories**: the shared XDG namespaces (`~/.config`, `~/.local`, and
    defensively `~/.local/bin`) must exist as real directories before `stow` runs. This is load-bearing:
    if either is missing, `stow` folds the entire namespace into one directory symlink into the repo
-   (since the repo only tracks a subset of each), and every later tool that writes into that namespace
-   — `mise`'s own binary, `zinit`'s data directory, nvim's plugin directory, and the Role Marker itself
-   — silently lands inside the repo's working tree instead of its real XDG location.
+   (since the repo only tracks a subset of each), and every later tool that writes into that namespace,
+   `mise`'s own binary, `zinit`'s data directory, nvim's plugin directory, and the Role Marker itself,
+   silently lands inside the repo's working tree instead of its real XDG location.
 2. **Neutralize `/etc/skel` conflicts**: for each of the handful of shell startup files a fresh Fedora
    `$HOME` ships, if it exists as a real file (not already a symlink into the repo), back it up out of
    the way. Idempotent: a file that's already a symlink into the repo is left alone.
 3. **Stow**: run stow's normal single-package invocation. A no-op on re-run.
 4. **Role Marker**: if it already exists, leave it untouched; otherwise write it from the required
    argument. A missing Marker with no argument is a hard error, per the canonical Role-reading
-   contract's "no default Role" rule — the argument is therefore only ever consulted on a machine that
+   contract's "no default Role" rule, the argument is therefore only ever consulted on a machine that
    doesn't have a Marker yet, so re-running on an already-marked machine never needs it passed again.
 5. **`~/.gitconfig` stub**: write the include-only stub (see below) only if the file is absent; never
    overwrite an existing one.
 6. **`mise`**: if its binary isn't present, install it via its official installer, then activate it
    within bootstrap's own process (not just export a PATH line for later shells) so every subsequent
    step in this same run sees the pinned toolchain rather than whatever the distro provides or nothing
-   at all. `mise` itself is deliberately left unpinned — it's the bootstrapper of the pinned toolchain,
+   at all. `mise` itself is deliberately left unpinned, it's the bootstrapper of the pinned toolchain,
    not a member of it.
 7. **`mise install`**: installs everything the tracked `mise` config declares. This is accepted as slow
-   on a Headless machine (it includes several Desktop-weight builds) — bootstrap prints a warning to
+   on a Headless machine (it includes several Desktop-weight builds), bootstrap prints a warning to
    that effect before running it, so a long first boot doesn't read as hung.
 8. **`tpm`**: clone it if missing, then run its plugin-install step. This is the one outright gap in
-   the repo today — nothing else clones it, so every tmux plugin declaration is currently inert on any
+   the repo today, nothing else clones it, so every tmux plugin declaration is currently inert on any
    machine that doesn't already happen to have it.
 9. **nvim plugins, forced**: run nvim's plugin manager to completion non-interactively, now that the
    mise-provided, pinned neovim is on PATH, so the machine has its plugins installed on exit rather
@@ -201,7 +201,7 @@ Mode state at all).
   `.gitconfig.shared`. Bootstrap writes this stub if absent (step 5 above); it is never clobbered on
   re-run, so anything a tool appends there later (`gh auth login`'s credential helper is the one live
   case) persists across bootstrap re-runs.
-- `.gitconfig.example` is removed — it was byte-identical to the tracked config it was meant to
+- `.gitconfig.example` is removed, it was byte-identical to the tracked config it was meant to
   demonstrate, so it varied nothing and is redundant once the tracked file is always enough to boot on
   its own.
 - The stow-ignore list gains an entry excluding a literal `~/.gitconfig` from ever being folded back
@@ -218,7 +218,7 @@ and the fourth loses its gate entirely:
 - The one variable with no real precondition needs no gate at all.
 - The variable selecting the Wayland Qt platform is gated on a compositor display actually being
   attached to this session, the same Session Fact this repo already uses for the equivalent clipboard
-  question — not on SSH-ness, which gets both waypipe and "SSHing into your own Desktop" wrong today.
+  question, not on SSH-ness, which gets both waypipe and "SSHing into your own Desktop" wrong today.
 
 `.envs.sh` itself continues to need no Role Marker at all: it's a shared, tracked file that ships
 byte-identical to both Roles, and every branch inside it after this change is a Capability Probe, not
@@ -226,7 +226,7 @@ a Role Fact.
 
 ### `.env`'s scope, documented at its source
 
-`~/.env` is machine-local secrets — credentials, tokens, anything in that class — untracked, and
+`~/.env` is machine-local secrets, credentials, tokens, anything in that class, untracked, and
 already sourced conditionally. This spec adds nothing beyond a one-line comment stating that scope
 directly above where `.envs.sh` sources it, so the file documents its own contract rather than leaving
 it implicit.
@@ -235,20 +235,20 @@ it implicit.
 
 Install `git` and `stow` (both stock packages on every target distro), clone the repo, run
 `bootstrap.sh <desktop|headless>`. Everything the current README says beyond an install procedure
-(the descriptive "Key Highlights" prose) is untouched by this spec — only the install story changes,
+(the descriptive "Key Highlights" prose) is untouched by this spec, only the install story changes,
 from nothing documented to three lines that are actually true.
 
 ## Testing Decisions
 
 - `bootstrap.sh` gets a bats file under the same coverage bar already established for `.local/scripts/`:
-  its **sequencing and guard logic** — whether it skips a `stow` conflict correctly against a faked
+  its **sequencing and guard logic**, whether it skips a `stow` conflict correctly against a faked
   `$HOME`, whether it writes the Role Marker only when absent and errors correctly when absent with no
   argument, whether it writes the `~/.gitconfig` stub only when absent, whether it skips `mise`
   install when the binary is already present, whether it skips cloning `tpm` when already present,
-  whether it writes the Theme Mode default only when absent — gets tests, using the same
+  whether it writes the Theme Mode default only when absent, gets tests, using the same
   sourcing-plus-fake-`$XDG_*`-dirs pattern `theme-switch.bats` already establishes.
 - The actual `mise install`, the installer's `curl | sh`, `nvim --headless` plugin sync, and `tpm`'s
-  install step get **no** bats coverage — there is no throwaway machine in this loop to run them
+  install step get **no** bats coverage, there is no throwaway machine in this loop to run them
   against safely, matching the same limitation already named for these exact steps.
 - `.envs.sh`'s new Capability Probes get bats coverage: source the file with a faked socket path
   present/absent and `$WAYLAND_DISPLAY` set/unset, and assert each variable is exported or not
@@ -267,7 +267,7 @@ from nothing documented to three lines that are actually true.
   none is introduced here. Each script that needs to read the Marker hand-rolls the canonical
   contract, as already decided.
 - **Any Role-dependent bootstrap behavior beyond writing the Marker's value.** The one candidate
-  exception (enabling a systemd unit on exactly one Role) no longer exists — that unit is deleted
+  exception (enabling a systemd unit on exactly one Role) no longer exists, that unit is deleted
   entirely by the clipboard-rewire spec, not conditionally started by this one.
 - **Wiring the `theme-switch`-expansion or clipboard-rewire specs' own deliverables.** This spec only
   *calls* `theme-switch`'s render-only entry point in its bootstrap sequence; it does not build that
@@ -279,12 +279,12 @@ from nothing documented to three lines that are actually true.
   No further sweep for other Write-Back Configs was requested beyond the one already found (`gh`'s
   `.gitconfig` write).
 - **Packaging or distributing `bootstrap.sh` outside this repo** (a curl-pipeable installer script,
-  a release process, etc.) — it's a tracked script run from a clone, nothing more.
+  a release process, etc.), it's a tracked script run from a clone, nothing more.
 
 ## Further Notes
 
 - Read [The bootstrap sequence after the dotfiles
-  land](../portable-dotfiles/issues/11-bootstrap-sequence.md) in full before implementing — it
+  land](../portable-dotfiles/issues/11-bootstrap-sequence.md) in full before implementing, it
   documents the exact dependency knot (mise before nvim's first launch, lazy/zinit's self-install
   timing) that makes the ordering non-obvious, and the follow-up note about fragment generation needing
   to be unconditional while the mode file stays create-if-absent.

@@ -1,4 +1,4 @@
-# 07 — delta syntax-theme follows the Theme Mode
+# 07: delta syntax-theme follows the Theme Mode
 
 **Status:** done
 

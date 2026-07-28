@@ -1,11 +1,11 @@
-# 02 — `.envs.sh` Capability Probes
+# 02: `.envs.sh` Capability Probes
 
 **What to build:** The three environment variables currently gated on whether the shell is an SSH
-session instead react to whether the thing they actually depend on is present right now — a local
+session instead react to whether the thing they actually depend on is present right now, a local
 daemon's socket, or an attached compositor display. SSHing into one's own Desktop, or connecting under
 waypipe, no longer strips variables that should still be set there.
 
-**Blocked by:** None — can start immediately.
+**Blocked by:** None, can start immediately.
 
 **Status:** done
 
@@ -17,7 +17,7 @@ Verified done on `main` (landed in `05e0d03`). `.envs.sh` now gates `DOCKER_HOST
 - [x] The variable selecting the Wayland Qt platform is exported only when a compositor display is
       attached to the current session (the same signal this repo already uses for the equivalent
       clipboard question), not based on SSH-ness.
-- [x] `.envs.sh` reads no Role Marker anywhere — every branch in it after this change is a Capability
+- [x] `.envs.sh` reads no Role Marker anywhere, every branch in it after this change is a Capability
       Probe, not a Role Fact.
 - [x] A one-line comment is added directly above where `.envs.sh` conditionally sources `~/.env`,
       stating its scope: machine-local secrets only (credentials, tokens).

@@ -1,4 +1,4 @@
-# 08 — delta-auto: width-adaptive side-by-side pager
+# 08: delta-auto: width-adaptive side-by-side pager
 
 **Status:** done
 

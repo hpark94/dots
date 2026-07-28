@@ -1,8 +1,8 @@
-# 05 — Roundtrip Integration Test
+# 05: Roundtrip Integration Test
 
 **What to build:** Verify the end-to-end workflow: `fy <file>` puts a reference on the clipboard, and the file can then be pasted back out. Cover it automatically at the stub level, and document the live-compositor pastes that must be checked manually.
 
-**Blocked by:** 01 — Core fy Script, 04 — BATS Test Suite
+**Blocked by:** 01, Core fy Script, 04, BATS Test Suite
 
 **Status:** ready-for-agent
 

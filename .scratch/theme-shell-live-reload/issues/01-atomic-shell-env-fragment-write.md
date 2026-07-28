@@ -1,4 +1,4 @@
-# 01 — Write the shell-env fragment atomically
+# 01: Write the shell-env fragment atomically
 
 **What to build:** The switch script's shell-env generator writes the Generated
 Config fragment so that any reader sees either the complete old fragment or the
@@ -10,7 +10,7 @@ place (atomic rename on the same filesystem). This is the only change to the
 switch script and the sole prerequisite for sourcing the fragment on every
 prompt (ticket 02).
 
-**Blocked by:** None — can start immediately.
+**Blocked by:** None, can start immediately.
 
 **Status:** implemented
 

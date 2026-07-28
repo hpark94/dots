@@ -1,13 +1,13 @@
-# 01 — waybar: pull integration (dark/light stylesheets)
+# 01: waybar: pull integration (dark/light stylesheets)
 
 **What to build:** Toggling Theme Mode actually changes waybar's appearance. Today waybar's
 stylesheet is hardcoded light-mode with no dark variant, so a dark toggle leaves the status bar
 glaring. waybar already subscribes to the same desktop-portal appearance signal `theme-switch`'s GTK
 step already writes, and already prefers a pair of mode-named stylesheets over its plain one when they
-exist — it has simply never had them to find. Creating them is the entire integration: no new apply
+exist, it has simply never had them to find. Creating them is the entire integration: no new apply
 step, no signal, no `theme-switch` code path beyond the generator.
 
-**Blocked by:** None — can start immediately.
+**Blocked by:** None, can start immediately.
 
 **Status:** done
 
@@ -33,12 +33,12 @@ pins a stylesheet, so it should).
       mode's colors.
 - [x] The color values in each per-mode file resolve every currently off-palette value onto an existing
       Canonical Palette slot (module hover background, the sidebar lock icon, the active-workspace
-      wash, and the tooltip border all map onto specific existing palette entries — see the spec's
+      wash, and the tooltip border all map onto specific existing palette entries, see the spec's
       resolution table for the exact mapping, no new palette roles are introduced).
 - [x] `theme-switch`'s generator writes **both** per-mode color fragments on every switch, not just the
-      current mode — this is the one generator in the whole script that must, since waybar rather than
+      current mode, this is the one generator in the whole script that must, since waybar rather than
       the script picks which one loads.
-- [x] No apply function, no signal, and no guard code is added to `theme-switch` for waybar — the pull
+- [x] No apply function, no signal, and no guard code is added to `theme-switch` for waybar, the pull
       subscription plus the existing GTK color-scheme write is the whole mechanism.
 - [x] Manually verified: toggling dark/light with waybar running actually re-themes it live, with no
       restart.

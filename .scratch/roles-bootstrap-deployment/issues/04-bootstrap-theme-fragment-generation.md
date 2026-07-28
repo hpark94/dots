@@ -1,12 +1,12 @@
-# 04 — `bootstrap.sh` Theme Mode + fragment generation
+# 04: `bootstrap.sh` Theme Mode + fragment generation
 
 **What to build:** A freshly bootstrapped Desktop's waybar and zathura work correctly the very first
 time `sway` is launched, instead of hard-failing to parse a tracked config whose generated color
 fragment doesn't exist yet. A machine with no Theme Mode yet gets a sensible default without ever
 resetting one that's already active.
 
-**Blocked by:** [03 — `bootstrap.sh` core sequence](03-bootstrap-core-sequence.md), and **05 —
-`theme-switch` Role gate + render-only entry point** (from the theme-switch-expansion ticket set —
+**Blocked by:** [03: `bootstrap.sh` core sequence](03-bootstrap-core-sequence.md), and **05:
+`theme-switch` Role gate + render-only entry point** (from the theme-switch-expansion ticket set,
 this step calls that entry point directly).
 
 **Status:** done
@@ -16,7 +16,7 @@ Verified done on `main`. The dependency (theme-switch-expansion ticket 05, the `
 - [x] The Theme Mode state file is written with a default value only if one doesn't already exist; a
       machine that already has a mode set keeps it untouched on every re-run.
 - [x] Every app's Generated Config fragment is (re)generated unconditionally, every run, via
-      `theme-switch`'s render-only entry point — not gated on whether the mode file was just created.
+      `theme-switch`'s render-only entry point, not gated on whether the mode file was just created.
 - [ ] Manually verified: bootstrapping a Desktop from a bare clone, then launching `sway` for the first
       time, does not produce a parse error from any tracked config whose colors come from a generated
       fragment. (Pending a live Desktop bring-up; the fragment generation itself is smoke-tested.)

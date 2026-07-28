@@ -5,18 +5,18 @@ Status: done
 ## Problem Statement
 
 Pasting from the Desktop's clipboard into nvim on a remote machine was unreliable, and the fix built
-for it — a `socat` TCP tunnel forwarded over SSH, gated by branching on SSH-ness (`$SSH_CLIENT`/
-`$SSH_TTY`) in both `.tmux.conf` and nvim — was itself broken in a way [Name the
+for it, a `socat` TCP tunnel forwarded over SSH, gated by branching on SSH-ness (`$SSH_CLIENT`/
+`$SSH_TTY`) in both `.tmux.conf` and nvim, was itself broken in a way [Name the
 split](../portable-dotfiles/issues/01-name-the-split.md) predicted: SSH-ness is only a proxy for "is
 the tunnel actually reachable," and a wrong one. `~/.ssh/config` gives two hosts (`ubuntu-server` and
 `vm-app`) the identical `Hostname`, but only one carries the `RemoteForward` that makes the tunnel
-exist — connect as the other and nvim hands paste to a `nc` call against nothing. `.tmux.conf`'s
+exist, connect as the other and nvim hands paste to a `nc` call against nothing. `.tmux.conf`'s
 branch is worse: it evaluates once when the tmux **server** starts, so detaching and reattaching
 through a different client leaves it stale.
 
 The real defect was never SSH or nesting. `tmux show -g get-clipboard` is `buffer`, the tmux default,
 which means tmux answers every clipboard read from its own paste buffer and never asks the terminal at
-all — on the Desktop as much as over SSH. The tunnel is a TCP workaround for a one-line tmux option
+all, on the Desktop as much as over SSH. The tunnel is a TCP workaround for a one-line tmux option
 that was never set.
 
 This spec is the write-up of [What signal picks the clipboard
@@ -28,7 +28,7 @@ map](../portable-dotfiles/map.md).
 Delete the tunnel entirely: the tracked `clipboard-tunnel.service` unit, the sway config line that
 starts it, and the `nc localhost 11989` calls in nvim. Replace it with OSC 52 in both directions, using
 links that are already installed and simply not wired together: foot already has OSC 52 paste enabled,
-tmux gets `get-clipboard both` set unconditionally (every tmux layer — inner and outer — is a relay, so
+tmux gets `get-clipboard both` set unconditionally (every tmux layer, inner and outer, is a relay, so
 one layer left on `buffer` breaks the chain), nvim's paste becomes the same built-in OSC 52 module its
 copy already uses, and ghostty's clipboard-read prompt becomes an automatic allow to match foot. This
 lands **more private** than the tunnel it replaces: a `socat` listener served the Desktop's clipboard
@@ -38,7 +38,7 @@ read answers only the owner's own terminal.
 The branch itself is replaced, not just its consequences: `$SSH_CLIENT`/`$SSH_TTY` in nvim become
 `$WAYLAND_DISPLAY`, the Session Fact this repo already uses for the same "is a compositor clipboard
 reachable from this session" question elsewhere. tmux's branch is deleted outright, because tracing it
-found tmux never actually had a clipboard branch to begin with — copy always worked over its own native
+found tmux never actually had a clipboard branch to begin with, copy always worked over its own native
 OSC 52 support, independent of the now-dead tunnel option it appeared to gate. `.tmux.remote.conf` is
 deleted along with the branch that sourced it; the one thing it was keeping alive, a visually
 distinguishable remote status bar, is rebuilt as a Role-keyed accent inside `theme-switch`'s tmux
@@ -118,13 +118,13 @@ breaks the whole chain regardless of which layer it is.
 → inner tmux → outer tmux → foot → the Wayland clipboard) is inferred from each link's documented
 behavior, not yet executed end to end as one path. Confirm it works nested, not just in a single tmux
 layer, before removing the tunnel is considered complete. Also confirm `osc52.paste`'s behavior when no
-reply arrives (e.g. the terminal doesn't support OSC 52) doesn't block waiting for one — an unbounded
+reply arrives (e.g. the terminal doesn't support OSC 52) doesn't block waiting for one, an unbounded
 wait here would be exactly the failure mode an unbounded `nc` call already was.
 
 ### The branch: `$WAYLAND_DISPLAY`, not SSH-ness
 
 nvim's clipboard strategy selection moves from testing `$SSH_CLIENT`/`$SSH_TTY` to testing
-`$WAYLAND_DISPLAY` — the same Session Fact this repo already uses for the same underlying question
+`$WAYLAND_DISPLAY`, the same Session Fact this repo already uses for the same underlying question
 elsewhere (a compositor clipboard being reachable from the current session). Set: use the native
 Wayland clipboard. Unset: use OSC 52 for both copy and paste. This is correct under waypipe (display
 forwarded, SSH-ness would wrongly say "remote") and when SSHing into one's own Desktop (a live
@@ -136,18 +136,18 @@ the way a once-evaluated tmux `if-shell` can, since it's read fresh.
 Tracing `.tmux.remote.conf`'s `@copy_backend_remote_tunnel_port` option found it read by nothing in any
 installed plugin. Copy has always worked via the tracked config's existing `set-clipboard on`, tmux's
 native OSC 52 support, entirely independently of the tunnel or the branch that appeared to gate it.
-`.tmux.remote.conf` and the `if-shell` that sourced it are deleted outright — not merged into the
+`.tmux.remote.conf` and the `if-shell` that sourced it are deleted outright, not merged into the
 unconditional config, since there is nothing left in the file worth keeping once `get-clipboard both`
 is unconditional.
 
 ### The remote status bar accent becomes Role-keyed, not file-gated
 
-The one real thing `.tmux.remote.conf` provided — a visually distinguishable remote tmux status bar —
+The one real thing `.tmux.remote.conf` provided, a visually distinguishable remote tmux status bar,
 is rebuilt inside `theme-switch`'s tmux fragment generator instead of a separate sourced file. The
 generator reads the machine's own Role Marker (via the same canonical reader
 [theme-switch expansion](../theme-switch-expansion/spec.md) adds to `theme-switch`) and swaps the
-existing accent color role — today hardcoded to one palette slot across `window-status-style`,
-`window-status-current-style`, `display-panes-active-colour`, `status-left`, and `status-right` — to a
+existing accent color role, today hardcoded to one palette slot across `window-status-style`,
+`window-status-current-style`, `display-panes-active-colour`, `status-left`, and `status-right`, to a
 different, already-existing palette slot when the Role is Headless, leaving the Desktop's accent
 unchanged. **No new palette roles are introduced**, consistent with the palette staying at its current
 20 values.
@@ -155,10 +155,10 @@ unchanged. **No new palette roles are introduced**, consistent with the palette 
 **The accent read must fall back to the Desktop accent, not hard-error, when the Marker is
 missing/unreadable.** `generate_tmux` is a `generate_*` function, and the [theme-switch expansion
 spec](../theme-switch-expansion/spec.md) keeps its render half (all `generate_*`/`apply_*`) usable with
-no Role Marker present — its `--render <mode>` entry point is tested against a Marker-less machine, and
+no Role Marker present, its `--render <mode>` entry point is tested against a Marker-less machine, and
 the Headless push exists precisely for cold/retrofit machines. So the Role read added here must treat
 "Headless" as the only branch that switches the accent, and treat every other outcome (Desktop, and
-equally a missing, empty, or unreadable Marker) as the normal Desktop accent — it must **not**
+equally a missing, empty, or unreadable Marker) as the normal Desktop accent, it must **not**
 propagate the canonical `read_role`'s hard "no default Role" failure out of the render pipeline. This
 is the one place `generate_tmux` diverges from `read_role`'s no-fallback contract, and it is
 deliberate: a Marker-less render still has to produce a fragment. See the Role-gate reconciliation note
@@ -168,7 +168,7 @@ This needs no condition that can go stale: it's decided fresh every time the fra
 including by the Headless push's render-only invocation, so a detached-and-reattached remote tmux
 session can never show a wrong accent the way the deleted `if-shell` (evaluated once, at server start)
 could. Accepted consequence: SSHing into one's own Desktop and running tmux there does **not** get the
-distinguishing accent, since that machine's Role is Desktop — this is the correct trade, since Role is
+distinguishing accent, since that machine's Role is Desktop, this is the correct trade, since Role is
 also what keeps the bar following Theme Mode correctly in that same case.
 
 **This decision depended on the Role-reading capability [theme-switch
@@ -178,7 +178,7 @@ entry point ticket), which has since landed. The tmux-accent work is now impleme
 slot from `color4` to `color1` only when the Role is Headless, falling back to the Desktop accent for
 every other outcome including a missing Marker.
 
-### Live cleanup is a manual, documented checklist — not shipped as code
+### Live cleanup is a manual, documented checklist, not shipped as code
 
 Two pieces of this change live entirely outside the repo and are not touched by any script:
 
@@ -217,7 +217,7 @@ real-machine, real-file changes outside what a repo checkout can safely reach in
 ## Out of Scope
 
 - **Actually stopping the live `clipboard-tunnel.service` or editing the real `~/.ssh/config`.** Both
-  are manual, operator-run steps per Implementation Decisions — this spec's implementation only
+  are manual, operator-run steps per Implementation Decisions, this spec's implementation only
   changes tracked repo files.
 - **`.envs.sh`'s unrelated `$SSH_CONNECTION`/`$SSH_TTY` branch** (`DOCKER_HOST`, `LIBVIRT_DEFAULT_URI`,
   `OMPI_CXX`, `QT_QPA_PLATFORM`). A different, already-decided fix for that branch (turning three of
@@ -237,7 +237,7 @@ real-machine, real-file changes outside what a repo checkout can safely reach in
 ## Further Notes
 
 - Read [What signal picks the clipboard backend](../portable-dotfiles/issues/09-clipboard-backend-signal.md)
-  in full before implementing — most of its value is in the reasoning for *why* the branch was wrong,
+  in full before implementing, most of its value is in the reasoning for *why* the branch was wrong,
   not just the resulting diff, and it documents the exact commands used to discover `get-clipboard
   buffer` and to confirm `@copy_backend_remote_tunnel_port` is read by nothing.
 - `docs/adr/0001-theme-switching-per-app-strategy.md` and `CONTEXT.md`'s **Session Fact** entry

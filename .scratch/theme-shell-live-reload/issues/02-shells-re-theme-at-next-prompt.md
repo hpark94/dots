@@ -1,4 +1,4 @@
-# 02 — Already-open shells re-theme at the next prompt
+# 02: Already-open shells re-theme at the next prompt
 
 **What to build:** An already-open shell picks up a Theme Mode change on its own,
 at its next prompt, with nothing to restart. After a switch, the next `fzf`
@@ -19,7 +19,7 @@ change-detection gate). The init files have no
 OpenCode twin (the twin convention covers `CLAUDE.md`/`AGENTS.md` only), so the
 hook is authored once per shell directly in each init file.
 
-**Blocked by:** 01 — the fragment must be written atomically before it is sourced
+**Blocked by:** 01, the fragment must be written atomically before it is sourced
 on every prompt.
 
 **Status:** implemented

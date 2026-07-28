@@ -1,13 +1,13 @@
-# 02 — Role-keyed remote tmux accent
+# 02: Role-keyed remote tmux accent
 
 **What to build:** A Headless machine's tmux status bar is visually distinguishable from the
 Desktop's at a glance, replacing the one useful thing the now-deleted `.tmux.remote.conf` provided.
-The accent is decided fresh every time the tmux color fragment is generated — including when a
-Headless machine's own render step regenerates it — so it can never go stale across detaching and
+The accent is decided fresh every time the tmux color fragment is generated, including when a
+Headless machine's own render step regenerates it, so it can never go stale across detaching and
 reattaching through a different client, the way the deleted file's once-evaluated branch could.
 
 **Blocked by:** `theme-switch` Role gate + render-only entry point (ticket 05 in the
-theme-switch-expansion ticket set) — this ticket needs the Role-reading capability that one adds to
+theme-switch-expansion ticket set), this ticket needs the Role-reading capability that one adds to
 `theme-switch`.
 
 **Status:** done
@@ -27,7 +27,7 @@ fragment on a Marker-less machine, per the spec's Role-gate reconciliation note.
       accents) to a different, already-existing palette slot. The Desktop's accent is unchanged.
       (Note: the original wording named `display-panes-active-colour` as an accent position, but that
       option is `color3`, not the accent, and is left untouched; the accent slot is `display-panes-colour`.)
-- [x] No new Canonical Palette role is introduced — the swap reuses the existing `color1` slot.
+- [x] No new Canonical Palette role is introduced, the swap reuses the existing `color1` slot.
 - [x] Verified: a Desktop's tmux status bar keeps its normal `color4` accent; a Headless machine's tmux
       fragment (generated via the `--render` render-only entry point, against the real palette) shows
       the distinct `color1` accent in both light and dark Theme Mode. Confirmed live end to end:
@@ -43,5 +43,5 @@ fragment on a Marker-less machine, per the spec's Role-gate reconciliation note.
 
 **Further Notes:** See `.scratch/clipboard-rewire/spec.md`, Implementation Decisions → "The remote
 status bar accent becomes Role-keyed, not file-gated." This ticket and the theme-switch-expansion
-ticket set's Headless push both touch `theme-switch`'s tmux generator — implement this one after the
+ticket set's Headless push both touch `theme-switch`'s tmux generator, implement this one after the
 Role gate ticket lands, using the same Role-reading code it introduces rather than adding a second copy.

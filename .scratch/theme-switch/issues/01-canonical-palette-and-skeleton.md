@@ -1,8 +1,8 @@
-# 01 — Canonical palette + `theme-switch` skeleton
+# 01: Canonical palette + `theme-switch` skeleton
 
-**What to build:** The foundational Canonical Palette files and the `theme-switch` script skeleton — mode resolution, state persistence, and the switch notification — with no app integrations wired up yet. Running `theme-switch dark`/`light`/`toggle` should work end-to-end at the level of "the Theme Mode is now persisted and I got a notification," even though no app reacts to it yet.
+**What to build:** The foundational Canonical Palette files and the `theme-switch` script skeleton, mode resolution, state persistence, and the switch notification, with no app integrations wired up yet. Running `theme-switch dark`/`light`/`toggle` should work end-to-end at the level of "the Theme Mode is now persisted and I got a notification," even though no app reacts to it yet.
 
-**Blocked by:** None — can start immediately
+**Blocked by:** None, can start immediately
 
 **Status:** done
 
@@ -12,7 +12,7 @@
 - [x] `theme-switch toggle` reads the existing state file and flips to the opposite mode; if no state file exists yet, it picks a sensible default.
 - [x] Each invocation fires `notify-send "Theme" "Switched to <mode> mode"`.
 - [x] `$XDG_STATE_HOME/theme/` (or its default path) is added to `.gitignore` so generated artifacts never show up as untracked/dirty.
-- [x] A test framework (bats or equivalent — pick whatever fits the existing toolchain in `.config/mise/config.toml`) is set up, with tests for `resolve_mode` covering: explicit `dark`, explicit `light`, `toggle` from an existing state file, and `toggle` with no existing state file.
+- [x] A test framework (bats or equivalent, pick whatever fits the existing toolchain in `.config/mise/config.toml`) is set up, with tests for `resolve_mode` covering: explicit `dark`, explicit `light`, `toggle` from an existing state file, and `toggle` with no existing state file.
 
 ## Comments
 

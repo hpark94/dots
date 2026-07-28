@@ -1,4 +1,4 @@
-# 03 — `bootstrap.sh` core sequence
+# 03: `bootstrap.sh` core sequence
 
 **What to build:** Running one script with one argument takes a machine from a bare `git clone` to a
 fully built toolchain: `stow` succeeds even on a fresh Fedora `$HOME`, the Role Marker and a
@@ -8,7 +8,7 @@ than waiting on first interactive use. The whole script is safe to re-run on a m
 fully set up, and safe to run against a machine that already has the dotfiles deployed by hand with no
 Marker and no state at all.
 
-**Blocked by:** [01 — `.gitconfig` split](01-gitconfig-split.md) — the gitconfig stub this script
+**Blocked by:** [01: `.gitconfig` split](01-gitconfig-split.md), the gitconfig stub this script
 writes is only meaningful once the tracked shared file it includes actually exists.
 
 **Status:** done
@@ -22,7 +22,7 @@ Verified done on `main`. The core sequence landed in `05e0d03`; the `bat cache -
 - [x] The shared XDG container directories are created as real directories before `stow` runs, if they
       don't already exist as real directories.
 - [x] Any fresh-machine shell startup file that would collide with `stow` is backed up out of the way
-      first, but only if it's a real file and not already a symlink into the repo — idempotent on
+      first, but only if it's a real file and not already a symlink into the repo, idempotent on
       re-run.
 - [x] Runs `stow` for the whole package; a no-op on a machine that's already stowed.
 - [x] The Role Marker is left untouched if it already exists; otherwise it's written from the required

@@ -1,4 +1,4 @@
-# 03 — zathura: push integration + recolor
+# 03: zathura: push integration + recolor
 
 **What to build:** zathura's chrome (background, statusbar, inputbar, completion popup,
 notifications, highlights) follows Theme Mode instead of being permanently stuck on the dark palette
@@ -6,7 +6,7 @@ it hardcodes today. Dark mode additionally recolors PDF pages themselves; light 
 in their true colors. The existing manual recolor-toggle keybind keeps working exactly as it does
 today, holding until the next theme switch reasserts the generated value.
 
-**Blocked by:** None — can start immediately.
+**Blocked by:** None, can start immediately.
 
 **Status:** done
 
@@ -27,7 +27,7 @@ switch.
 - [x] Every color-bearing setting currently hardcoded directly in the tracked zathura config (chrome
       colors, highlight colors, and the recolor on/off + recolor light/dark colors) moves out into a
       generated fragment, included from the tracked config after its non-color settings (keybinds,
-      window/scroll/font options stay tracked and unchanged). The include path is relative — zathura's
+      window/scroll/font options stay tracked and unchanged). The include path is relative, zathura's
       include directive does not expand `~`.
 - [x] The generated fragment's colors resolve from the Canonical Palette per mode.
 - [x] Dark mode's fragment turns recolor on, with its light/dark recolor colors derived from the
@@ -36,7 +36,7 @@ switch.
       config-reload method, on every switch.
 - [x] The existing manual recolor-toggle keybind is untouched and still works; a theme switch
       afterward correctly resets it back to whatever the new mode's fragment specifies (this is
-      expected — zathura cannot report back a manually-overridden value for the switch to preserve).
+      expected, zathura cannot report back a manually-overridden value for the switch to preserve).
 - [x] Manually verified: toggling dark/light with a zathura window open re-themes its chrome and
       recolor state immediately, without closing and reopening the document.
 - [x] `theme-switch.bats` gains coverage for the new generator function (exact fragment contents,
@@ -45,7 +45,7 @@ switch.
 
 **Further Notes:** See `.scratch/theme-switch-expansion/spec.md`, Implementation Decisions → "zathura:
 push, generated fragment plus D-Bus `SourceConfig`." The config-reload method's exact re-application
-of the recolor setting was confirmed by reading zathura's source, not by direct observation — confirm
+of the recolor setting was confirmed by reading zathura's source, not by direct observation, confirm
 it directly while implementing.
 
 ## Comments
