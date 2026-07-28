@@ -30,6 +30,15 @@ desktop/OS light-dark preference." The portal value waybar reads is written by o
 so switching remains an explicit user action; waybar merely learns about it by subscription instead
 of by signal. Nothing follows an external or scheduled source.
 
+delta, the git pager, was wired in later as another next-launch include-fragment app,
+the same shape as ghostty and fuzzel. `theme-switch` writes a gitignored `delta.gitconfig`
+fragment naming the mode's bat syntax theme (`hp_light` / `hp_dark`), and the tracked
+`.gitconfig.shared` `[include]`s it. delta has no persistent instance to signal; git spawns
+it fresh per invocation, so the next diff is always current with no apply step. lazygit
+inherits this by using delta as its own pager, and re-themes on its next diff too. This also
+keeps the tracked/generated split intact: delta rides bat's already-tracked `hp_*` Selected
+Themes, and only the gitignored fragment is generated.
+
 All Generated Config fragments live outside the tracked dotfiles tree (gitignored under `~/.local/state/theme/`) so `git status` stays clean after every switch. Only the Canonical Palette source files and the hand-authored Selected Themes are tracked in git.
 
 Considered and rejected: forcing every app through one uniform "generate a file and reload" pipeline. This would have meant either accepting stale/dirty git diffs on tracked configs (ghostty, nvim, bat, .zshrc) on every switch, or inventing fake reload mechanisms (simulated keypresses, nvim RPC sockets) for apps that don't need them.
