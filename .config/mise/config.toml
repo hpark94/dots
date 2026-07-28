@@ -8,6 +8,8 @@ jq = "1.8.1"
 ripgrep = "15.2.0"
 tree-sitter = "0.26.11"
 zoxide = "0.10.0"
+direnv = "2.37.1"
+delta = "0.19.2"
 
 bats = "1.13.0"
 claude = "latest"
