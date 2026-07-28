@@ -380,6 +380,17 @@ apply_foot() {
 	pkill -"$sig" -x foot >/dev/null 2>&1 || true
 }
 
+# ghostty 1.3.1 re-reads its config on SIGUSR2 and applies theme/color changes
+# to running surfaces, so a single signal is enough: generate_ghostty already
+# rewrote the theme fragment this render, and the reload picks it up. Unlike
+# foot (which preloads both palettes and needs a per-mode signal to select one),
+# ghostty needs no mode-specific signal.
+apply_ghostty() {
+	# $1 (mode) is unused: the reload is mode-independent. The parameter is kept
+	# for symmetry with the other apply_* call sites.
+	pkill -USR2 -x ghostty >/dev/null 2>&1 || true
+}
+
 apply_sway() {
 	local mode=$1
 	if [[ -n "${SWAYSOCK:-}" ]] && command -v swaymsg >/dev/null 2>&1; then
@@ -496,6 +507,7 @@ render() {
 	generate_fuzzel "$mode" "$out_dir"
 
 	apply_foot "$mode"
+	apply_ghostty "$mode"
 	apply_sway "$mode"
 	apply_tmux "$mode"
 	apply_gtk "$mode"

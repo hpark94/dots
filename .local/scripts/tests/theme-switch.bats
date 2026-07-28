@@ -189,6 +189,11 @@ stub_externals() {
 	[ "$status" -eq 0 ]
 }
 
+@test "apply_ghostty does not error when no ghostty process is running" {
+	run apply_ghostty dark
+	[ "$status" -eq 0 ]
+}
+
 @test "apply_sway does not error and skips live commands when SWAYSOCK is unset" {
 	run apply_sway dark
 	[ "$status" -eq 0 ]
