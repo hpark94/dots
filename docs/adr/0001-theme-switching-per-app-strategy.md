@@ -34,8 +34,7 @@ delta, the git pager, was wired in later as another next-launch include-fragment
 the same shape as ghostty and fuzzel. `theme-switch` writes a gitignored `delta.gitconfig`
 fragment naming the mode's bat syntax theme (`hp_light` / `hp_dark`), and the tracked
 `.gitconfig.shared` `[include]`s it. delta has no persistent instance to signal; git spawns
-it fresh per invocation, so the next diff is always current with no apply step. lazygit
-inherits this by using delta as its own pager, and re-themes on its next diff too. This also
+it fresh per invocation, so the next diff is always current with no apply step. This also
 keeps the tracked/generated split intact: delta rides bat's already-tracked `hp_*` Selected
 Themes, and only the gitignored fragment is generated.
 
