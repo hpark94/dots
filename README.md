@@ -25,11 +25,18 @@ via SSH or working locally, I want same snappiness and set of tools.
 
 ## Installation
 
-From a bare machine to a fully built one in three steps:
+From a bare machine to a fully built one in four steps:
 
 1. Install `git` and `stow` (stock packages on every target distro).
 2. Clone this repo to `~/dots`: `git clone <repo-url> ~/dots`.
-3. Run `~/dots/bootstrap.sh <desktop|headless>`.
+3. Export a GitHub API token: `export GITHUB_TOKEN=<token>`. A classic PAT with
+   no scopes is enough. Without one, `bootstrap.sh` aborts before installing
+   anything slow: the pinned toolchain pulls dozens of GitHub-hosted releases,
+   and GitHub's unauthenticated ceiling of 60 requests per hour runs out partway
+   through, leaving the remaining tools silently uninstalled. `mise` also
+   accepts a token from an authenticated `gh` CLI, but `gh` is not part of this
+   toolchain, so on a fresh machine `GITHUB_TOKEN` is the only route.
+4. Run `~/dots/bootstrap.sh <desktop|headless>`.
 
 `bootstrap.sh` handles everything else (stow, the Role Marker, `mise` and its
 toolchain, tmux/nvim/zinit plugins, and the default theme state). It is
