@@ -403,13 +403,28 @@ apply_sway() {
 	fi
 }
 
+# The headless push runs --render through a non-interactive shell, which never
+# activates mise, so the mise shims are off PATH and a bare `tmux` resolves to
+# the system client. A system client cannot necessarily speak to a server that
+# a mise-managed tmux started (an older protocol version just reports "server
+# exited unexpectedly"), so the client has to be resolved explicitly.
+tmux_bin() {
+	local shim="${XDG_DATA_HOME:-$HOME/.local/share}/mise/shims/tmux"
+	if [[ -x "$shim" ]]; then
+		printf '%s\n' "$shim"
+	else
+		printf 'tmux\n'
+	fi
+}
+
 apply_tmux() {
-	local mode=$1
-	if command -v tmux >/dev/null 2>&1 && tmux list-sessions >/dev/null 2>&1; then
+	local mode=$1 tmux_cmd
+	tmux_cmd=$(tmux_bin)
+	if command -v "$tmux_cmd" >/dev/null 2>&1 && "$tmux_cmd" list-sessions >/dev/null 2>&1; then
 		local pairs i
 		tmux_option_pairs "$mode" pairs
 		for ((i = 0; i < ${#pairs[@]}; i += 2)); do
-			tmux set-option -g "${pairs[i]}" "${pairs[i + 1]}" >/dev/null 2>&1 || true
+			"$tmux_cmd" set-option -g "${pairs[i]}" "${pairs[i + 1]}" >/dev/null 2>&1 || true
 		done
 	fi
 }

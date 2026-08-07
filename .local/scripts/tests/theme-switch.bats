@@ -221,9 +221,64 @@ stub_externals() {
 	[[ "$output" == *'set -g mode-style "bg=#10000c"'* ]]
 }
 
-@test "apply_tmux does not error when no tmux server is running" {
+# Writes a logging tmux stub at $1 that reports a live server, so the
+# set-option loop is reached; every invocation is appended to $2. Pass $3 to
+# override the exit status of `list-sessions` and simulate a dead server.
+setup_tmux_stub() {
+	local path=$1 log=$2 list_status=${3:-0}
+	mkdir -p "$(dirname "$path")"
+	cat >"$path" <<STUB_EOF
+#!/usr/bin/env bash
+printf '%s\n' "\$*" >>"$log"
+[[ "\$1" == "list-sessions" ]] && exit $list_status
+exit 0
+STUB_EOF
+	chmod +x "$path"
+}
+
+# The tmux socket lives outside $HOME, so an unstubbed apply_tmux would reach
+# the real server of whoever runs the suite and repaint their live session with
+# the fake test palette. Every test here therefore drives a stub.
+@test "apply_tmux skips the option loop when no tmux server is running" {
+	unset XDG_DATA_HOME
+	local path_log="$BATS_TEST_TMPDIR/path-tmux.log"
+	setup_tmux_stub "$BATS_TEST_TMPDIR/tmux-bin/tmux" "$path_log" 1
+	PATH="$BATS_TEST_TMPDIR/tmux-bin:$PATH"
+
 	run apply_tmux dark
+
 	[ "$status" -eq 0 ]
+	run cat "$path_log"
+	[[ "$output" == *"list-sessions"* ]]
+	[[ "$output" != *"set-option"* ]]
+}
+
+@test "apply_tmux drives the mise shim, not whatever tmux PATH resolves to" {
+	unset XDG_DATA_HOME
+	local shim_log="$BATS_TEST_TMPDIR/shim-tmux.log" path_log="$BATS_TEST_TMPDIR/path-tmux.log"
+	setup_tmux_stub "$HOME/.local/share/mise/shims/tmux" "$shim_log"
+	setup_tmux_stub "$BATS_TEST_TMPDIR/tmux-bin/tmux" "$path_log"
+	PATH="$BATS_TEST_TMPDIR/tmux-bin:$PATH"
+
+	apply_tmux dark
+
+	run cat "$shim_log"
+	[[ "$output" == *"list-sessions"* ]]
+	[[ "$output" == *"set-option -g "* ]]
+	[ ! -e "$path_log" ]
+}
+
+@test "apply_tmux falls back to the PATH tmux when no mise shim is installed" {
+	unset XDG_DATA_HOME
+	local path_log="$BATS_TEST_TMPDIR/path-tmux.log"
+	setup_tmux_stub "$BATS_TEST_TMPDIR/tmux-bin/tmux" "$path_log"
+	PATH="$BATS_TEST_TMPDIR/tmux-bin:$PATH"
+
+	apply_tmux dark
+
+	run cat "$path_log"
+	[[ "$output" == *"list-sessions"* ]]
+	[[ "$output" == *"set-option -g "* ]]
 }
 
 # --- Role-keyed tmux accent (clipboard-rewire ticket 02) ---
