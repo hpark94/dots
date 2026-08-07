@@ -15,7 +15,6 @@ bats = "1.13.0"
 claude = "latest"
 lazygit = "0.63.1"
 neovim = "0.12.4"
-resvg = "0.47.0"
 tmux = "3.7b"
 yazi = "26.5.6"
 
