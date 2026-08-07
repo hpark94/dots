@@ -468,12 +468,16 @@ ssh_config_hosts() {
 push_headless() {
 	local mode=$1 host
 	command -v ssh >/dev/null 2>&1 || return 0
+	# This loop's stdin is the host list, and the render ssh below forwards its
+	# stdin to the remote command, so without -n it drains the list and the loop
+	# ends at the first live host. -O check never reads stdin; it carries -n only
+	# so both calls stay consistent and stdin-safe if either is ever reshaped.
 	while read -r host; do
 		[[ -n "$host" ]] || continue
-		if timeout 5 ssh -o BatchMode=yes -O check "$host" >/dev/null 2>&1; then
+		if timeout 5 ssh -n -o BatchMode=yes -O check "$host" >/dev/null 2>&1; then
 			# The tilde is expanded by the remote shell, not the local one.
 			# shellcheck disable=SC2088
-			timeout 10 ssh -o BatchMode=yes "$host" \
+			timeout 10 ssh -n -o BatchMode=yes "$host" \
 				"~/.local/scripts/theme-switch --render $mode" >/dev/null 2>&1 || true
 		fi
 	done < <(ssh_config_hosts)

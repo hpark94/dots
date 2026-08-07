@@ -566,6 +566,53 @@ stub_externals() {
 	[ "$status" -eq 0 ]
 }
 
+# An ssh stub faithful to real ssh in the one way that matters here: a control
+# command (-O check) never touches stdin, while a remote-command invocation
+# forwards stdin to the remote and so reads it to EOF unless given -n. It logs
+# every invocation so a test can assert how far the host loop actually got, and
+# only `beta` has a live master.
+setup_ssh_stub() {
+	local bin="$BATS_TEST_TMPDIR/ssh-bin"
+	mkdir -p "$bin"
+	export SSH_LOG="$BATS_TEST_TMPDIR/ssh.log"
+	: >"$SSH_LOG"
+	cat >"$bin/ssh" <<'STUB_EOF'
+#!/usr/bin/env bash
+consume=1
+check=0
+for arg in "$@"; do
+	[[ "$arg" == "-n" ]] && consume=0
+	[[ "$arg" == "-O" ]] && check=1
+done
+if ((check)); then
+	host="${*: -1}"
+	printf 'check %s\n' "$host" >>"$SSH_LOG"
+	[[ "$host" == "beta" ]]
+	exit $?
+fi
+((consume)) && cat >/dev/null
+printf 'render %s\n' "${*: -2:1}" >>"$SSH_LOG"
+STUB_EOF
+	chmod +x "$bin/ssh"
+	PATH="$bin:$PATH"
+}
+
+@test "push_headless reaches every configured host, not just up to the first live one" {
+	mkdir -p "$HOME/.ssh"
+	printf 'Host alpha\nHost beta\nHost gamma\nHost delta\n' >"$HOME/.ssh/config"
+	setup_ssh_stub
+
+	push_headless dark
+
+	run cat "$SSH_LOG"
+	[[ "$output" == *"check alpha"* ]]
+	[[ "$output" == *"check beta"* ]]
+	[[ "$output" == *"render beta"* ]]
+	# The regression: hosts after the first live one were silently never seen.
+	[[ "$output" == *"check gamma"* ]]
+	[[ "$output" == *"check delta"* ]]
+}
+
 @test "ssh_config_hosts lists concrete hosts and skips pattern entries" {
 	mkdir -p "$HOME/.ssh"
 	printf 'Host alpha beta\n    HostName x\nHost *.example\n    User y\nHost *\n    ControlMaster auto\n' \

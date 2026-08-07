@@ -72,3 +72,5 @@ fixed in advance, confirm both against observed behavior while building this.
 ## Comments
 
 **2026-07-26 (owner):** Manually verified against ubuntu-server. Test A (live toggle over open ControlMaster updates the remote tmux session), Test B (cold connect / catch-up renders the pushed mode, no-state-file falls back to light with no tmux error), and Test C (neither push path hangs when the host is unreachable) all pass with no errors.
+
+**2026-08-07 (owner):** That verification only ever covered a single host, so it missed a defect in `push_headless`: the host loop's stdin is the host list itself (`done < <(ssh_config_hosts)`), and the inner `ssh` inherited it and read it to EOF. The loop therefore ended at the first host with a live ControlMaster, and every host after it was silently never even `-O check`ed. Observed live with `uni-cluster, work-pvm, work-tavm, ubuntu-server`: the push stopped after `work-tavm` and `ubuntu-server` never got one. Fixed by adding `-n` to both `ssh` calls in the loop, plus a bats regression test that asserts every configured host is reached.
