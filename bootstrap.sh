@@ -44,6 +44,16 @@ theme_switch_bin() {
 	echo "$REPO_DIR/.local/scripts/theme-switch"
 }
 
+# mise may have just been installed into a dir that bootstrap's non-interactive
+# process does not have on PATH, so fall back to where the installer puts it.
+mise_bin() {
+	if command -v mise >/dev/null 2>&1; then
+		echo mise
+	else
+		echo "$HOME/.local/bin/mise"
+	fi
+}
+
 # 1. The shared XDG namespaces must be real dirs before stow, or stow folds each
 #    whole namespace into one symlink into the repo and mise/zinit/nvim plugins
 #    and the Role Marker all drift into the working tree.
@@ -102,9 +112,28 @@ install_mise() {
 # 6b. Activate mise in this process (not just for later shells) so every step
 #     below resolves the mise-managed toolchain, including the pinned neovim.
 activate_mise() {
-	local bin=mise
-	command -v mise >/dev/null 2>&1 || bin="$HOME/.local/bin/mise"
-	eval "$("$bin" activate bash --shims)"
+	eval "$("$(mise_bin)" activate bash --shims)"
+}
+
+# 6c. Abort before the multi-minute install unless mise can resolve a GitHub API
+#     token: unauthenticated, GitHub allows 60 requests/hour, which mise blows
+#     through partway and then skips the remaining tools without failing loudly.
+require_github_token() {
+	# The env sources come first, mirroring mise's own precedence, and they also
+	# keep this gate usable on a retrofit machine whose older mise has no `token`
+	# subcommand: there the command below would exit nonzero and abort falsely.
+	if [[ -n "${MISE_GITHUB_TOKEN:-}" || -n "${GITHUB_TOKEN:-}" || -n "${GITHUB_API_TOKEN:-}" ]]; then
+		return 0
+	fi
+	# Covers mise's remaining sources, above all a gh CLI login. --raw is what
+	# makes the exit status meaningful (plain `mise token github` exits 0 and
+	# prints "(none)"); its stdout is dropped so no token reaches the log.
+	if "$(mise_bin)" token github --raw >/dev/null 2>&1; then
+		return 0
+	fi
+	err "no GitHub API token; mise would hit GitHub's 60 requests/hour unauthenticated limit and silently skip tools"
+	printf 'Set GITHUB_TOKEN and re-run: a classic PAT with no scopes suffices and raises the limit to 5000/hour.\n' >&2
+	exit 1
 }
 
 # 7. Install everything the tracked mise config declares. Slow on first run
@@ -199,6 +228,7 @@ main() {
 	write_gitconfig_stub
 	install_mise
 	activate_mise
+	require_github_token
 	mise_install
 	clone_tpm
 	install_tpm_plugins

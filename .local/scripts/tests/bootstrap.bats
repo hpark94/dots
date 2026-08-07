@@ -89,6 +89,61 @@ failing_stubs() {
 	[ "$status" -eq 0 ]
 }
 
+# Put a mise stub exiting with the given status in the given dir, standing in
+# for the `mise token github --raw` probe. It records its arguments so a test
+# can pin the invocation, and its absence proves mise was never reached.
+stub_mise() {
+	local dir=$1 code=$2
+	mkdir -p "$dir"
+	cat >"$dir/mise" <<-EOF
+		#!/usr/bin/env bash
+		printf '%s\n' "\$*" >>"\$BATS_TEST_TMPDIR/mise-args"
+		exit $code
+	EOF
+	chmod +x "$dir/mise"
+}
+
+# The suite runs on developer machines that very likely export a token, so a
+# scenario needing its absence has to clear all three sources itself.
+clear_token_env() {
+	unset MISE_GITHUB_TOKEN GITHUB_TOKEN GITHUB_API_TOKEN
+}
+
+@test "require_github_token accepts an env token without invoking mise" {
+	clear_token_env
+	# A passing stub: only the missing args file can prove the env source is
+	# consulted first, which is what keeps the gate working where mise has no
+	# `token` subcommand.
+	stub_mise "$BATS_TEST_TMPDIR/stub-bin" 0
+	GITHUB_TOKEN=t PATH="$BATS_TEST_TMPDIR/stub-bin:$PATH" run require_github_token
+	[ "$status" -eq 0 ]
+	[ ! -e "$BATS_TEST_TMPDIR/mise-args" ]
+}
+
+@test "require_github_token accepts a token mise resolves itself" {
+	clear_token_env
+	stub_mise "$BATS_TEST_TMPDIR/stub-bin" 0
+	PATH="$BATS_TEST_TMPDIR/stub-bin:$PATH" run require_github_token
+	[ "$status" -eq 0 ]
+	[ "$(cat "$BATS_TEST_TMPDIR/mise-args")" = "token github --raw" ]
+}
+
+@test "require_github_token probes mise by path when it is off PATH" {
+	clear_token_env
+	stub_mise "$HOME/.local/bin" 0
+	PATH="/usr/bin:/bin" run require_github_token
+	[ "$status" -eq 0 ]
+	[ "$(cat "$BATS_TEST_TMPDIR/mise-args")" = "token github --raw" ]
+}
+
+@test "require_github_token fails when no token can be resolved" {
+	clear_token_env
+	stub_mise "$BATS_TEST_TMPDIR/stub-bin" 1
+	PATH="$BATS_TEST_TMPDIR/stub-bin:$PATH" run require_github_token
+	[ "$status" -ne 0 ]
+	[ "$(cat "$BATS_TEST_TMPDIR/mise-args")" = "token github --raw" ]
+}
+
 @test "clone_tpm skips cloning when tpm is already present" {
 	mkdir -p "$(tpm_dir)"
 	failing_stubs git
