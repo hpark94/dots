@@ -12,7 +12,7 @@ return {
         signature = {
             enabled = false,
             window = {
-                border = "rounded",
+                border = "single",
             },
         },
         appearance = {
@@ -40,7 +40,7 @@ return {
         },
         completion = {
             menu = {
-                border = "rounded",
+                border = "single",
                 scrolloff = 2,
                 scrollbar = false,
                 draw = {
@@ -53,7 +53,7 @@ return {
             },
             documentation = {
                 window = {
-                    border = "rounded",
+                    border = "single",
                     max_width = 50,
                     scrollbar = false,
                     winhighlight = "Normal:BlinkCmpDoc,FloatBorder:BlinkCmpDocBorder,EndOfBuffer:BlinkCmpDoc",

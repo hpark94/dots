@@ -15,6 +15,17 @@ return {
             inc_rename = false,
             lsp_doc_border = true,
         },
+        -- noice goes through nui, which ignores vim.o.winborder once a style is set.
+        views = {
+            hover = { border = { style = "single" } },
+            popup = { border = { style = "single" } },
+            cmdline_popup = { border = { style = "single" } },
+            cmdline_popupmenu = { border = { style = "single" } },
+            cmdline_input = { border = { style = "single" } },
+            confirm = { border = { style = "single" } },
+            -- This one ships borderless, so keep winborder from adding a border.
+            popupmenu = { border = { style = "none" } },
+        },
         routes = {
             {
                 view = "notify",

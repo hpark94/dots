@@ -4,6 +4,10 @@ return {
     opts = {
         delay = 500,
         preset = "helix",
+        -- The helix preset hardcodes its border, so vim.o.winborder is ignored.
+        win = {
+            border = "single",
+        },
         icons = {
             mappings = false,
         },

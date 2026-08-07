@@ -44,7 +44,7 @@ autocmd("LspAttach", {
                 Snacks.picker.lsp_definitions()
             end, "Goto Definition")
             map("K", function()
-                vim.lsp.buf.hover({ border = "rounded" })
+                vim.lsp.buf.hover({ border = "single" })
             end, "LSP Hover")
             map("gD", function()
                 Snacks.picker.lsp_declarations()

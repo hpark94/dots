@@ -3,8 +3,10 @@ return {
     config = function()
         local mappings = require("core.mappings")
         require("grug-far").setup({
-            -- options, see Configuration section below
-            -- there are no required options atm
+            -- These windows hardcode a rounded border, ignoring vim.o.winborder.
+            helpWindow = { border = "single" },
+            historyWindow = { border = "single" },
+            previewWindow = { border = "single" },
         })
         mappings.grugfar()
     end,

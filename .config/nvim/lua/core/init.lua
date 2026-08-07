@@ -80,6 +80,9 @@ o.showmode = false
 o.splitright = true
 o.splitbelow = true
 
+-- Float border
+o.winborder = "single"
+
 -- QOL
 o.cursorline = true
 o.confirm = true

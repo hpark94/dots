@@ -162,7 +162,7 @@ M.notify = function()
             col = math.floor((vim.o.columns - width) / 2),
             row = math.floor((vim.o.lines - height) / 2),
             style = "minimal",
-            border = "rounded",
+            border = "single",
             title = " Notifications ",
             title_pos = "center",
         }
