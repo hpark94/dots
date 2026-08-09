@@ -34,5 +34,5 @@ mode=$(tr -d '[:space:]' <"$state_file")
 # tilde is expanded by the remote shell, not the local one.
 # shellcheck disable=SC2088
 (timeout 10 ssh -o BatchMode=yes "$host" \
-	"~/.local/scripts/theme-switch --render $mode" >/dev/null 2>&1 || true) &
+    "~/.local/scripts/theme-switch --render $mode" >/dev/null 2>&1 || true) &
 exit 0

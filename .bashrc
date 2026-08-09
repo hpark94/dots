@@ -2,15 +2,15 @@ _has() { command -v "$1" >/dev/null 2>&1; }
 shopt -s checkwinsize
 
 _venv_prompt() {
-	if [ -n "$VIRTUAL_ENV" ]; then
-		printf '(%s) ' "$(basename "$VIRTUAL_ENV")"
-	fi
+    if [ -n "$VIRTUAL_ENV" ]; then
+        printf '(%s) ' "$(basename "$VIRTUAL_ENV")"
+    fi
 }
 
 if [ -t 1 ] && tput colors >/dev/null 2>&1 && [ "$(tput colors)" -ge 8 ]; then
-	PS1='\[\033[01;33m\]\[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\w\[\033[00m\]\n$(_venv_prompt)$ '
+    PS1='\[\033[01;33m\]\[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\w\[\033[00m\]\n$(_venv_prompt)$ '
 else
-	PS1='\u@\h:\w\n$(_venv_prompt)$'
+    PS1='\u@\h:\w\n$(_venv_prompt)$'
 fi
 
 HISTFILE=~/.bash_history
@@ -22,7 +22,7 @@ source "$HOME/.envs.sh"
 _has mise && eval "$(~/.local/bin/mise activate bash)"
 
 _theme_reload() {
-	[ -f "$HOME/.local/state/theme/shell-env.sh" ] && source "$HOME/.local/state/theme/shell-env.sh"
+    [ -f "$HOME/.local/state/theme/shell-env.sh" ] && source "$HOME/.local/state/theme/shell-env.sh"
 }
 _theme_reload
 

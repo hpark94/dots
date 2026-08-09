@@ -10,13 +10,13 @@ set -euo pipefail
 
 # Print the file path with $HOME collapsed to ~, as the sole stdout line.
 print_result() {
-	local absolute_path
-	absolute_path=$(realpath "$1")
-	if [[ "$absolute_path" == "$HOME"* ]]; then
-		printf '~%s\n' "${absolute_path#"$HOME"}"
-	else
-		printf '%s\n' "$absolute_path"
-	fi
+    local absolute_path
+    absolute_path=$(realpath "$1")
+    if [[ "$absolute_path" == "$HOME"* ]]; then
+        printf '~%s\n' "${absolute_path#"$HOME"}"
+    else
+        printf '%s\n' "$absolute_path"
+    fi
 }
 
 # Percent-encode a path into an RFC 3986 file:// path. Keep unreserved bytes and
@@ -24,52 +24,52 @@ print_result() {
 # result round-trips through fp's `printf '%b' "${uri//%/\\x}"` decoder. Encode by
 # raw byte under LC_ALL=C so multibyte filenames survive.
 percent_encode() {
-	local string="$1" out="" i c hex
-	local LC_ALL=C
-	for ((i = 0; i < ${#string}; i++)); do
-		c="${string:i:1}"
-		case "$c" in
-		[a-zA-Z0-9._~/-]) out+="$c" ;;
-		*)
-			printf -v hex '%%%02X' "$(($(printf '%d' "'$c") & 0xFF))"
-			out+="$hex"
-			;;
-		esac
-	done
-	printf '%s' "$out"
+    local string="$1" out="" i c hex
+    local LC_ALL=C
+    for ((i = 0; i < ${#string}; i++)); do
+        c="${string:i:1}"
+        case "$c" in
+            [a-zA-Z0-9._~/-]) out+="$c" ;;
+            *)
+                printf -v hex '%%%02X' "$(($(printf '%d' "'$c") & 0xFF))"
+                out+="$hex"
+                ;;
+        esac
+    done
+    printf '%s' "$out"
 }
 
 main() {
-	if [[ $# -ne 1 ]]; then
-		echo "fy: usage: fy <file>" >&2
-		echo "fy: exactly one file argument required, got $#" >&2
-		exit 1
-	fi
+    if [[ $# -ne 1 ]]; then
+        echo "fy: usage: fy <file>" >&2
+        echo "fy: exactly one file argument required, got $#" >&2
+        exit 1
+    fi
 
-	local filepath="$1"
+    local filepath="$1"
 
-	if [[ ! -f "$filepath" ]]; then
-		echo "fy: file does not exist: $filepath" >&2
-		exit 1
-	fi
+    if [[ ! -f "$filepath" ]]; then
+        echo "fy: file does not exist: $filepath" >&2
+        exit 1
+    fi
 
-	if ! command -v wl-copy >/dev/null 2>&1; then
-		echo "fy: wl-copy not available. Is Wayland running?" >&2
-		exit 1
-	fi
+    if ! command -v wl-copy >/dev/null 2>&1; then
+        echo "fy: wl-copy not available. Is Wayland running?" >&2
+        exit 1
+    fi
 
-	local real_path encoded
-	real_path=$(realpath "$filepath")
-	encoded=$(percent_encode "$real_path")
+    local real_path encoded
+    real_path=$(realpath "$filepath")
+    encoded=$(percent_encode "$real_path")
 
-	if ! printf 'file://%s\r\n' "$encoded" | wl-copy --type text/uri-list; then
-		echo "fy: failed to copy file to clipboard. Is wl-copy available and Wayland running?" >&2
-		exit 1
-	fi
+    if ! printf 'file://%s\r\n' "$encoded" | wl-copy --type text/uri-list; then
+        echo "fy: failed to copy file to clipboard. Is wl-copy available and Wayland running?" >&2
+        exit 1
+    fi
 
-	print_result "$real_path"
+    print_result "$real_path"
 }
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-	main "$@"
+    main "$@"
 fi

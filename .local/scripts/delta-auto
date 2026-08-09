@@ -12,14 +12,14 @@ readonly WIDE_THRESHOLD=100
 
 cols=$(tput cols 2>/dev/null || true)
 if [[ ! "$cols" =~ ^[0-9]+$ ]]; then
-	cols=${COLUMNS:-0}
+    cols=${COLUMNS:-0}
 fi
 if [[ ! "$cols" =~ ^[0-9]+$ ]]; then
-	cols=0
+    cols=0
 fi
 
 if ((cols >= WIDE_THRESHOLD)); then
-	exec delta --side-by-side "$@"
+    exec delta --side-by-side "$@"
 fi
 
 exec delta "$@"
