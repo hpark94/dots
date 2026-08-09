@@ -51,7 +51,7 @@ handle_exe() {
 
 check_args() {
     if [[ -z "$2" || "$2" == --* || "$2" == -* ]]; then
-        echo "Error: Second argument ist not valid." >&2
+        echo "Error: Second argument is not valid." >&2
         exit 1
     fi
 }

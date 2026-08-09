@@ -1,16 +1,16 @@
 #!/usr/bin/env bash
 if ! git stash; then
-    echo "Fehler beim Stashen der Änderungen!" >&2
+    echo "Failed to stash changes." >&2
     exit 1
 fi
 
 if ! git pull; then
-    echo "Fehler beim Updaten der Dateien!" >&2
+    echo "Failed to pull updates." >&2
     exit 1
 fi
 
 if ! git stash pop; then
-    echo "Konflikt beim Stash Pop. Bitte manuell auflösen." >&2
+    echo "Conflict during stash pop. Resolve it manually." >&2
     exit 1
 fi
 
