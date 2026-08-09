@@ -1,3 +1,7 @@
+---
+status: superseded by ADR-0005
+---
+
 # Two agent instruction templates, split by model strength
 
 One generic starting-point instruction file has to serve both Claude Code (strong)
