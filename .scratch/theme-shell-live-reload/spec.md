@@ -44,18 +44,18 @@ script contributes no new code to make it happen.
    that a running editor, agent, ssh session, or any process in a pane is never
    disturbed by the theme switch.
 8. As a developer, I want non-interactive shells (scripts, subshells) to be
-   entirely unaffected by the re-theme mechanism, so that no background shell can
-   be accidentally signalled or terminated.
+   entirely unaffected by the re-theme mechanism, so that no background shell
+   can be accidentally signalled or terminated.
 9. As a developer, I want the switch script itself to gain no new code for this,
    so that the theming machinery stays as simple as it is today and the shell
    owns its own subscription.
 10. As a developer, I want the switch to keep `git status` clean, so that
     re-theming an open shell never produces a tracked diff.
 11. As a developer on a Headless machine, I want an already-open SSH shell to
-    re-theme at its next prompt when the Desktop pushes a mode, so that my remote
-    sessions follow the one global Theme Mode without my restarting them.
-12. As a developer, I want a switch that happens while a prompt is being drawn to
-    never expose a half-written fragment, so that I never see a broken
+    re-theme at its next prompt when the Desktop pushes a mode, so that my
+    remote sessions follow the one global Theme Mode without my restarting them.
+12. As a developer, I want a switch that happens while a prompt is being drawn
+    to never expose a half-written fragment, so that I never see a broken
     `FZF_DEFAULT_OPTS` or an unset `BAT_THEME` for a prompt.
 13. As a developer, I want direnv, mise, and zoxide to keep firing on every
     prompt after this change, so that adding the theme hook does not break the
@@ -77,16 +77,16 @@ script contributes no new code to make it happen.
   re-reads the Generated Config fragment on its own; the switch script is not
   taught to signal shells. This mirrors waybar's Pull integration and matches
   ADR-0003. Push (a `SIGUSR1` trap fanned out by `pkill`) is rejected because
-  `SIGUSR1`'s default disposition is to terminate any matched process lacking the
-  trap, endangering non-interactive shells and subshells; Pull avoids this by
-  construction because the hook exists only in the interactive init files.
+  `SIGUSR1`'s default disposition is to terminate any matched process lacking
+  the trap, endangering non-interactive shells and subshells; Pull avoids this
+  by construction because the hook exists only in the interactive init files.
 
 - **Trigger: a per-command hook.** zsh registers a `preexec` hook via
   `add-zsh-hook` and a `line-init` widget via `add-zle-hook-widget`; bash sets a
   `DEBUG` trap. Both run a shared `_theme_reload` function that re-sources the
-  shell-env fragment *before each command* rather than on the prompt. Firing on
-  the prompt (`precmd`/`PROMPT_COMMAND`) runs after the just-accepted command, so
-  the first `bat` or `fzf` right after a switch still saw the old mode (an
+  shell-env fragment _before each command_ rather than on the prompt. Firing on
+  the prompt (`precmd`/`PROMPT_COMMAND`) runs after the just-accepted command,
+  so the first `bat` or `fzf` right after a switch still saw the old mode (an
   off-by-one); firing before each command removes that lag. The zsh `line-init`
   hook additionally re-themes tools spawned by editor widgets (fzf-tab, Ctrl-R,
   Ctrl-T), since it fires once per prompt line and the fragment `export`s
@@ -96,15 +96,15 @@ script contributes no new code to make it happen.
   per-prompt hooks keep firing.
 
 - **Scope: the shell-env fragment only.** The hook re-sources only the generated
-  fragment carrying `FZF_DEFAULT_OPTS` and `BAT_THEME`, never the full shell init.
-  A full re-source would re-run plugin managers, completion init, keybindings,
-  ulimit, and tmux auto-attach, which is out of proportion to recoloring two
-  tools.
+  fragment carrying `FZF_DEFAULT_OPTS` and `BAT_THEME`, never the full shell
+  init. A full re-source would re-run plugin managers, completion init,
+  keybindings, ulimit, and tmux auto-attach, which is out of proportion to
+  recoloring two tools.
 
 - **No change-detection gate.** The hook re-sources unconditionally before every
-  command. The guarded work is two `export`s reading a two-line file; a gate cheap
-  enough to help costs about what it saves, and a `stat`-based gate forks a
-  process every command and costs more than the work it guards.
+  command. The guarded work is two `export`s reading a two-line file; a gate
+  cheap enough to help costs about what it saves, and a `stat`-based gate forks
+  a process every command and costs more than the work it guards.
 
 - **Single source of truth for the shell side.** The existing inline
   startup-source line in each interactive init is replaced by defining
@@ -120,41 +120,41 @@ script contributes no new code to make it happen.
 
 - **Cross-role behavior falls out for free.** Because the interactive init files
   are shared across Roles, an already-open SSH shell on a Headless machine
-  re-themes at its next command when the Desktop renders a mode via `--render`. No
-  Headless-specific code is added.
+  re-themes at its next command when the Desktop renders a mode via `--render`.
+  No Headless-specific code is added.
 
 ## Testing Decisions
 
 - **What a good test checks here:** the externally observable content of the
   Generated Config fragment, not how it is produced. Tests assert what a shell
-  would read, in the same style as the existing suite, and do not assert internal
-  helpers or the exact write sequence.
+  would read, in the same style as the existing suite, and do not assert
+  internal helpers or the exact write sequence.
 
-- **Seam:** the single, existing seam in `.local/scripts/tests/theme-switch.bats`,
-  which sources `theme-switch` and calls generator functions directly against a
-  temporary output directory, then inspects the written file. No new seam is
-  introduced. This is the highest available seam for the one change to the switch
-  script.
+- **Seam:** the single, existing seam in
+  `.local/scripts/tests/theme-switch.bats`, which sources `theme-switch` and
+  calls generator functions directly against a temporary output directory, then
+  inspects the written file. No new seam is introduced. This is the highest
+  available seam for the one change to the switch script.
 
 - **Module under test:** the shell-env generator (`generate_shell_env`). The
   atomic-write change is covered by asserting that after generation the fragment
   is complete and correct (the existing `FZF_DEFAULT_OPTS` / `BAT_THEME`
-  assertions continue to hold for both modes) and that no stray temporary file is
-  left behind in the output directory.
+  assertions continue to hold for both modes) and that no stray temporary file
+  is left behind in the output directory.
 
 - **Prior art:** the existing `generate_shell_env` tests for the light and dark
   palettes, and the pattern of the other `generate_*` tests, which call a
   generator against `$BATS_TEST_TMPDIR/out` and match the resulting file.
 
-- **The per-command hook is verified by manual smoke, not automated.** Its body is a
-  trivial `[ -f ] && source`; the risk lives in the interactive wiring
+- **The per-command hook is verified by manual smoke, not automated.** Its body
+  is a trivial `[ -f ] && source`; the risk lives in the interactive wiring
   (`add-zsh-hook`, `PROMPT_COMMAND` append), which cannot be exercised without
   standing up a full interactive shell with the plugin stack, and which would
   force extracting the function out of the init files purely to test it. Manual
   smoke: switch the Theme Mode in a live shell, confirm the next `fzf` and `bat`
   are themed and that direnv still fires each prompt, in both zsh and bash. The
-  Headless self-re-theme path, if smoke-tested, is exercised on the ubuntu-server
-  host per the repo's SSH-testing scope.
+  Headless self-re-theme path, if smoke-tested, is exercised on the
+  ubuntu-server host per the repo's SSH-testing scope.
 
 ## Out of Scope
 
