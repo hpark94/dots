@@ -53,7 +53,7 @@ limitation the testing decisions already named.
       upstream).
 - [x] `bat cache --build` runs every run, so bat registers the tracked custom
       themes (`hp_dark` / `hp_light` under `.config/bat/themes/`) instead of
-      warning `Unknown theme 'hp_dark', using     default` and falling back to a
+      warning `Unknown theme 'hp_dark', using default` and falling back to a
       built-in theme. Without this, `--theme-dark`/`--theme-light` in the stowed
       bat config point at themes bat has never cached, so a freshly deployed
       machine (Desktop or Headless) never renders the intended bat colors until

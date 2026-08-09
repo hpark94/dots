@@ -49,9 +49,8 @@ which are being overturned:
 - Its **Out of Scope** list names "waybar, rofi/wofi, mako/dunst (swaync
   itself), lock screen, wallpaper" as deliberately excluded.
 - Its **Out of Scope** list also rules out "any new palette roles beyond the
-  existing 16 ANSI colors
-  - bg/fg/selection," on the grounds that tmux and sway's bespoke values were
-    dropped rather than preserved as new roles.
+  existing 16 ANSI colors \+ bg/fg/selection," on the grounds that tmux and
+  sway's bespoke values were dropped rather than preserved as new roles.
 
 Per `docs/agents/domain.md`, if the answer contradicts
 `docs/adr/0001-theme-switching-per-app-strategy.md`, surface that explicitly

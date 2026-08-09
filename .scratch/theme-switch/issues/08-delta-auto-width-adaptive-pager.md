@@ -3,12 +3,11 @@
 **Status:** done
 
 Built and reviewed on `main`. `.local/scripts/delta-auto` added (side-by-side at
-
-> = 100 cols, else unified, args passed through, `exec delta`);
-> `core.pager = delta-auto` in `.gitconfig.shared`; lazygit left unified via its
-> own pager. Reviewer APPROVE; the one low-severity gap it noted (non-numeric
-> width untested) was closed with a 7th test. bats 7/7 for delta-auto, full
-> suite green, shellcheck clean.
+`>=` 100 cols, else unified, args passed through, `exec delta`);
+`core.pager = delta-auto` in `.gitconfig.shared`; lazygit left unified via its
+own pager. Reviewer APPROVE; the one low-severity gap it noted (non-numeric
+width untested) was closed with a 7th test. bats 7/7 for delta-auto, full suite
+green, shellcheck clean.
 
 ## Problem
 
@@ -57,7 +56,7 @@ better. We want the split to switch on automatically at a width threshold.
 - [ ] Extra args pass through to delta.
 - [ ] `core.pager = delta-auto` in `.gitconfig.shared`; lazygit pager unchanged.
 - [ ] `bats .local/scripts/tests/delta-auto.bats` passes;
-      `shellcheck     .local/scripts/delta-auto` is clean.
+      `shellcheck .local/scripts/delta-auto` is clean.
 
 ## Notes / out of scope
 
