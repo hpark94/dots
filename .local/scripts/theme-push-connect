@@ -9,7 +9,7 @@
 set -u
 
 host=${1:-}
-[[ -n "$host" ]] || exit 0
+[[ -n "${host}" ]] || exit 0
 
 # Recursion guard. The push below itself opens an SSH connection to $host; that
 # child ssh would re-fire this LocalCommand. The exported flag is inherited by
@@ -20,19 +20,19 @@ host=${1:-}
 export THEME_PUSH_INFLIGHT=1
 
 # Only a Desktop with a decided mode has anything to push.
-role_file="${XDG_CONFIG_HOME:-$HOME/.config}/dotfiles/role"
-[[ -r "$role_file" ]] || exit 0
-[[ "$(tr -d '[:space:]' <"$role_file")" == "desktop" ]] || exit 0
+role_file="${XDG_CONFIG_HOME:-${HOME}/.config}/dotfiles/role"
+[[ -r "${role_file}" ]] || exit 0
+[[ "$(tr -d '[:space:]' <"${role_file}")" == "desktop" ]] || exit 0
 
-state_file="${XDG_STATE_HOME:-$HOME/.local/state}/theme/mode"
-[[ -r "$state_file" ]] || exit 0
-mode=$(tr -d '[:space:]' <"$state_file")
-[[ "$mode" == "dark" || "$mode" == "light" ]] || exit 0
+state_file="${XDG_STATE_HOME:-${HOME}/.local/state}/theme/mode"
+[[ -r "${state_file}" ]] || exit 0
+mode=$(tr -d '[:space:]' <"${state_file}")
+[[ "${mode}" == "dark" || "${mode}" == "light" ]] || exit 0
 
 # Backgrounded and timeout-bounded so connection setup returns immediately and a
 # stalled host cannot hang the shell. Reuses the just-opened master socket. The
 # tilde is expanded by the remote shell, not the local one.
 # shellcheck disable=SC2088
-(timeout 10 ssh -o BatchMode=yes "$host" \
-    "~/.local/scripts/theme-switch --render $mode" >/dev/null 2>&1 || true) &
+(timeout 10 ssh -o BatchMode=yes "${host}" \
+    "~/.local/scripts/theme-switch --render ${mode}" >/dev/null 2>&1 || true) &
 exit 0

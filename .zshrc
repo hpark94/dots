@@ -2,9 +2,9 @@ _has() { command -v "$1" >/dev/null 2>&1; }
 
 # Zinit
 ZINIT_HOME="${XDG_DATA_HOME:-${HOME}/.local/share}/zinit/zinit.git"
-if [ ! -d "$ZINIT_HOME" ]; then
-    mkdir -p "$(dirname $ZINIT_HOME)"
-    git clone https://github.com/zdharma-continuum/zinit.git "$ZINIT_HOME"
+if [ ! -d "${ZINIT_HOME}" ]; then
+    mkdir -p "$(dirname ${ZINIT_HOME})"
+    git clone https://github.com/zdharma-continuum/zinit.git "${ZINIT_HOME}"
 fi
 source "${ZINIT_HOME}/zinit.zsh"
 
@@ -13,10 +13,10 @@ autoload -Uz compinit && compinit
 _comp_options+=(globdots)
 
 # Source config
-source "$HOME/.envs.sh"
+source "${HOME}/.envs.sh"
 _has mise && eval "$(~/.local/bin/mise activate zsh)"
-source "$HOME/.aliases.sh"
-_has fzf && _has tmux && source "$HOME/.shell_functions.sh"
+source "${HOME}/.aliases.sh"
+_has fzf && _has tmux && source "${HOME}/.shell_functions.sh"
 _has fzf && source <(fzf --zsh)
 _has zoxide && eval "$(zoxide init --cmd cd zsh)"
 _has direnv && eval "$(direnv hook zsh)"
@@ -42,8 +42,8 @@ _ffd() {
     tools=()
     local dir bin
     for dir in ${(s.:.)PATH}; do
-        for bin in "$dir"/*(N-x:t); do
-            tools+=("$bin")
+        for bin in "${dir}"/*(N-x:t); do
+            tools+=("${bin}")
         done
     done
     tools=(${(u)tools})
@@ -53,7 +53,7 @@ compdef _ffd ffd
 
 # Themes
 _theme_reload() {
-    [ -f "$HOME/.local/state/theme/shell-env.sh" ] && source "$HOME/.local/state/theme/shell-env.sh"
+    [ -f "${HOME}/.local/state/theme/shell-env.sh" ] && source "${HOME}/.local/state/theme/shell-env.sh"
 }
 _theme_reload
 autoload -Uz add-zsh-hook add-zle-hook-widget
@@ -64,7 +64,7 @@ add-zle-hook-widget line-init _theme_reload
 HIST_STAMPS="dd.mm.yyyy"
 HISTSIZE=5000
 HISTFILE=~/.zsh_history
-SAVEHIST=$HISTSIZE
+SAVEHIST=${HISTSIZE}
 HISTDUP=erase
 setopt appendhistory
 setopt sharehistory

@@ -165,9 +165,9 @@ done
 active_mod_count=0
 active_mod=""
 for mod in "${!MOD[@]}"; do
-    if [[ "${MOD[$mod]}" = true ]]; then
+    if [[ "${MOD[${mod}]}" = true ]]; then
         ((active_mod_count++))
-        active_mod="$mod"
+        active_mod="${mod}"
     fi
 done
 
@@ -176,9 +176,9 @@ if ((active_mod_count != 1)); then
     exit 1
 fi
 
-case "$active_mod" in
+case "${active_mod}" in
     daily | yesterday | tomorrow | zettel | pinned | code | scratch | todo | review | recipe)
-        if [[ -z "$title" ]]; then
+        if [[ -z "${title}" ]]; then
             title="Untitled"
             exit 1
         fi

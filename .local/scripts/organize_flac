@@ -35,7 +35,7 @@ check_installation metaflac
 while IFS= read -r -d '' file; do
     absolute_path=$(realpath "${file}")
 
-    remove_comment "$absolute_path"
+    remove_comment "${absolute_path}"
 
     ext="${absolute_path##*.}"
 

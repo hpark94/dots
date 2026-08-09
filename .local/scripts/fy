@@ -12,10 +12,10 @@ set -euo pipefail
 print_result() {
     local absolute_path
     absolute_path=$(realpath "$1")
-    if [[ "$absolute_path" == "$HOME"* ]]; then
-        printf '~%s\n' "${absolute_path#"$HOME"}"
+    if [[ "${absolute_path}" == "${HOME}"* ]]; then
+        printf '~%s\n' "${absolute_path#"${HOME}"}"
     else
-        printf '%s\n' "$absolute_path"
+        printf '%s\n' "${absolute_path}"
     fi
 }
 
@@ -28,15 +28,15 @@ percent_encode() {
     local LC_ALL=C
     for ((i = 0; i < ${#string}; i++)); do
         c="${string:i:1}"
-        case "$c" in
-            [a-zA-Z0-9._~/-]) out+="$c" ;;
+        case "${c}" in
+            [a-zA-Z0-9._~/-]) out+="${c}" ;;
             *)
-                printf -v hex '%%%02X' "$(($(printf '%d' "'$c") & 0xFF))"
-                out+="$hex"
+                printf -v hex '%%%02X' "$(($(printf '%d' "'${c}") & 0xFF))"
+                out+="${hex}"
                 ;;
         esac
     done
-    printf '%s' "$out"
+    printf '%s' "${out}"
 }
 
 main() {
@@ -48,8 +48,8 @@ main() {
 
     local filepath="$1"
 
-    if [[ ! -f "$filepath" ]]; then
-        echo "fy: file does not exist: $filepath" >&2
+    if [[ ! -f "${filepath}" ]]; then
+        echo "fy: file does not exist: ${filepath}" >&2
         exit 1
     fi
 
@@ -59,15 +59,15 @@ main() {
     fi
 
     local real_path encoded
-    real_path=$(realpath "$filepath")
-    encoded=$(percent_encode "$real_path")
+    real_path=$(realpath "${filepath}")
+    encoded=$(percent_encode "${real_path}")
 
-    if ! printf 'file://%s\r\n' "$encoded" | wl-copy --type text/uri-list; then
+    if ! printf 'file://%s\r\n' "${encoded}" | wl-copy --type text/uri-list; then
         echo "fy: failed to copy file to clipboard. Is wl-copy available and Wayland running?" >&2
         exit 1
     fi
 
-    print_result "$real_path"
+    print_result "${real_path}"
 }
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then

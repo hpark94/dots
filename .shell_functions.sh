@@ -2,7 +2,7 @@ function _fzf_comprun() {
     local command=$1
     shift
 
-    case "$command" in
+    case "${command}" in
         export | unset) fzf --preview "eval 'echo \${}'" "$@" ;;
         ssh) fzf --preview 'dig {}' "$@" ;;
         *) fzf --preview 'if [ -d {} ]; then eza --tree --color=always --level=2 {} | head -200; else bat -n --color=always --line-range 1:500 {}; fi' "$@" ;;
@@ -40,10 +40,10 @@ function frg() {
 
     local keybinds=(
         --bind "esc:abort"
-        --bind "start:$reload"
-        --bind "change:$reload"
-        --bind "enter:become:$opener"
-        --bind "ctrl-o:execute:$opener"
+        --bind "start:${reload}"
+        --bind "change:${reload}"
+        --bind "enter:become:${opener}"
+        --bind "ctrl-o:execute:${opener}"
         --bind "alt-a:select-all"
         --bind "alt-d:deselect-all"
         --bind "ctrl-/:toggle-preview"
@@ -54,9 +54,9 @@ function frg() {
         --ansi
         --multi
         --delimiter ":"
-        --preview "$preview_script"
+        --preview "${preview_script}"
         --preview-window "<80(up)"
-        --query "$query"
+        --query "${query}"
     )
 
     fzf "${fzf_opts[@]}" "${keybinds[@]}"
@@ -102,8 +102,8 @@ ffd() {
 
     local keybinds=(
         --bind "esc:abort"
-        --bind "enter:become:bash -c '$opener' _ {+}"
-        --bind "ctrl-o:execute:bash -c '$opener' _ {+}"
+        --bind "enter:become:bash -c '${opener}' _ {+}"
+        --bind "ctrl-o:execute:bash -c '${opener}' _ {+}"
         --bind "alt-a:select-all"
         --bind "alt-d:deselect-all"
         --bind "ctrl-/:toggle-preview"
@@ -124,27 +124,27 @@ ffd() {
 }
 
 tmux_start() {
-    if [[ "$TERMINAL_EMULATOR" == "JetBrains-JediTerm" ]]; then
+    if [[ "${TERMINAL_EMULATOR}" == "JetBrains-JediTerm" ]]; then
         return
     fi
-    if [[ "$TERM_PROGRAM" == "vscode" ]]; then
+    if [[ "${TERM_PROGRAM}" == "vscode" ]]; then
         return
     fi
 
-    if [[ -z $TMUX ]] && command -v tmux >/dev/null 2>&1; then
+    if [[ -z ${TMUX} ]] && command -v tmux >/dev/null 2>&1; then
         local session_name="${USER}"
         local start_dir="${HOME}"
 
-        if tmux has-session -t "$session_name" 2>/dev/null; then
-            tmux attach-session -t "$session_name"
+        if tmux has-session -t "${session_name}" 2>/dev/null; then
+            tmux attach-session -t "${session_name}"
         else
-            tmux new-session -s "$session_name" -c "$start_dir"
+            tmux new-session -s "${session_name}" -c "${start_dir}"
         fi
     fi
 }
 
 function tmux_sessionizer_wrapper() {
-    if [[ -z $BUFFER ]]; then
+    if [[ -z ${BUFFER} ]]; then
         BUFFER="tmux-sessionizer"
         zle accept-line
     fi
@@ -160,8 +160,8 @@ zupdate() {
 
 function y() {
     local tmp="$(mktemp -t "yazi-cwd.XXXXXX")" cwd
-    command yazi "$@" --cwd-file="$tmp"
-    IFS= read -r -d '' cwd <"$tmp"
-    [ "$cwd" != "$PWD" ] && [ -d "$cwd" ] && builtin cd -- "$cwd"
-    command rm -f -- "$tmp"
+    command yazi "$@" --cwd-file="${tmp}"
+    IFS= read -r -d '' cwd <"${tmp}"
+    [ "${cwd}" != "${PWD}" ] && [ -d "${cwd}" ] && builtin cd -- "${cwd}"
+    command rm -f -- "${tmp}"
 }

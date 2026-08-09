@@ -2,8 +2,8 @@ _has() { command -v "$1" >/dev/null 2>&1; }
 shopt -s checkwinsize
 
 _venv_prompt() {
-    if [ -n "$VIRTUAL_ENV" ]; then
-        printf '(%s) ' "$(basename "$VIRTUAL_ENV")"
+    if [ -n "${VIRTUAL_ENV}" ]; then
+        printf '(%s) ' "$(basename "${VIRTUAL_ENV}")"
     fi
 }
 
@@ -18,16 +18,16 @@ HISTSIZE=5000
 HISTFILESIZE=5000
 HISTCONTROL=ignoreboth:erasedups
 
-source "$HOME/.envs.sh"
+source "${HOME}/.envs.sh"
 _has mise && eval "$(~/.local/bin/mise activate bash)"
 
 _theme_reload() {
-    [ -f "$HOME/.local/state/theme/shell-env.sh" ] && source "$HOME/.local/state/theme/shell-env.sh"
+    [ -f "${HOME}/.local/state/theme/shell-env.sh" ] && source "${HOME}/.local/state/theme/shell-env.sh"
 }
 _theme_reload
 
-source "$HOME/.aliases.sh"
-_has fzf && _has tmux && source "$HOME/.shell_functions.sh"
+source "${HOME}/.aliases.sh"
+_has fzf && _has tmux && source "${HOME}/.shell_functions.sh"
 
 _has fzf && eval "$(fzf --bash)"
 _has zoxide && eval "$(zoxide init --cmd cd bash)"

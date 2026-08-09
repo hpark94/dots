@@ -26,22 +26,22 @@ err() {
 }
 
 role_marker_file() {
-    echo "${XDG_CONFIG_HOME:-$HOME/.config}/dotfiles/role"
+    echo "${XDG_CONFIG_HOME:-${HOME}/.config}/dotfiles/role"
 }
 
 theme_state_file() {
-    echo "${XDG_STATE_HOME:-$HOME/.local/state}/theme/mode"
+    echo "${XDG_STATE_HOME:-${HOME}/.local/state}/theme/mode"
 }
 
 tpm_dir() {
-    echo "$HOME/.tmux/plugins/tpm"
+    echo "${HOME}/.tmux/plugins/tpm"
 }
 
 # theme-switch lives in the repo (and is stowed onto PATH), but bootstrap's own
 # non-interactive process may not have the stowed scripts dir on PATH, so we call
 # it by its repo path. A function so the bats suite can point it at a stub.
 theme_switch_bin() {
-    echo "$REPO_DIR/.local/scripts/theme-switch"
+    echo "${REPO_DIR}/.local/scripts/theme-switch"
 }
 
 # mise may have just been installed into a dir that bootstrap's non-interactive
@@ -50,7 +50,7 @@ mise_bin() {
     if command -v mise >/dev/null 2>&1; then
         echo mise
     else
-        echo "$HOME/.local/bin/mise"
+        echo "${HOME}/.local/bin/mise"
     fi
 }
 
@@ -58,7 +58,7 @@ mise_bin() {
 #    whole namespace into one symlink into the repo and mise/zinit/nvim plugins
 #    and the Role Marker all drift into the working tree.
 precreate_dirs() {
-    mkdir -p "$HOME/.config" "$HOME/.local" "$HOME/.local/bin"
+    mkdir -p "${HOME}/.config" "${HOME}/.local" "${HOME}/.local/bin"
 }
 
 # 2. Back up any real skel file that would abort stow; leave an already-stowed
@@ -66,16 +66,16 @@ precreate_dirs() {
 backup_skel() {
     local f target
     for f in "${SKEL_FILES[@]}"; do
-        target="$HOME/$f"
-        if [[ -f "$target" && ! -L "$target" ]]; then
-            mv "$target" "$target.bak"
+        target="${HOME}/${f}"
+        if [[ -f "${target}" && ! -L "${target}" ]]; then
+            mv "${target}" "${target}.bak"
         fi
     done
 }
 
 # 3. Stow the single package. A no-op once already stowed.
 run_stow() {
-    (cd "$REPO_DIR" && stow .)
+    (cd "${REPO_DIR}" && stow .)
 }
 
 # 4. Write the Role Marker from the argument, but never clobber an existing one
@@ -83,27 +83,27 @@ run_stow() {
 write_role_marker() {
     local role=$1 marker
     marker=$(role_marker_file)
-    if [[ -e "$marker" ]]; then
+    if [[ -e "${marker}" ]]; then
         return 0
     fi
-    mkdir -p "$(dirname "$marker")"
-    printf '%s\n' "$role" >"$marker"
+    mkdir -p "$(dirname "${marker}")"
+    printf '%s\n' "${role}" >"${marker}"
 }
 
 # 5. Write the include-only ~/.gitconfig stub if absent; never overwrite one a
 #    tool (e.g. `gh auth login`) has since appended its own settings to.
 write_gitconfig_stub() {
-    local stub="$HOME/.gitconfig"
-    if [[ -e "$stub" || -L "$stub" ]]; then
+    local stub="${HOME}/.gitconfig"
+    if [[ -e "${stub}" || -L "${stub}" ]]; then
         return 0
     fi
-    printf '[include]\n\tpath = ~/.gitconfig.shared\n' >"$stub"
+    printf '[include]\n\tpath = ~/.gitconfig.shared\n' >"${stub}"
 }
 
 # 6a. Install mise only if absent. It bootstraps the pinned toolchain, so it is
 #     deliberately itself unpinned.
 install_mise() {
-    if command -v mise >/dev/null 2>&1 || [[ -x "$HOME/.local/bin/mise" ]]; then
+    if command -v mise >/dev/null 2>&1 || [[ -x "${HOME}/.local/bin/mise" ]]; then
         return 0
     fi
     curl https://mise.run | sh
@@ -148,8 +148,8 @@ mise_install() {
 clone_tpm() {
     local dir
     dir=$(tpm_dir)
-    if [[ ! -d "$dir" ]]; then
-        git clone --depth 1 https://github.com/tmux-plugins/tpm "$dir"
+    if [[ ! -d "${dir}" ]]; then
+        git clone --depth 1 https://github.com/tmux-plugins/tpm "${dir}"
     fi
 }
 
@@ -187,11 +187,11 @@ build_bat_cache() {
 write_theme_default() {
     local mode_file
     mode_file=$(theme_state_file)
-    if [[ -e "$mode_file" ]]; then
+    if [[ -e "${mode_file}" ]]; then
         return 0
     fi
-    mkdir -p "$(dirname "$mode_file")"
-    printf '%s' light >"$mode_file"
+    mkdir -p "$(dirname "${mode_file}")"
+    printf '%s' light >"${mode_file}"
 }
 
 # 11b. Regenerate every app's Generated Config fragment for the resolved mode,
@@ -205,7 +205,7 @@ write_theme_default() {
 render_theme_fragments() {
     local mode
     mode=$(<"$(theme_state_file)")
-    "$(theme_switch_bin)" --render "$mode"
+    "$(theme_switch_bin)" --render "${mode}"
 }
 
 main() {
@@ -213,10 +213,10 @@ main() {
         usage
     fi
     local role=$1
-    case "$role" in
+    case "${role}" in
         desktop | headless) ;;
         *)
-            err "unknown role '$role'"
+            err "unknown role '${role}'"
             usage
             ;;
     esac
@@ -224,7 +224,7 @@ main() {
     precreate_dirs
     backup_skel
     run_stow
-    write_role_marker "$role"
+    write_role_marker "${role}"
     write_gitconfig_stub
     install_mise
     activate_mise

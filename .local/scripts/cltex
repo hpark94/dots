@@ -6,10 +6,10 @@ extensions=(
 )
 
 for ext in "${extensions[@]}"; do
-    if [[ "$ext" == "*.out" ]]; then
+    if [[ "${ext}" == "*.out" ]]; then
         find . -name "*.out" ! -name "slurm*.out" -type f -delete
     else
-        find . -name "$ext" -type f -delete
+        find . -name "${ext}" -type f -delete
     fi
 done
 

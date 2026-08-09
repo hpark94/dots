@@ -2,7 +2,7 @@
 set -euo pipefail
 
 theme_state_dir() {
-    echo "${XDG_STATE_HOME:-$HOME/.local/state}/theme"
+    echo "${XDG_STATE_HOME:-${HOME}/.local/state}/theme"
 }
 
 theme_state_file() {
@@ -10,7 +10,7 @@ theme_state_file() {
 }
 
 theme_config_dir() {
-    echo "${XDG_CONFIG_HOME:-$HOME/.config}/theme"
+    echo "${XDG_CONFIG_HOME:-${HOME}/.config}/theme"
 }
 
 theme_palette_file() {
@@ -29,14 +29,14 @@ theme_palette_file() {
 # read is corrected here to an -r guard plus the bare fast-path (still no
 # subprocess); the pinned contract above is otherwise unchanged.
 read_role() {
-    local marker="${XDG_CONFIG_HOME:-$HOME/.config}/dotfiles/role" role=""
-    if [[ -r "$marker" ]]; then
-        role=$(<"$marker")
+    local marker="${XDG_CONFIG_HOME:-${HOME}/.config}/dotfiles/role" role=""
+    if [[ -r "${marker}" ]]; then
+        role=$(<"${marker}")
     fi
     role="${role//[[:space:]]/}"
-    case "$role" in
+    case "${role}" in
         desktop | headless)
-            printf '%s' "$role"
+            printf '%s' "${role}"
             ;;
         *)
             echo "Error: ${marker} must contain exactly 'desktop' or 'headless'. Fix: printf '%s' desktop > ${marker} (or headless)." >&2
@@ -47,14 +47,14 @@ read_role() {
 
 resolve_mode() {
     local requested=$1
-    case "$requested" in
+    case "${requested}" in
         dark | light)
-            echo "$requested"
+            echo "${requested}"
             ;;
         toggle)
             local state_file
             state_file=$(theme_state_file)
-            if [[ -f "$state_file" ]] && [[ "$(<"$state_file")" == "dark" ]]; then
+            if [[ -f "${state_file}" ]] && [[ "$(<"${state_file}")" == "dark" ]]; then
                 echo "light"
             else
                 echo "dark"
@@ -71,15 +71,15 @@ write_state() {
     local mode=$1
     local state_dir
     state_dir=$(theme_state_dir)
-    mkdir -p "$state_dir"
-    printf '%s' "$mode" >"$state_dir/mode"
+    mkdir -p "${state_dir}"
+    printf '%s' "${mode}" >"${state_dir}/mode"
 }
 
 foot_colors_block() {
     local palette_file=$1
     # shellcheck disable=SC1090,SC2154
     (
-        source "$palette_file"
+        source "${palette_file}"
         printf 'background=%s\n' "${bg#\#}"
         printf 'foreground=%s\n\n' "${fg#\#}"
         printf 'regular0=%s\n' "${color0#\#}"
@@ -105,38 +105,38 @@ foot_colors_block() {
 
 generate_foot() {
     local mode=$1 out_dir=$2
-    mkdir -p "$out_dir"
+    mkdir -p "${out_dir}"
     {
-        printf 'initial-color-theme=%s\n\n' "$mode"
+        printf 'initial-color-theme=%s\n\n' "${mode}"
         printf '[colors-light]\n'
         foot_colors_block "$(theme_palette_file light)"
         printf '\n[colors-dark]\n'
         foot_colors_block "$(theme_palette_file dark)"
-    } >"$out_dir/foot-colors.ini"
+    } >"${out_dir}/foot-colors.ini"
 }
 
 sway_client_line() {
     local group=$1 color=$2
-    printf 'client.%s %s %s #ffffff %s %s' "$group" "$color" "$color" "$color" "$color"
+    printf 'client.%s %s %s #ffffff %s %s' "${group}" "${color}" "${color}" "${color}" "${color}"
 }
 
 generate_sway() {
     local mode=$1 out_dir=$2
-    mkdir -p "$out_dir"
+    mkdir -p "${out_dir}"
     # shellcheck disable=SC1090,SC2154
     (
-        source "$(theme_palette_file "$mode")"
+        source "$(theme_palette_file "${mode}")"
         {
-            printf '%s\n' "$(sway_client_line focused "$color11")"
-            printf '%s\n' "$(sway_client_line focused_inactive "$color8")"
-        } >"$out_dir/sway-colors.conf"
+            printf '%s\n' "$(sway_client_line focused "${color11}")"
+            printf '%s\n' "$(sway_client_line focused_inactive "${color8}")"
+        } >"${out_dir}/sway-colors.conf"
     )
 }
 
 generate_ghostty() {
     local mode=$1 out_dir=$2
-    mkdir -p "$out_dir"
-    printf 'theme = "hp_%s"\n' "$mode" >"$out_dir/ghostty-theme.conf"
+    mkdir -p "${out_dir}"
+    printf 'theme = "hp_%s"\n' "${mode}" >"${out_dir}/ghostty-theme.conf"
 }
 
 # delta reads BAT_THEME too, but unlike bat it implements neither the
@@ -145,8 +145,8 @@ generate_ghostty() {
 # fragment so delta themes the next diff correctly.
 generate_delta() {
     local mode=$1 out_dir=$2
-    mkdir -p "$out_dir"
-    printf '[delta]\n\tsyntax-theme = hp_%s\n' "$mode" >"$out_dir/delta.gitconfig"
+    mkdir -p "${out_dir}"
+    printf '[delta]\n\tsyntax-theme = hp_%s\n' "${mode}" >"${out_dir}/delta.gitconfig"
 }
 
 # lazygit exposes only a selection *background*, no foreground, so the selected
@@ -157,14 +157,14 @@ generate_delta() {
 # be a single-item YAML sequence, and the hex quoted (a bare #... is a YAML comment).
 generate_lazygit() {
     local mode=$1 out_dir=$2
-    mkdir -p "$out_dir"
+    mkdir -p "${out_dir}"
     # shellcheck disable=SC1090,SC2154
     (
-        source "$(theme_palette_file "$mode")"
-        local sel="$selection_bg"
-        [[ "$mode" == "light" ]] && sel="$color6"
-        printf 'gui:\n  theme:\n    selectedLineBgColor:\n      - "%s"\n' "$sel" \
-            >"$out_dir/lazygit-theme.yml"
+        source "$(theme_palette_file "${mode}")"
+        local sel="${selection_bg}"
+        [[ "${mode}" == "light" ]] && sel="${color6}"
+        printf 'gui:\n  theme:\n    selectedLineBgColor:\n      - "%s"\n' "${sel}" \
+            >"${out_dir}/lazygit-theme.yml"
     )
 }
 
@@ -198,50 +198,50 @@ tmux_option_pairs() {
     accent_slot=$(tmux_accent_slot)
     # shellcheck disable=SC1090,SC2154
     mapfile -t _tmux_option_pairs_out < <(
-        source "$(theme_palette_file "$mode")"
+        source "$(theme_palette_file "${mode}")"
         local accent="${!accent_slot}"
         printf '%s\n' \
-            "window-status-style" "fg=$accent" \
-            "window-status-current-style" "fg=$bg,bold,bg=$accent" \
-            "display-panes-colour" "$accent" \
-            "display-panes-active-colour" "$color3" \
-            "status-style" "fg=$fg,bg=$bg" \
-            "status-left" "#[fg=$accent,bold] #S #[default] " \
-            "status-right" "#[fg=$fg] %H:%M #[fg=$accent,bold] #H " \
-            "message-style" "fg=$color5" \
-            "mode-style" "bg=$color12"
+            "window-status-style" "fg=${accent}" \
+            "window-status-current-style" "fg=${bg},bold,bg=${accent}" \
+            "display-panes-colour" "${accent}" \
+            "display-panes-active-colour" "${color3}" \
+            "status-style" "fg=${fg},bg=${bg}" \
+            "status-left" "#[fg=${accent},bold] #S #[default] " \
+            "status-right" "#[fg=${fg}] %H:%M #[fg=${accent},bold] #H " \
+            "message-style" "fg=${color5}" \
+            "mode-style" "bg=${color12}"
     )
 }
 
 generate_tmux() {
     local mode=$1 out_dir=$2
-    mkdir -p "$out_dir"
+    mkdir -p "${out_dir}"
     local pairs i
-    tmux_option_pairs "$mode" pairs
+    tmux_option_pairs "${mode}" pairs
     {
         for ((i = 0; i < ${#pairs[@]}; i += 2)); do
             printf 'set -g %s "%s"\n' "${pairs[i]}" "${pairs[i + 1]}"
         done
-    } >"$out_dir/tmux-colors.conf"
+    } >"${out_dir}/tmux-colors.conf"
 }
 
 generate_shell_env() {
     local mode=$1 out_dir=$2
-    mkdir -p "$out_dir"
+    mkdir -p "${out_dir}"
     # Write atomically: a same-directory temp file plus mv, so a shell sourcing
     # the fragment mid-switch reads either the whole old or the whole new file.
-    local tmp="$out_dir/shell-env.sh.tmp.$$"
+    local tmp="${out_dir}/shell-env.sh.tmp.$$"
     # shellcheck disable=SC1090,SC2154
     (
-        source "$(theme_palette_file "$mode")"
+        source "$(theme_palette_file "${mode}")"
         {
             # args map 1:1 onto: fg,bg,hl / fg+,bg+,hl+ / info,prompt,pointer / marker,spinner,header
             printf "export FZF_DEFAULT_OPTS='--color=fg:%s,bg:%s,hl:%s --color=fg+:%s,bg+:%s,hl+:%s --color=info:%s,prompt:%s,pointer:%s --color=marker:%s,spinner:%s,header:%s'\n" \
-                "$fg" "$bg" "$fg" "$fg" "$selection_bg" "$fg" "$color4" "$color5" "$color1" "$color2" "$color5" "$color3"
-            printf 'export BAT_THEME=%s\n' "$mode"
-        } >"$tmp"
+                "${fg}" "${bg}" "${fg}" "${fg}" "${selection_bg}" "${fg}" "${color4}" "${color5}" "${color1}" "${color2}" "${color5}" "${color3}"
+            printf 'export BAT_THEME=%s\n' "${mode}"
+        } >"${tmp}"
     )
-    mv -f "$tmp" "$out_dir/shell-env.sh"
+    mv -f "${tmp}" "${out_dir}/shell-env.sh"
 }
 
 # waybar is a *pull* app (ADR-0001): it re-reads its stylesheet on every
@@ -257,16 +257,16 @@ waybar_colors_block() {
     local palette_file=$1
     # shellcheck disable=SC1090,SC2154
     (
-        source "$palette_file"
+        source "${palette_file}"
         local i
         for i in $(seq 0 15); do
-            local -n slot="color$i"
-            printf '@define-color color%d %s;\n' "$i" "$slot"
+            local -n slot="color${i}"
+            printf '@define-color color%d %s;\n' "${i}" "${slot}"
         done
-        printf '@define-color bg %s;\n' "$bg"
-        printf '@define-color fg %s;\n' "$fg"
-        printf '@define-color selection_bg %s;\n' "$selection_bg"
-        printf '@define-color selection_fg %s;\n' "$selection_fg"
+        printf '@define-color bg %s;\n' "${bg}"
+        printf '@define-color fg %s;\n' "${fg}"
+        printf '@define-color selection_bg %s;\n' "${selection_bg}"
+        printf '@define-color selection_fg %s;\n' "${selection_fg}"
     )
 }
 
@@ -274,9 +274,9 @@ generate_waybar() {
     # $1 (mode) is intentionally unused: waybar picks the mode itself, so both
     # fragments are always written.
     local out_dir=$2
-    mkdir -p "$out_dir"
-    waybar_colors_block "$(theme_palette_file light)" >"$out_dir/waybar-light.css"
-    waybar_colors_block "$(theme_palette_file dark)" >"$out_dir/waybar-dark.css"
+    mkdir -p "${out_dir}"
+    waybar_colors_block "$(theme_palette_file light)" >"${out_dir}/waybar-light.css"
+    waybar_colors_block "$(theme_palette_file dark)" >"${out_dir}/waybar-dark.css"
 }
 
 # swaync is a *push* app with no portal awareness, so it is told explicitly on
@@ -286,20 +286,20 @@ generate_waybar() {
 # slots. No new palette roles.
 generate_swaync() {
     local mode=$1 out_dir=$2
-    mkdir -p "$out_dir"
+    mkdir -p "${out_dir}"
     # shellcheck disable=SC1090,SC2154
     (
-        source "$(theme_palette_file "$mode")"
+        source "$(theme_palette_file "${mode}")"
         {
-            printf '@define-color bg %s;\n' "$bg"
-            printf '@define-color surface %s;\n' "$selection_bg"
-            printf '@define-color text %s;\n' "$fg"
-            printf '@define-color critical %s;\n' "$color1"
-            printf '@define-color link %s;\n' "$color4"
+            printf '@define-color bg %s;\n' "${bg}"
+            printf '@define-color surface %s;\n' "${selection_bg}"
+            printf '@define-color text %s;\n' "${fg}"
+            printf '@define-color critical %s;\n' "${color1}"
+            printf '@define-color link %s;\n' "${color4}"
             # color0 is dark in both palettes, so a shadow derived from it reads
             # as a shadow in both modes (unlike @text, which inverts).
-            printf '@define-color shadow %s;\n' "$color0"
-        } >"$out_dir/swaync-colors.css"
+            printf '@define-color shadow %s;\n' "${color0}"
+        } >"${out_dir}/swaync-colors.css"
     )
 }
 
@@ -317,36 +317,36 @@ hex_to_rgb() {
 # in true color. apply_zathura re-sources it per running instance over D-Bus.
 generate_zathura() {
     local mode=$1 out_dir=$2
-    mkdir -p "$out_dir"
+    mkdir -p "${out_dir}"
     local recolor=false
-    [[ "$mode" == "dark" ]] && recolor=true
+    [[ "${mode}" == "dark" ]] && recolor=true
     # shellcheck disable=SC1090,SC2154
     (
-        source "$(theme_palette_file "$mode")"
+        source "$(theme_palette_file "${mode}")"
         {
-            printf 'set default-bg "%s"\n' "$bg"
-            printf 'set default-fg "%s"\n' "$fg"
-            printf 'set statusbar-bg "%s"\n' "$bg"
-            printf 'set statusbar-fg "%s"\n' "$fg"
-            printf 'set inputbar-bg "%s"\n' "$bg"
-            printf 'set inputbar-fg "%s"\n' "$fg"
-            printf 'set highlight-color "rgba(%s, 0.2)"\n' "$(hex_to_rgb "$color6")"
-            printf 'set highlight-active-color "rgba(%s, 0.2)"\n' "$(hex_to_rgb "$color1")"
-            printf 'set highlight-fg "%s"\n' "$color4"
-            printf 'set notification-bg "%s"\n' "$fg"
-            printf 'set notification-fg "%s"\n' "$bg"
-            printf 'set notification-error-bg "%s"\n' "$color1"
-            printf 'set notification-error-fg "%s"\n' "$bg"
-            printf 'set notification-warning-bg "%s"\n' "$color1"
-            printf 'set notification-warning-fg "%s"\n' "$bg"
-            printf 'set completion-bg "%s"\n' "$bg"
-            printf 'set completion-fg "%s"\n' "$fg"
-            printf 'set completion-highlight-bg "%s"\n' "$bg"
-            printf 'set completion-highlight-fg "%s"\n' "$color2"
-            printf 'set recolor %s\n' "$recolor"
-            printf 'set recolor-lightcolor "%s"\n' "$bg"
-            printf 'set recolor-darkcolor "%s"\n' "$fg"
-        } >"$out_dir/zathura-colors"
+            printf 'set default-bg "%s"\n' "${bg}"
+            printf 'set default-fg "%s"\n' "${fg}"
+            printf 'set statusbar-bg "%s"\n' "${bg}"
+            printf 'set statusbar-fg "%s"\n' "${fg}"
+            printf 'set inputbar-bg "%s"\n' "${bg}"
+            printf 'set inputbar-fg "%s"\n' "${fg}"
+            printf 'set highlight-color "rgba(%s, 0.2)"\n' "$(hex_to_rgb "${color6}")"
+            printf 'set highlight-active-color "rgba(%s, 0.2)"\n' "$(hex_to_rgb "${color1}")"
+            printf 'set highlight-fg "%s"\n' "${color4}"
+            printf 'set notification-bg "%s"\n' "${fg}"
+            printf 'set notification-fg "%s"\n' "${bg}"
+            printf 'set notification-error-bg "%s"\n' "${color1}"
+            printf 'set notification-error-fg "%s"\n' "${bg}"
+            printf 'set notification-warning-bg "%s"\n' "${color1}"
+            printf 'set notification-warning-fg "%s"\n' "${bg}"
+            printf 'set completion-bg "%s"\n' "${bg}"
+            printf 'set completion-fg "%s"\n' "${fg}"
+            printf 'set completion-highlight-bg "%s"\n' "${bg}"
+            printf 'set completion-highlight-fg "%s"\n' "${color2}"
+            printf 'set recolor %s\n' "${recolor}"
+            printf 'set recolor-lightcolor "%s"\n' "${bg}"
+            printf 'set recolor-darkcolor "%s"\n' "${fg}"
+        } >"${out_dir}/zathura-colors"
     )
 }
 
@@ -357,10 +357,10 @@ generate_zathura() {
 # hex without a leading #.
 generate_fuzzel() {
     local mode=$1 out_dir=$2
-    mkdir -p "$out_dir"
+    mkdir -p "${out_dir}"
     # shellcheck disable=SC1090,SC2154
     (
-        source "$(theme_palette_file "$mode")"
+        source "$(theme_palette_file "${mode}")"
         {
             printf '[colors]\n'
             printf 'background=%sff\n' "${bg#\#}"
@@ -370,14 +370,14 @@ generate_fuzzel() {
             printf 'selection-text=%sff\n' "${fg#\#}"
             printf 'selection-match=%sff\n' "${color4#\#}"
             printf 'border=%sff\n' "${color11#\#}"
-        } >"$out_dir/fuzzel-colors.ini"
+        } >"${out_dir}/fuzzel-colors.ini"
     )
 }
 
 apply_foot() {
     local mode=$1 sig=USR2
-    [[ "$mode" == "dark" ]] && sig=USR1
-    pkill -"$sig" -x foot >/dev/null 2>&1 || true
+    [[ "${mode}" == "dark" ]] && sig=USR1
+    pkill -"${sig}" -x foot >/dev/null 2>&1 || true
 }
 
 # ghostty 1.3.1 re-reads its config on SIGUSR2 and applies theme/color changes
@@ -396,9 +396,9 @@ apply_sway() {
     if [[ -n "${SWAYSOCK:-}" ]] && command -v swaymsg >/dev/null 2>&1; then
         # shellcheck disable=SC1090,SC2154
         (
-            source "$(theme_palette_file "$mode")"
-            swaymsg "$(sway_client_line focused "$color11")" >/dev/null 2>&1 || true
-            swaymsg "$(sway_client_line focused_inactive "$color8")" >/dev/null 2>&1 || true
+            source "$(theme_palette_file "${mode}")"
+            swaymsg "$(sway_client_line focused "${color11}")" >/dev/null 2>&1 || true
+            swaymsg "$(sway_client_line focused_inactive "${color8}")" >/dev/null 2>&1 || true
         )
     fi
 }
@@ -409,9 +409,9 @@ apply_sway() {
 # a mise-managed tmux started (an older protocol version just reports "server
 # exited unexpectedly"), so the client has to be resolved explicitly.
 tmux_bin() {
-    local shim="${XDG_DATA_HOME:-$HOME/.local/share}/mise/shims/tmux"
-    if [[ -x "$shim" ]]; then
-        printf '%s\n' "$shim"
+    local shim="${XDG_DATA_HOME:-${HOME}/.local/share}/mise/shims/tmux"
+    if [[ -x "${shim}" ]]; then
+        printf '%s\n' "${shim}"
     else
         printf 'tmux\n'
     fi
@@ -420,24 +420,24 @@ tmux_bin() {
 apply_tmux() {
     local mode=$1 tmux_cmd
     tmux_cmd=$(tmux_bin)
-    if command -v "$tmux_cmd" >/dev/null 2>&1 && "$tmux_cmd" list-sessions >/dev/null 2>&1; then
+    if command -v "${tmux_cmd}" >/dev/null 2>&1 && "${tmux_cmd}" list-sessions >/dev/null 2>&1; then
         local pairs i
-        tmux_option_pairs "$mode" pairs
+        tmux_option_pairs "${mode}" pairs
         for ((i = 0; i < ${#pairs[@]}; i += 2)); do
-            "$tmux_cmd" set-option -g "${pairs[i]}" "${pairs[i + 1]}" >/dev/null 2>&1 || true
+            "${tmux_cmd}" set-option -g "${pairs[i]}" "${pairs[i + 1]}" >/dev/null 2>&1 || true
         done
     fi
 }
 
 apply_gtk() {
     local mode=$1 gtk_theme=Adwaita-light color_scheme=prefer-light
-    if [[ "$mode" == "dark" ]]; then
+    if [[ "${mode}" == "dark" ]]; then
         gtk_theme=Adwaita-dark
         color_scheme=prefer-dark
     fi
     if command -v gsettings >/dev/null 2>&1; then
-        gsettings set org.gnome.desktop.interface gtk-theme "$gtk_theme" >/dev/null 2>&1 || true
-        gsettings set org.gnome.desktop.interface color-scheme "$color_scheme" >/dev/null 2>&1 || true
+        gsettings set org.gnome.desktop.interface gtk-theme "${gtk_theme}" >/dev/null 2>&1 || true
+        gsettings set org.gnome.desktop.interface color-scheme "${color_scheme}" >/dev/null 2>&1 || true
     fi
 }
 
@@ -457,21 +457,21 @@ apply_zathura() {
     # ListNames returns one ('a', b, ...') tuple; pull each zathura bus name out.
     while read -r name; do
         gdbus call --session \
-            --dest "$name" \
+            --dest "${name}" \
             --object-path /org/pwmt/zathura \
             --method org.pwmt.zathura.SourceConfig >/dev/null 2>&1 || true
-    done < <(grep -oE 'org\.pwmt\.zathura\.PID-[0-9]+' <<<"$names")
+    done < <(grep -oE 'org\.pwmt\.zathura\.PID-[0-9]+' <<<"${names}")
 }
 
 # Concrete (non-wildcard) Host aliases from ~/.ssh/config, one per line. Skips
 # pattern entries (*, ?, !) so only real, pushable hosts come back.
 ssh_config_hosts() {
-    local cfg="$HOME/.ssh/config"
-    [[ -r "$cfg" ]] || return 0
+    local cfg="${HOME}/.ssh/config"
+    [[ -r "${cfg}" ]] || return 0
     awk 'tolower($1) == "host" {
 		for (i = 2; i <= NF; i++)
 			if ($i !~ /[*?!]/) print $i
-	}' "$cfg"
+	}' "${cfg}"
 }
 
 # Toggle-time Headless push. For each configured host with a currently-live
@@ -488,12 +488,12 @@ push_headless() {
     # ends at the first live host. -O check never reads stdin; it carries -n only
     # so both calls stay consistent and stdin-safe if either is ever reshaped.
     while read -r host; do
-        [[ -n "$host" ]] || continue
-        if timeout 5 ssh -n -o BatchMode=yes -O check "$host" >/dev/null 2>&1; then
+        [[ -n "${host}" ]] || continue
+        if timeout 5 ssh -n -o BatchMode=yes -O check "${host}" >/dev/null 2>&1; then
             # The tilde is expanded by the remote shell, not the local one.
             # shellcheck disable=SC2088
-            timeout 10 ssh -n -o BatchMode=yes "$host" \
-                "~/.local/scripts/theme-switch --render $mode" >/dev/null 2>&1 || true
+            timeout 10 ssh -n -o BatchMode=yes "${host}" \
+                "~/.local/scripts/theme-switch --render ${mode}" >/dev/null 2>&1 || true
         fi
     done < <(ssh_config_hosts)
 }
@@ -501,7 +501,7 @@ push_headless() {
 notify_mode() {
     local mode=$1
     if command -v notify-send >/dev/null 2>&1; then
-        notify-send "Theme" "Switched to $mode mode" || true
+        notify-send "Theme" "Switched to ${mode} mode" || true
     fi
 }
 
@@ -511,27 +511,27 @@ notify_mode() {
 render() {
     local mode=$1 out_dir
     out_dir=$(theme_state_dir)
-    write_state "$mode"
+    write_state "${mode}"
 
-    generate_foot "$mode" "$out_dir"
-    generate_sway "$mode" "$out_dir"
-    generate_ghostty "$mode" "$out_dir"
-    generate_delta "$mode" "$out_dir"
-    generate_lazygit "$mode" "$out_dir"
-    generate_tmux "$mode" "$out_dir"
-    generate_shell_env "$mode" "$out_dir"
-    generate_waybar "$mode" "$out_dir"
-    generate_swaync "$mode" "$out_dir"
-    generate_zathura "$mode" "$out_dir"
-    generate_fuzzel "$mode" "$out_dir"
+    generate_foot "${mode}" "${out_dir}"
+    generate_sway "${mode}" "${out_dir}"
+    generate_ghostty "${mode}" "${out_dir}"
+    generate_delta "${mode}" "${out_dir}"
+    generate_lazygit "${mode}" "${out_dir}"
+    generate_tmux "${mode}" "${out_dir}"
+    generate_shell_env "${mode}" "${out_dir}"
+    generate_waybar "${mode}" "${out_dir}"
+    generate_swaync "${mode}" "${out_dir}"
+    generate_zathura "${mode}" "${out_dir}"
+    generate_fuzzel "${mode}" "${out_dir}"
 
-    apply_foot "$mode"
-    apply_ghostty "$mode"
-    apply_sway "$mode"
-    apply_tmux "$mode"
-    apply_gtk "$mode"
-    apply_swaync "$mode"
-    apply_zathura "$mode"
+    apply_foot "${mode}"
+    apply_ghostty "${mode}"
+    apply_sway "${mode}"
+    apply_tmux "${mode}"
+    apply_gtk "${mode}"
+    apply_swaync "${mode}"
+    apply_zathura "${mode}"
 }
 
 usage() {
@@ -544,14 +544,14 @@ usage() {
 
 main() {
     local arg=${1:-toggle}
-    case "$arg" in
+    case "${arg}" in
         -h | --help)
             usage
             return 0
             ;;
         --render)
             local render_mode=${2:-}
-            case "$render_mode" in
+            case "${render_mode}" in
                 dark | light) ;;
                 *)
                     echo "Error: --render requires an explicit mode: dark or light." >&2
@@ -559,7 +559,7 @@ main() {
                     return 1
                     ;;
             esac
-            render "$render_mode"
+            render "${render_mode}"
             return 0
             ;;
     esac
@@ -570,19 +570,19 @@ main() {
     if ! role=$(read_role); then
         return 1
     fi
-    if [[ "$role" == "headless" ]]; then
+    if [[ "${role}" == "headless" ]]; then
         echo "Error: this machine's Role is 'headless'; it has no authority to decide the Theme Mode. To apply a mode decided by the Desktop, run: theme-switch --render <dark|light>." >&2
         return 1
     fi
 
-    if ! mode=$(resolve_mode "$arg"); then
+    if ! mode=$(resolve_mode "${arg}"); then
         return 1
     fi
-    render "$mode"
-    notify_mode "$mode"
+    render "${mode}"
+    notify_mode "${mode}"
     # Propagate to any Headless machine with a live connection right now. Only
     # the Desktop reaches here; --render (the remote's own path) never pushes.
-    push_headless "$mode"
+    push_headless "${mode}"
 }
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
