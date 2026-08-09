@@ -23,4 +23,36 @@ switch_case_indent = true
 space_redirects = false
 keep_padding = false
 function_next_line = false
-never_split = true
+
+[.local/scripts/*]
+indent_style = space
+indent_size = 4
+
+shell_variant = bash
+binary_next_line = true
+switch_case_indent = true
+space_redirects = false
+keep_padding = false
+function_next_line = false
+
+[*.bats]
+indent_style = space
+indent_size = 4
+
+shell_variant = bats
+binary_next_line = true
+switch_case_indent = true
+space_redirects = false
+keep_padding = false
+function_next_line = false
+
+[.bashrc]
+indent_style = space
+indent_size = 4
+
+shell_variant = bash
+binary_next_line = true
+switch_case_indent = true
+space_redirects = false
+keep_padding = false
+function_next_line = false
