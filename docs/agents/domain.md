@@ -55,6 +55,14 @@ If the concept you need isn't in the glossary yet, that's a signal, either
 you're inventing language the project doesn't use (reconsider) or there's a real
 gap (note it for `/domain-modeling`).
 
+## Writing a glossary entry
+
+Each entry is three lines: term, definition, `_Avoid_`. End the term and
+definition lines with a backslash, as the existing entries do. It is a Markdown
+hard break, and without it prettier's `proseWrap: always` merges all three into
+one paragraph. Two trailing spaces would work too, but `.editorconfig` strips
+them.
+
 ## Flag ADR conflicts
 
 If your output contradicts an existing ADR, surface it explicitly rather than
