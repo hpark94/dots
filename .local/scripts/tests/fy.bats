@@ -2,9 +2,8 @@
 
 bats_require_minimum_version 1.5.0
 
-# BATS test suite for fy. Mocks wl-copy with a stub that records its args and
-# stdin to files on disk, so assertions survive the `run bash "$SCRIPT"` subshell
-# and can inspect exactly what was placed on the clipboard.
+# The wl-copy stub records its args and stdin to files on disk, so assertions
+# survive the `run bash "$SCRIPT"` subshell and see the exact payload.
 
 SCRIPT="${BATS_TEST_DIRNAME}/../../../.local/scripts/fy"
 

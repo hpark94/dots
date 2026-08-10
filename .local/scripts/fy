@@ -1,14 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# fy - Copy a file reference to the Wayland clipboard.
-# Emits a file:// URI in the text/uri-list target. Browser chats (Claude web),
-# fp, and the terminal then receive the file, not its bytes. wl-copy advertises
-# only one type per invocation; text/uri-list is the browser-compatible one, so
-# a fy-copied file does not paste into Thunar (which needs
-# x-special/gnome-copied-files). See .scratch/fy/spec.md for that tradeoff.
+# wl-copy advertises one type per invocation; text/uri-list is the
+# browser-compatible one, at the cost of Thunar pasting (.scratch/fy/spec.md).
 
-# Print the file path with $HOME collapsed to ~, as the sole stdout line.
 print_result() {
     local absolute_path
     absolute_path=$(realpath "$1")
@@ -19,10 +14,9 @@ print_result() {
     fi
 }
 
-# Percent-encode a path into an RFC 3986 file:// path. Keep unreserved bytes and
-# the path separator literal; encode everything else (%, space, non-ASCII) so the
-# result round-trips through fp's `printf '%b' "${uri//%/\\x}"` decoder. Encode by
-# raw byte under LC_ALL=C so multibyte filenames survive.
+# Unreserved bytes and the path separator stay literal so the result round-trips
+# through fp's `printf '%b' "${uri//%/\\x}"` decoder; encoding by raw byte under
+# LC_ALL=C is what makes multibyte filenames survive.
 percent_encode() {
     local string="$1" out="" i c hex
     local LC_ALL=C

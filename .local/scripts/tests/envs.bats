@@ -45,10 +45,9 @@ socket.socket(socket.AF_UNIX).bind(sys.argv[1])' "$1"
     [ -z "${DOCKER_HOST:-}" ]
 }
 
-# LIBVIRT_DEFAULT_URI's socket path is hard-coded (/run/libvirt/libvirt-sock),
-# not fakeable via $XDG_*, so exercise the concrete variable through the same
-# probe helper with a controllable path. `source` first sets it from this host's
-# real socket, so unset before asserting.
+# LIBVIRT_DEFAULT_URI's socket path is hard-coded, not fakeable via $XDG_*, so
+# the probe helper is driven with a controllable path instead. `source` may set
+# the variable from this host's real socket, hence the unset before asserting.
 @test "LIBVIRT_DEFAULT_URI is exported when its libvirt socket exists" {
     source "${ENVS}" || true
     unset LIBVIRT_DEFAULT_URI

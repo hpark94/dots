@@ -18,16 +18,9 @@ theme_palette_file() {
     echo "$(theme_config_dir)/hp_${mode}.sh"
 }
 
-# Canonical Role Marker reader, shared byte-for-byte across the script set per
-# the script-conventions decision (.scratch/portable-dotfiles/issues/14 and 13):
-# path, contract, and error wording may not drift. Missing, unreadable, empty,
-# or unrecognized content are all one hard error; whitespace is stripped first.
-#
-# The pinned snippet read the file with `$(<"$marker" 2>/dev/null)`; under bash
-# the `2>/dev/null` cancels the special `$(<file)` fast-path and yields the
-# empty string for every file, so the reader rejected even a valid Marker. The
-# read is corrected here to an -r guard plus the bare fast-path (still no
-# subprocess); the pinned contract above is otherwise unchanged.
+# Canonical Role Marker reader: path, contract and error wording may not drift
+# (.scratch/portable-dotfiles/issues/14 and 13). The read itself is corrected
+# per theme-switch-expansion/issues/05; do not restore the pinned 2>/dev/null.
 read_role() {
     local marker="${XDG_CONFIG_HOME:-${HOME}/.config}/dotfiles/role" role=""
     if [[ -r "${marker}" ]]; then
@@ -139,22 +132,18 @@ generate_ghostty() {
     printf 'theme = "hp_%s"\n' "${mode}" >"${out_dir}/ghostty-theme.conf"
 }
 
-# delta reads BAT_THEME too, but unlike bat it implements neither the
-# light/dark aliases nor bat's --theme-light/--theme-dark config, so it needs
-# the resolved theme name. Write the syntax-theme into an included gitconfig
-# fragment so delta themes the next diff correctly.
+# delta reads BAT_THEME but implements neither bat's light/dark aliases nor its
+# --theme-light/--theme-dark config, so it needs the resolved theme name in an
+# included gitconfig fragment.
 generate_delta() {
     local mode=$1 out_dir=$2
     mkdir -p "${out_dir}"
     printf '[delta]\n\tsyntax-theme = hp_%s\n' "${mode}" >"${out_dir}/delta.gitconfig"
 }
 
-# lazygit exposes only a selection *background*, no foreground, so the selected
-# row's text keeps its own colors. dark uses the mode's selection_bg; light uses a
-# distinct indigo bar instead, because light's selection_bg (#e4ded7) barely stands
-# out from the diff's red/green. Injected as a Generated Config fragment merged over
-# the tracked config. lazygit's theme colors are lists, not scalars: the value must
-# be a single-item YAML sequence, and the hex quoted (a bare #... is a YAML comment).
+# lazygit offers a selection background but no foreground; light's selection_bg
+# barely stands out from the diff's red and green, so light gets a distinct bar.
+# The quoted hex sits in a single-item sequence (a bare #... is a YAML comment).
 generate_lazygit() {
     local mode=$1 out_dir=$2
     mkdir -p "${out_dir}"
@@ -168,22 +157,12 @@ generate_lazygit() {
     )
 }
 
-# Name of the palette slot the tmux status bar uses as its accent, keyed on this
-# machine's own Role. A Headless machine swaps the normal accent (color4) for a
-# distinct, already-existing slot (color1) so its status bar is unmistakable from
-# the Desktop's at a glance, rebuilding the one useful thing the deleted
-# .tmux.remote.conf provided (clipboard-rewire spec, "The remote status bar
-# accent becomes Role-keyed, not file-gated"). No new Canonical Palette role is
-# introduced.
-#
-# Unlike every other read_role caller, this must NOT hard-fail: generate_tmux is
-# part of the Role-agnostic render half, reached by --render on Marker-less and
-# retrofit machines too, so it has to produce a fragment regardless. Headless is
-# therefore the only outcome that switches the accent; Desktop and every other
-# outcome (missing, empty, or unreadable Marker) resolve to the Desktop accent.
-# The decision is made fresh on every generate, so it can never go stale across
-# detach/reattach the way the deleted if-shell's once-evaluated branch could.
+# A Headless machine swaps the accent slot so its status bar is unmistakable
+# from the Desktop's at a glance (clipboard-rewire spec).
 tmux_accent_slot() {
+    # Must not hard-fail like every other read_role caller: --render has to
+    # produce a fragment on Marker-less machines too, so anything but a headless
+    # Marker resolves to the Desktop accent.
     if [[ "$(read_role 2>/dev/null || true)" == "headless" ]]; then
         printf 'color1'
     else
@@ -244,15 +223,9 @@ generate_shell_env() {
     mv -f "${tmp}" "${out_dir}/shell-env.sh"
 }
 
-# waybar is a *pull* app (ADR-0001): it re-reads its stylesheet on every
-# org.freedesktop.appearance change (which apply_gtk already writes) and, when
-# started without -s, prefers style-dark.css/style-light.css over style.css.
-# waybar, not this script, decides which one loads, so the generator writes
-# BOTH per-mode @define-color fragments on every switch and both stay on disk.
-# The values are the full Canonical Palette; the tracked style-rules.css picks
-# which slots it uses (off-palette values there resolve onto existing slots:
-# hover -> selection_bg, lock icon -> color13, active wash -> alpha(color12),
-# tooltip border -> alpha(fg)). No apply function, no signal.
+# waybar is a *pull* app (ADR-0001): it picks style-dark.css or style-light.css
+# itself, so both per-mode fragments are written on every switch and both stay
+# on disk. No apply function, no signal.
 waybar_colors_block() {
     local palette_file=$1
     # shellcheck disable=SC1090,SC2154
@@ -271,8 +244,7 @@ waybar_colors_block() {
 }
 
 generate_waybar() {
-    # $1 (mode) is intentionally unused: waybar picks the mode itself, so both
-    # fragments are always written.
+    # $1 (mode) is unused: waybar picks the mode itself.
     local out_dir=$2
     mkdir -p "${out_dir}"
     waybar_colors_block "$(theme_palette_file light)" >"${out_dir}/waybar-light.css"
@@ -280,10 +252,7 @@ generate_waybar() {
 }
 
 # swaync is a *push* app with no portal awareness, so it is told explicitly on
-# every switch. The tracked style.css references named custom properties sourced
-# from this one current-mode fragment: surface -> selection_bg (the old muted
-# grey collapses here), text -> fg, plus the existing critical/link severity
-# slots. No new palette roles.
+# every switch; the tracked style.css sources this one current-mode fragment.
 generate_swaync() {
     local mode=$1 out_dir=$2
     mkdir -p "${out_dir}"
@@ -303,18 +272,16 @@ generate_swaync() {
     )
 }
 
-# Emit "r, g, b" decimals for a #rrggbb value, for the two translucent zathura
-# highlight colors that need an rgba() with an alpha the palette can't carry.
+# zathura's two translucent highlights need an rgba() alpha the palette cannot
+# carry, hence the decimal split.
 hex_to_rgb() {
     local hex=${1#\#}
     printf '%d, %d, %d' "0x${hex:0:2}" "0x${hex:2:2}" "0x${hex:4:2}"
 }
 
-# zathura is a *push* app. Every color-bearing setting moves out of the tracked
-# zathurarc into this current-mode fragment (included with a relative path,
-# since zathura's include does not expand ~). Dark mode turns recolor on with
-# palette-derived light/dark endpoints; light mode turns it off, leaving pages
-# in true color. apply_zathura re-sources it per running instance over D-Bus.
+# zathura is a *push* app; the tracked zathurarc includes this fragment by
+# relative path, because zathura's include does not expand ~. Light leaves
+# recolor off so pages keep their true color.
 generate_zathura() {
     local mode=$1 out_dir=$2
     mkdir -p "${out_dir}"
@@ -350,11 +317,9 @@ generate_zathura() {
     )
 }
 
-# fuzzel is a *next-launch* app: it is spawned fresh per invocation and exits,
-# so its include is always read current and no apply step or signal exists. The
-# tracked [colors] block is deleted outright; a missing fragment fails loudly
-# onto fuzzel's own defaults rather than serving stale colors. Colors are RRGGBBAA
-# hex without a leading #.
+# fuzzel is a *next-launch* app: spawned fresh per invocation, so its include is
+# always current and no apply step exists. The tracked [colors] block is gone, so
+# a missing fragment falls back to fuzzel's defaults instead of stale colors.
 generate_fuzzel() {
     local mode=$1 out_dir=$2
     mkdir -p "${out_dir}"
@@ -380,14 +345,10 @@ apply_foot() {
     pkill -"${sig}" -x foot >/dev/null 2>&1 || true
 }
 
-# ghostty 1.3.1 re-reads its config on SIGUSR2 and applies theme/color changes
-# to running surfaces, so a single signal is enough: generate_ghostty already
-# rewrote the theme fragment this render, and the reload picks it up. Unlike
-# foot (which preloads both palettes and needs a per-mode signal to select one),
-# ghostty needs no mode-specific signal.
+# ghostty re-reads its config on SIGUSR2 and applies it to running surfaces, so
+# one mode-independent signal suffices, unlike foot's per-mode USR1/USR2
+# (ADR-0004). $1 is unused; it keeps every apply_* call site uniform.
 apply_ghostty() {
-    # $1 (mode) is unused: the reload is mode-independent. The parameter is kept
-    # for symmetry with the other apply_* call sites.
     pkill -USR2 -x ghostty >/dev/null 2>&1 || true
 }
 
@@ -403,11 +364,9 @@ apply_sway() {
     fi
 }
 
-# The headless push runs --render through a non-interactive shell, which never
-# activates mise, so the mise shims are off PATH and a bare `tmux` resolves to
-# the system client. A system client cannot necessarily speak to a server that
-# a mise-managed tmux started (an older protocol version just reports "server
-# exited unexpectedly"), so the client has to be resolved explicitly.
+# The Headless push renders through a non-interactive shell, which never
+# activates mise, so a bare `tmux` resolves to the system client, which may be
+# too old to speak to a mise-started server. Resolve the shim explicitly.
 tmux_bin() {
     local shim="${XDG_DATA_HOME:-${HOME}/.local/share}/mise/shims/tmux"
     if [[ -x "${shim}" ]]; then
@@ -463,8 +422,7 @@ apply_zathura() {
     done < <(grep -oE 'org\.pwmt\.zathura\.PID-[0-9]+' <<<"${names}")
 }
 
-# Concrete (non-wildcard) Host aliases from ~/.ssh/config, one per line. Skips
-# pattern entries (*, ?, !) so only real, pushable hosts come back.
+# Pattern entries (*, ?, !) are skipped: only concrete hosts are pushable.
 ssh_config_hosts() {
     local cfg="${HOME}/.ssh/config"
     [[ -r "${cfg}" ]] || return 0
@@ -474,19 +432,14 @@ ssh_config_hosts() {
 	}' "${cfg}"
 }
 
-# Toggle-time Headless push. For each configured host with a currently-live
-# ControlMaster socket (ssh -O check), render the decided mode on that machine
-# via the gate-free --render entry point. Every step is timeout-bounded so a
-# stale or newly-unreachable host can never hang the local toggle; a host with
-# no live socket is skipped in the fast, non-blocking path of -O check. Only the
-# deciding (Desktop) path calls this, never --render, so a push never recurses.
+# Toggle-time Headless push, to every host with a live ControlMaster socket.
+# Timeout-bounded throughout so a stale host cannot hang the local toggle; only
+# the deciding path calls this, never --render, so a push never recurses.
 push_headless() {
     local mode=$1 host
     command -v ssh >/dev/null 2>&1 || return 0
-    # This loop's stdin is the host list, and the render ssh below forwards its
-    # stdin to the remote command, so without -n it drains the list and the loop
-    # ends at the first live host. -O check never reads stdin; it carries -n only
-    # so both calls stay consistent and stdin-safe if either is ever reshaped.
+    # Without -n the render ssh drains this loop's stdin, which is the host list,
+    # and the loop ends at the first live host. -O check carries -n to match.
     while read -r host; do
         [[ -n "${host}" ]] || continue
         if timeout 5 ssh -n -o BatchMode=yes -O check "${host}" >/dev/null 2>&1; then
@@ -505,9 +458,8 @@ notify_mode() {
     fi
 }
 
-# Render a given mode: persist it and run every generator and apply step. This
-# is the Role-agnostic half (see script-conventions / theme-switch-expansion
-# spec) and is invoked both by the deciding path and by --render.
+# The Role-agnostic half (theme-switch-expansion spec), reached both by the
+# deciding path and by --render.
 render() {
     local mode=$1 out_dir
     out_dir=$(theme_state_dir)
@@ -564,8 +516,7 @@ main() {
             ;;
     esac
 
-    # Deciding path: only a Desktop has authority to choose the Theme Mode, so
-    # refuse before writing or generating anything if the Role is not desktop.
+    # Only a Desktop may decide the Theme Mode; refuse before anything is written.
     local role mode
     if ! role=$(read_role); then
         return 1
@@ -580,8 +531,6 @@ main() {
     fi
     render "${mode}"
     notify_mode "${mode}"
-    # Propagate to any Headless machine with a live connection right now. Only
-    # the Desktop reaches here; --render (the remote's own path) never pushes.
     push_headless "${mode}"
 }
 

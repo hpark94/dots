@@ -1,10 +1,7 @@
 #!/usr/bin/env bats
 
-# Covers the theme-fragment sourcing (the sessionizer is normally started by
-# `tmux neww`, which hands it the tmux server's frozen environment, so it has to
-# read the current theme vars off disk itself) and the session dispatch. `TMUX`
-# and `pgrep` are pinned by stubs so the result does not depend on whether bats
-# itself runs inside a tmux session.
+# `TMUX` and `pgrep` are pinned by stubs, so the session dispatch under test does
+# not depend on whether bats itself runs inside a tmux session.
 
 setup() {
     export HOME="${BATS_TEST_TMPDIR}/home"

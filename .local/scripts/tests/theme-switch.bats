@@ -621,11 +621,9 @@ STUB_EOF
     [ "${status}" -eq 0 ]
 }
 
-# An ssh stub faithful to real ssh in the one way that matters here: a control
-# command (-O check) never touches stdin, while a remote-command invocation
-# forwards stdin to the remote and so reads it to EOF unless given -n. It logs
-# every invocation so a test can assert how far the host loop actually got, and
-# only `beta` has a live master.
+# An ssh stub faithful in the one way that matters: -O check never touches stdin,
+# while a remote command forwards stdin and so reads it to EOF unless given -n.
+# It logs every invocation, and only `beta` has a live master.
 setup_ssh_stub() {
     local bin="${BATS_TEST_TMPDIR}/ssh-bin"
     mkdir -p "${bin}"

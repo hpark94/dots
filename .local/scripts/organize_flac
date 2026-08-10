@@ -48,8 +48,8 @@ while IFS= read -r -d '' file; do
 
     ext="${absolute_path##*.}"
 
-    # A failing tag lookup must leave the value empty for the check below, not
-    # abort the whole run through pipefail.
+    # `|| true`: a failing tag lookup leaves the value empty for the check below
+    # instead of aborting the run through pipefail.
     artist=$(metaflac --show-tag=ARTIST "${absolute_path}" </dev/null | cut -d= -f2-) || true
     artist=$(sanitize "${artist}")
     album=$(metaflac --show-tag=ALBUM "${absolute_path}" </dev/null | cut -d= -f2-) || true
@@ -58,9 +58,8 @@ while IFS= read -r -d '' file; do
     title=$(sanitize "${title}")
     track=$(metaflac --show-tag=TRACKNUMBER "${absolute_path}" </dev/null | cut -d= -f2- | cut -d/ -f1) || true
 
-    # The track pattern is part of the completeness test because printf rejects
-    # anything non-decimal, and under errexit that would end the run instead of
-    # routing the file here.
+    # The track pattern belongs in the completeness test: printf rejects
+    # non-decimal input, which under errexit would end the run.
     if [[ -z ${artist} || -z ${album} || -z ${title} || ! ${track} =~ ^[0-9]+$ ]]; then
         log "ERROR" "${absolute_path}: metadata missing or unusable!"
         skip_dir="${MUSIC_DIR}/skipped"

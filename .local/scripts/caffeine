@@ -16,9 +16,8 @@ fi
 pid_file="${XDG_RUNTIME_DIR}/caffeine.pid"
 pid=$(cat "${pid_file}" 2>/dev/null || true)
 
-# A stale file, from an inhibitor that died with its session, falls through here
-# and is overwritten by the fresh one below. The name behind the PID is checked
-# too, because the kernel hands a dead PID out again to anyone.
+# A stale file, from an inhibitor that died with its session, falls through and
+# is overwritten below. The name behind the PID is checked because PIDs recycle.
 if [[ -n "${pid}" && -r "/proc/${pid}/comm" ]] \
     && [[ "$(cat "/proc/${pid}/comm")" == "systemd-inhibit" ]]; then
     kill "${pid}"

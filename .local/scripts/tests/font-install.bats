@@ -2,9 +2,8 @@
 
 bats_require_minimum_version 1.5.0
 
-# BATS test suite for font-install's download path. curl, unzip and fc-cache are
-# stubbed and HOME points at BATS_TEST_TMPDIR, so nothing is fetched and the real
-# font directory is never written to.
+# curl, unzip and fc-cache are stubbed and HOME points at BATS_TEST_TMPDIR, so
+# nothing is fetched and the real font directory is never written to.
 
 setup() {
     export HOME="${BATS_TEST_TMPDIR}/home"

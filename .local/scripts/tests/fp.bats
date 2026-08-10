@@ -2,9 +2,8 @@
 
 bats_require_minimum_version 1.5.0
 
-# BATS test suite for fp's x-special/gnome-copied-files branch. Mocks wl-paste
-# with a stub driven by files on disk: one lists the offered types, one holds the
-# gnome-copied-files payload. This mirrors what fy writes to the clipboard.
+# wl-paste is stubbed from files on disk: one lists the offered types, one holds
+# the payload, mirroring what a file manager or fy puts on the clipboard.
 
 SCRIPT="${BATS_TEST_DIRNAME}/../../../.local/scripts/fp"
 

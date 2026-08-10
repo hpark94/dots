@@ -2,11 +2,8 @@
 
 bats_require_minimum_version 1.5.0
 
-# BATS test suite for delta-auto. Stubs `tput` and `delta` on PATH and runs the
-# real script end to end. The `delta` stub echoes its args, so assertions can
-# substring-match to check whether --side-by-side was added and whether extra
-# args pass through. The stub-bin dir is first on PATH and also holds a copy of
-# the script under test, so it resolves the stubbed `tput`/`delta`.
+# The real script runs from the stub-bin dir, which is first on PATH, so it
+# resolves the stubbed `tput` and `delta`; the `delta` stub echoes its args.
 
 setup() {
     export STUB_BIN="${BATS_TEST_TMPDIR}/stub-bin"

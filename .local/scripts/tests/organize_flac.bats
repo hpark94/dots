@@ -2,10 +2,8 @@
 
 bats_require_minimum_version 1.5.0
 
-# BATS test suite for organize_flac. The script derives MUSIC_DIR from $HOME, so
-# pointing HOME at BATS_TEST_TMPDIR keeps every `mv` inside a throwaway tree and
-# away from the real music library. metaflac is stubbed and reads the tag values
-# from the TAG_* variables a test exports.
+# MUSIC_DIR derives from $HOME, so pointing HOME at BATS_TEST_TMPDIR keeps every
+# `mv` away from the real library; the metaflac stub answers from TAG_*.
 
 setup() {
     export HOME="${BATS_TEST_TMPDIR}/home"

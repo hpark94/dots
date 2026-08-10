@@ -23,7 +23,6 @@ has_type() {
     return 1
 }
 
-# Print the target path with $HOME collapsed to ~, as the sole stdout line.
 print_result() {
     local absolute_path
     absolute_path=$(realpath "$1")
@@ -34,7 +33,6 @@ print_result() {
     fi
 }
 
-# Return a collision-free path inside target_dir for the given basename.
 unique_path() {
     local base="$1" stem ext candidate n=1
     if [[ "${base}" == *.* ]]; then
@@ -52,8 +50,7 @@ unique_path() {
     printf '%s' "${candidate}"
 }
 
-# Map a MIME subtype to a file extension. jpeg is the only special case;
-# every other subtype is already a sensible extension (png, gif, webp, pdf, ...).
+# jpeg is the only subtype that is not already a usable extension.
 mime_extension() {
     local subtype="${1##*/}"
     subtype="${subtype%%;*}"
@@ -65,9 +62,8 @@ mime_extension() {
     fi
 }
 
-# Pick the first concrete non-text type on offer, so binary assets win over
-# any text/* alternative representation. Source apps list their preferred image
-# type first, so this order is set by the source, not a richness ranking.
+# The first non-text type wins: source apps list their preferred image type
+# first, so the order is theirs rather than a richness ranking of ours.
 pick_binary_type() {
     local type
     for type in "${available_types[@]}"; do
@@ -82,9 +78,8 @@ pick_binary_type() {
     return 1
 }
 
-# Copy the local file named by the first ^file:// line of $1 into target_dir.
-# Assumes RFC-compliant URIs (literal % and backslash are percent-encoded);
-# malformed input fails safely via the existence check. Returns non-zero when no
+# Assumes RFC-compliant URIs (literal % and backslash percent-encoded);
+# malformed input fails safely on the existence check. Returns non-zero when no
 # usable local file was found, so the caller can fall through.
 paste_file_uri() {
     local source_file
@@ -99,8 +94,8 @@ paste_file_uri() {
     print_result "${dest}"
 }
 
-# A file manager's Ctrl+C. Payload is `copy\nfile://<uri>`; reuse the shared
-# file:// handler, ignoring the leading operation line.
+# A file manager's Ctrl+C: the payload is `copy\nfile://<uri>`, so the shared
+# file:// handler serves it once the leading operation line is ignored.
 if has_type "x-special/gnome-copied-files"; then
     if paste_file_uri "$(wl-paste --type x-special/gnome-copied-files 2>/dev/null)"; then
         exit 0
@@ -111,9 +106,9 @@ if has_type "text/uri-list"; then
     if paste_file_uri "$(wl-paste --type text/uri-list 2>/dev/null)"; then
         exit 0
     fi
-    # No usable local file:// entry: fall through to the binary branch. A browser
-    # "copy image" offers a text/uri-list (http:// URL) alongside an image/png, so
-    # we must save the image bytes rather than error out here.
+    # A browser "copy image" offers a text/uri-list (http:// URL) alongside an
+    # image/png, so a missing local file:// must fall through to the binary
+    # branch and save the bytes rather than error out.
 fi
 
 if binary_type=$(pick_binary_type); then

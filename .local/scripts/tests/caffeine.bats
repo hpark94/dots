@@ -2,10 +2,8 @@
 
 bats_require_minimum_version 1.5.0
 
-# BATS test suite for caffeine. XDG_RUNTIME_DIR points into BATS_TEST_TMPDIR and
-# systemd-inhibit is stubbed, so the machine's own idle inhibitor is never
-# touched. The stub renames itself through /proc/self/comm, because that name is
-# what caffeine reads to tell its own inhibitor from a recycled PID.
+# XDG_RUNTIME_DIR points into BATS_TEST_TMPDIR and systemd-inhibit is stubbed,
+# so the machine's own idle inhibitor is never touched.
 
 setup() {
     export XDG_RUNTIME_DIR="${BATS_TEST_TMPDIR}/run"
@@ -16,9 +14,9 @@ setup() {
     STUB_BIN="${BATS_TEST_TMPDIR}/stub-bin"
     mkdir -p "${STUB_BIN}"
     PATH="${STUB_BIN}:${PATH}"
-    # Only bats' fd 3 is closed, as every background process in a bats test must.
-    # stdout and stderr stay inherited on purpose: detaching those is caffeine's
-    # job, and a stub that hid its own would let that regress unseen.
+    # Closes only bats' fd 3, as every background process must; stdout and stderr
+    # stay inherited, because detaching those is caffeine's job. The stub renames
+    # itself via /proc/self/comm, the name caffeine checks to own its inhibitor.
     cat >"${STUB_BIN}/systemd-inhibit" <<'STUB_EOF'
 #!/usr/bin/env bash
 exec 3>&-

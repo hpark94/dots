@@ -45,14 +45,13 @@ else
     done < <(find "${search_paths[@]}" -mindepth 1 -maxdepth 1 \( -type d -o -xtype d \) 2>/dev/null)
 
     # Launched via `tmux neww` (nvim's <C-f>), this inherits the tmux server's
-    # frozen environment rather than a fresh shell's, so the theme vars would
-    # otherwise be stuck at whatever mode the server was started in.
+    # frozen environment, so the theme vars have to come off disk instead.
     theme_env="${XDG_STATE_HOME:-${HOME}/.local/state}/theme/shell-env.sh"
     # shellcheck disable=SC1090
     [[ -r "${theme_env}" ]] && source "${theme_env}"
 
-    # An fzf abort exits 130, which errexit would turn into a script abort; the
-    # empty selection below is the intended quiet exit instead.
+    # An fzf abort exits 130, which errexit would turn into a failure; the empty
+    # selection below is the intended quiet exit instead.
     selected=$(printf "%s\n" "${options[@]}" | fzf --bind "esc:abort") || true
 fi
 
