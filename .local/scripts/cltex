@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+set -euo pipefail
+
 extensions=(
     "*.aux" "*.lof" "*.lot" "*.log" "*.toc" "*.out" "*.xdv"
     "*.bbl*" "*.bcf*" "*.blg*" "*.loa" "*.fls" "*.fdb_latexmk"

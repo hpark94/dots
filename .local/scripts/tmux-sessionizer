@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+set -euo pipefail
 
 fixed_paths=(
     ~/
@@ -30,7 +31,9 @@ else
     # shellcheck disable=SC1090
     [[ -r "${theme_env}" ]] && source "${theme_env}"
 
-    selected=$(printf "%s\n" "${options[@]}" | fzf --bind "esc:abort")
+    # An fzf abort exits 130, which errexit would turn into a script abort; the
+    # empty selection below is the intended quiet exit instead.
+    selected=$(printf "%s\n" "${options[@]}" | fzf --bind "esc:abort") || true
 fi
 
 if [[ -z ${selected} ]]; then
@@ -38,9 +41,9 @@ if [[ -z ${selected} ]]; then
 fi
 
 selected_name=$(basename "${selected}" | tr . _)
-tmux_running=$(pgrep tmux)
+tmux_running=$(pgrep tmux) || true
 
-if [[ -z ${TMUX} ]] && [[ -z ${tmux_running} ]]; then
+if [[ -z ${TMUX:-} ]] && [[ -z ${tmux_running} ]]; then
     tmux new-session -s "${selected_name}" -c "${selected}"
     exit 0
 fi
@@ -49,7 +52,7 @@ if ! tmux has-session -t="${selected_name}" 2>/dev/null; then
     tmux new-session -ds "${selected_name}" -c "${selected}"
 fi
 
-if [[ -z ${TMUX} ]]; then
+if [[ -z ${TMUX:-} ]]; then
     tmux attach-session -t "${selected_name}"
 else
     tmux switch-client -t "${selected_name}"

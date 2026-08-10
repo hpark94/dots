@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -e
+set -euo pipefail
 
 FONT_BASE_DIR="${HOME}/.local/share/fonts"
 

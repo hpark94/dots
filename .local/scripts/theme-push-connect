@@ -6,7 +6,7 @@
 # Headless machine that was offline during a prior toggle catches up the moment
 # it is reached. Best-effort and bounded: a connection must never block or fail
 # because of it. See .scratch/theme-switch-expansion/spec.md, "The Headless push".
-set -u
+set -euo pipefail
 
 host=${1:-}
 [[ -n "${host}" ]] || exit 0

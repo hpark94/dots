@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -e
+set -euo pipefail
 
 MUSIC_DIR="${HOME}/music"
 
@@ -39,14 +39,15 @@ while IFS= read -r -d '' file; do
 
     ext="${absolute_path##*.}"
 
-    artist=$(metaflac --show-tag=ARTIST "${absolute_path}" </dev/null | cut -d= -f2)
+    # A failing tag lookup must leave the value empty for the check below, not
+    # abort the whole run through pipefail.
+    artist=$(metaflac --show-tag=ARTIST "${absolute_path}" </dev/null | cut -d= -f2) || true
     artist=$(sanitize "${artist}")
-    album=$(metaflac --show-tag=ALBUM "${absolute_path}" </dev/null | cut -d= -f2)
+    album=$(metaflac --show-tag=ALBUM "${absolute_path}" </dev/null | cut -d= -f2) || true
     album=$(sanitize "${album}")
-    title=$(metaflac --show-tag=TITLE "${absolute_path}" </dev/null | cut -d= -f2)
+    title=$(metaflac --show-tag=TITLE "${absolute_path}" </dev/null | cut -d= -f2) || true
     title=$(sanitize "${title}")
-    track=$(metaflac --show-tag=TRACKNUMBER "${absolute_path}" </dev/null | cut -d= -f2 | cut -d/ -f1)
-    track=$(printf "%02d" "${track}")
+    track=$(metaflac --show-tag=TRACKNUMBER "${absolute_path}" </dev/null | cut -d= -f2 | cut -d/ -f1) || true
 
     if [[ -z ${artist} || -z ${album} || -z ${title} || -z ${track} ]]; then
         log "ERROR" "${absolute_path}: metadata missing!"
@@ -57,6 +58,10 @@ while IFS= read -r -d '' file; do
         mv "${absolute_path}" "${skip_file}"
         continue
     fi
+
+    # Only now: printf on an empty track fails, and under errexit that would end
+    # the run before the skipped/ branch above could catch the file.
+    track=$(printf "%02d" "${track}")
 
     newpath="${MUSIC_DIR}/${ext}/${artist}/${album}"
 
