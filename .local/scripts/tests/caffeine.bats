@@ -16,11 +16,12 @@ setup() {
     STUB_BIN="${BATS_TEST_TMPDIR}/stub-bin"
     mkdir -p "${STUB_BIN}"
     PATH="${STUB_BIN}:${PATH}"
-    # The redirect matters: a background job holding the pipe `run` reads would
-    # block the test until the stub finished on its own.
+    # Only bats' fd 3 is closed, as every background process in a bats test must.
+    # stdout and stderr stay inherited on purpose: detaching those is caffeine's
+    # job, and a stub that hid its own would let that regress unseen.
     cat >"${STUB_BIN}/systemd-inhibit" <<'STUB_EOF'
 #!/usr/bin/env bash
-exec >/dev/null 2>&1
+exec 3>&-
 printf 'systemd-inhibit' >/proc/self/comm
 sleep 30
 STUB_EOF
