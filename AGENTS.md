@@ -64,7 +64,8 @@ it before adding a file to the repo root.
   safe to re-run.
 - `mise install`: Sync toolchain from `.config/mise/config.toml`.
 - `bats .local/scripts/tests/` or `bats .local/scripts/tests/<test-file>.bats`:
-  Run tests for bootstrap.sh, theme-switch, envs, fy, and fp.
+  Run tests for bootstrap.sh, theme-switch, envs, fy, fp, delta-auto,
+  tmux-sessionizer, caffeine, cltex, font-install, and organize_flac.
 - `nvim --headless '"+Lazy! sync' +qa`: Force nvim plugin sync.
 - `theme-switch dark|light|toggle`: Desktop-only; decides and applies Theme
   Mode.
