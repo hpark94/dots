@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-MUSIC_DIR="${HOME}/music"
+MUSIC_DIR="${HOME}/Music"
 
 log() {
     local level="$1"

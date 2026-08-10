@@ -7,7 +7,7 @@ bats_require_minimum_version 1.5.0
 
 setup() {
     export HOME="${BATS_TEST_TMPDIR}/home"
-    music_dir="${HOME}/music"
+    music_dir="${HOME}/Music"
     mkdir -p "${music_dir}"
     SCRIPT="${BATS_TEST_DIRNAME}/../organize_flac"
 
