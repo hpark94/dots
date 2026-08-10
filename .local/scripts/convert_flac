@@ -53,6 +53,5 @@ fi
 
 while IFS= read -r -d '' file; do
     log "INFO" "${file} converting..."
-    absolute_path=$(realpath "${file}")
-    convert "${absolute_path}"
+    convert "${file}"
 done < <(find "${MUSIC_DIR}" -type d -name "skipped" -prune -o -type f -name "*.flac" -print0)
