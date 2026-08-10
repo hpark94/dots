@@ -1,6 +1,14 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# Bash only treats Hangul as a letter under a UTF-8 locale; without this the
+# Slug rule would silently turn a Korean title into a row of separators when the
+# script runs from a timer or a bare SSH command.
+export LC_ALL=C.UTF-8
+
+# The Slug rule collapses runs of `-` with the `+(-)` pattern.
+shopt -s extglob
+
 MUSIC_DIR="${HOME}/Music"
 
 log() {
@@ -20,14 +28,15 @@ check_installation() {
     fi
 }
 
-sanitize() {
-    local val="$1"
-    val="${val,,}"
-    val="${val// /_}"
-    val="${val//\//_}"
-    val="${val//:/-}"
-    val="${val//\'/_}"
-    echo "${val}"
+# Parentheses are the one punctuation the Slug keeps: the bracketed qualifier
+# carries meaning in this library's titles.
+slug() {
+    local val="${1,,}"
+    val="${val//[^[:alnum:]()]/-}"
+    val="${val//+(-)/-}"
+    val="${val#-}"
+    val="${val%-}"
+    printf '%s\n' "${val}"
 }
 
 remove_comment() {
@@ -50,17 +59,23 @@ while IFS= read -r -d '' file; do
 
     # `|| true`: a failing tag lookup leaves the value empty for the check below
     # instead of aborting the run through pipefail.
+    album_artist=$(metaflac --show-tag=ALBUMARTIST "${absolute_path}" </dev/null | cut -d= -f2-) || true
     artist=$(metaflac --show-tag=ARTIST "${absolute_path}" </dev/null | cut -d= -f2-) || true
-    artist=$(sanitize "${artist}")
+    # The Album Artist falls back to the Track Artist, which is what the whole
+    # path used to be keyed on, so a tagger that omits ALBUMARTIST loses nothing.
+    album_artist=$(slug "${album_artist:-${artist}}")
+    artist=$(slug "${artist}")
     album=$(metaflac --show-tag=ALBUM "${absolute_path}" </dev/null | cut -d= -f2-) || true
-    album=$(sanitize "${album}")
+    album=$(slug "${album}")
     title=$(metaflac --show-tag=TITLE "${absolute_path}" </dev/null | cut -d= -f2-) || true
-    title=$(sanitize "${title}")
+    title=$(slug "${title}")
     track=$(metaflac --show-tag=TRACKNUMBER "${absolute_path}" </dev/null | cut -d= -f2- | cut -d/ -f1) || true
 
-    # The track pattern belongs in the completeness test: printf rejects
-    # non-decimal input, which under errexit would end the run.
-    if [[ -z ${artist} || -z ${album} || -z ${title} || ! ${track} =~ ^[0-9]+$ ]]; then
+    # Checked after slugging, so a value of pure punctuation counts as unusable
+    # rather than filing the file under an empty name. The track pattern belongs
+    # here too: printf rejects non-decimal input, which under errexit would end
+    # the run.
+    if [[ -z ${album_artist} || -z ${artist} || -z ${album} || -z ${title} || ! ${track} =~ ^[0-9]+$ ]]; then
         log "ERROR" "${absolute_path}: metadata missing or unusable!"
         skip_dir="${MUSIC_DIR}/skipped"
         skip_name=$(basename "${absolute_path}")
@@ -78,11 +93,11 @@ while IFS= read -r -d '' file; do
     # would be errors and 010 would silently become 8.
     track=$(printf "%02d" "$((10#${track}))")
 
-    newpath="${MUSIC_DIR}/${ext}/${artist}/${album}"
+    newpath="${MUSIC_DIR}/${ext}/${album_artist}/${album}"
 
     mkdir -p "${newpath}"
 
-    newname="${track}_${title}-${artist}.${ext}"
+    newname="${track}-${title}-${artist}.${ext}"
     newname="${newpath}/${newname}"
 
     if [[ "${file}" == "${newname}" ]]; then
@@ -98,3 +113,10 @@ while IFS= read -r -d '' file; do
     log "INFO" "Rename: ${file} -> ${newname}"
     mv -- "${file}" "${newname}"
 done < <(find "${MUSIC_DIR}" -type d -name "skipped" -prune -o -type f -name "*.flac" -print0)
+
+# Confined to the flac tree, so Skipped and the mp3 tree are out of reach.
+# `-delete` implies depth-first, so a directory left empty only because its
+# children went away is removed in the same pass.
+if [[ -d "${MUSIC_DIR}/flac" ]]; then
+    find "${MUSIC_DIR}/flac" -mindepth 1 -type d -empty -delete
+fi

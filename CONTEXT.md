@@ -1,8 +1,8 @@
 # Dotfiles
 
-Vocabulary for this repo: the machine Roles it deploys onto, and how it switches
-its terminal/editor/WM tooling between light and dark color themes from a single
-script.
+Vocabulary for this repo: the machine Roles it deploys onto, how it switches its
+terminal/editor/WM tooling between light and dark color themes from a single
+script, and how the music scripts turn audio tags into paths.
 
 ## Language
 
@@ -156,3 +156,46 @@ app's process did pick up the change, since that app's own portal subscription
 is live even though the switch script's write to it isn't tied to any per-app
 signal.\
 _Avoid_: static, cold
+
+### Music library
+
+**Album Artist**:\
+The artist a release as a whole is credited to, read from the `ALBUMARTIST` tag
+and falling back to `ARTIST` where that tag is absent. Sole decider of the
+artist directory, so every track of a release files together however its
+individual tracks are credited: a guest on one track cannot fork the album into
+a sibling directory. Deliberately a different tag from the Track Artist rather
+than a parse of it, because a genuine joint release credits both names in
+`ALBUMARTIST` and taking the first would be a guess (see ADR-0006).\
+_Avoid_: artist (ambiguous with Track Artist), main artist, primary artist
+
+**Track Artist**:\
+The artist credited on one individual recording, read from the `ARTIST` tag,
+guests included. Decides the artist suffix of the filename and never a
+directory. It exists as its own term because once the directory keys on the
+Album Artist, the filename is the only place a collaboration still shows on
+disk.\
+_Avoid_: artist, performer, featured artist (that names only the guest half of
+the credit)
+
+**Slug**:\
+The single form every tag value takes before it becomes a path segment:
+lowercased, with each character that is neither letter, digit, nor parenthesis
+turned into `-`, runs of `-` collapsed to one, and `-` trimmed from both ends.
+Letter and digit are meant in the Unicode sense, so Hangul, Kana and CJK
+survive; parentheses are the one punctuation exception, because the bracketed
+qualifier carries meaning in this library's titles. `-` is the only separator a
+Slug can contain, which is what makes doubled and stranded separators
+unrepresentable rather than merely repaired. A value that slugs to the empty
+string counts as unusable metadata and sends its file to Skipped.\
+_Avoid_: sanitized name, safe name, normalized (normalization means Unicode
+NFC/NFD folding, which a Slug does not do)
+
+**Skipped**:\
+The quarantine directory holding files whose tags cannot yield a complete path,
+because a tag is missing, because a track number is not a decimal, or because a
+value slugs to nothing. A file goes there rather than being filed under a
+guessed or empty name, and it is neither deleted nor retagged; a name already
+taken there leaves the file where it is. The counterpart to the collision guard
+in the filed tree: both fail loudly and move on instead of overwriting.\
+_Avoid_: rejected, failed, trash, quarantine as the directory name
