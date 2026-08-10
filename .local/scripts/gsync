@@ -1,18 +1,24 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+if [[ $# -gt 1 ]]; then
+    echo "gsync: usage: gsync [message]" >&2
+    echo "gsync: at most one commit message argument allowed, got $#" >&2
+    exit 1
+fi
+
 if ! git stash; then
-    echo "Failed to stash changes." >&2
+    echo "gsync: failed to stash changes." >&2
     exit 1
 fi
 
 if ! git pull; then
-    echo "Failed to pull updates." >&2
+    echo "gsync: failed to pull updates." >&2
     exit 1
 fi
 
 if ! git stash pop; then
-    echo "Conflict during stash pop. Resolve it manually." >&2
+    echo "gsync: conflict during stash pop. Resolve it manually." >&2
     exit 1
 fi
 

@@ -1,6 +1,13 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# The deletions below are recursive and irreversible, and *.log, *.out and *.toc
+# are common far outside LaTeX; a *.tex is the only proof this is a build tree.
+if ! compgen -G "*.tex" >/dev/null; then
+    echo "cltex: no *.tex in the current directory, refusing to delete build artifacts." >&2
+    exit 1
+fi
+
 extensions=(
     "*.aux" "*.lof" "*.lot" "*.log" "*.toc" "*.out" "*.xdv"
     "*.bbl*" "*.bcf*" "*.blg*" "*.loa" "*.fls" "*.fdb_latexmk"

@@ -6,7 +6,11 @@ MUSIC_DIR="${HOME}/music"
 log() {
     local level="$1"
     shift
-    echo -e "[$(date '+%H:%M:%S')] [${level}] $*"
+    if [[ "${level}" == "ERROR" ]]; then
+        printf '[%s] [%s] %s\n' "$(date '+%H:%M:%S')" "${level}" "$*" >&2
+    else
+        printf '[%s] [%s] %s\n' "$(date '+%H:%M:%S')" "${level}" "$*"
+    fi
 }
 
 check_installation() {
@@ -31,6 +35,11 @@ remove_comment() {
 }
 
 check_installation metaflac
+
+if [[ ! -d "${MUSIC_DIR}" ]]; then
+    log "ERROR" "${MUSIC_DIR} does not exist. Aborting..."
+    exit 1
+fi
 
 while IFS= read -r -d '' file; do
     absolute_path=$(realpath "${file}")

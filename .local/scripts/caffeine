@@ -1,8 +1,28 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-if pidof systemd-inhibit >/dev/null; then
-    killall systemd-inhibit
-else
-    systemd-inhibit --what=idle --why="Caffeine Modus" --who="User" sleep infinity &
+if ! command -v systemd-inhibit >/dev/null 2>&1; then
+    echo "caffeine: systemd-inhibit not available." >&2
+    exit 1
 fi
+
+if [[ -z "${XDG_RUNTIME_DIR:-}" ]]; then
+    echo "caffeine: XDG_RUNTIME_DIR is not set." >&2
+    exit 1
+fi
+
+# Toggle only the inhibitor this script started. `killall systemd-inhibit` also
+# took down foreign locks, a running package manager's among them.
+pid_file="${XDG_RUNTIME_DIR}/caffeine.pid"
+pid=$(cat "${pid_file}" 2>/dev/null || true)
+
+# A stale file, from an inhibitor that died with its session, falls through here
+# and is overwritten by the fresh one below.
+if [[ -n "${pid}" ]] && kill -0 "${pid}" 2>/dev/null; then
+    kill "${pid}"
+    rm -f "${pid_file}"
+    exit 0
+fi
+
+systemd-inhibit --what=idle --why="Caffeine mode" --who="User" sleep infinity &
+printf '%s\n' "$!" >"${pid_file}"

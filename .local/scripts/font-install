@@ -6,27 +6,41 @@ FONT_BASE_DIR="${HOME}/.local/share/fonts"
 log() {
     local level="$1"
     shift
-    echo -e "[$(date '+%H:%M:%S')] [${level}] $*"
+    if [[ "${level}" == "ERROR" ]]; then
+        printf '[%s] [%s] %s\n' "$(date '+%H:%M:%S')" "${level}" "$*" >&2
+    else
+        printf '[%s] [%s] %s\n' "$(date '+%H:%M:%S')" "${level}" "$*"
+    fi
 }
 
-if ! command -v unzip >/dev/null 2>&1; then
-    log "ERROR" "Unzip not installed. Aborting..."
-    exit 1
-fi
+for cmd in curl unzip fc-cache; do
+    if ! command -v "${cmd}" >/dev/null 2>&1; then
+        log "ERROR" "${cmd} not installed. Aborting..."
+        exit 1
+    fi
+done
+
+temp_dir=$(mktemp -d)
+trap 'rm -rf "${temp_dir}"' EXIT
 
 install_font() {
     local font_name="$1"
     local font_url="$2"
 
     local target_dir="${FONT_BASE_DIR}/${font_name}"
-    local temp_zip="/tmp/${font_name}.zip"
-    local temp_extract="/tmp/${font_name}_extract"
+    local temp_zip="${temp_dir}/${font_name}.zip"
+    local temp_extract="${temp_dir}/${font_name}_extract"
 
     mkdir -p "${target_dir}"
     mkdir -p "${temp_extract}"
 
     log "INFO" "Downloading ${font_name}..."
-    curl -L "${font_url}" -o "${temp_zip}"
+    # Without -f, curl writes the server's HTML error page into the .zip and
+    # unzip is left to discover the "font" is a 404.
+    if ! curl -fL "${font_url}" -o "${temp_zip}"; then
+        log "ERROR" "Failed to download ${font_name} from ${font_url}. Aborting..."
+        exit 1
+    fi
 
     log "INFO" "Extracting and filtering .ttf files..."
     unzip -oq "${temp_zip}" -d "${temp_extract}"

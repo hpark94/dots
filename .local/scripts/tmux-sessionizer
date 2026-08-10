@@ -1,6 +1,13 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+for cmd in fzf tmux; do
+    if ! command -v "${cmd}" >/dev/null 2>&1; then
+        echo "tmux-sessionizer: ${cmd} not available." >&2
+        exit 1
+    fi
+done
+
 fixed_paths=(
     ~/
     ~/dots
@@ -16,6 +23,10 @@ search_paths=(
 )
 
 if [[ $# -eq 1 ]]; then
+    if [[ ! -d "$1" ]]; then
+        echo "tmux-sessionizer: not a directory: $1" >&2
+        exit 1
+    fi
     selected=$1
 else
     options=("${fixed_paths[@]}")
