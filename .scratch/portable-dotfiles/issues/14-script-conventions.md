@@ -129,22 +129,34 @@ renamed to fit each script's naming):
 
 ```bash
 read_role() {
-	local marker="${XDG_CONFIG_HOME:-$HOME/.config}/dotfiles/role" role
-	if ! role=$(<"$marker" 2>/dev/null); then
-		role=""
-	fi
-	role="${role//[[:space:]]/}"
-	case "$role" in
-	desktop | headless)
-		printf '%s' "$role"
-		;;
-	*)
-		echo "Error: ${marker} must contain exactly 'desktop' or 'headless'. Fix: printf '%s' desktop > ${marker} (or headless)." >&2
-		return 1
-		;;
-	esac
+    local marker="${XDG_CONFIG_HOME:-${HOME}/.config}/dotfiles/role" role=""
+    if [[ -r "${marker}" ]]; then
+        role=$(<"${marker}")
+    fi
+    role="${role//[[:space:]]/}"
+    case "${role}" in
+        desktop | headless)
+            printf '%s' "${role}"
+            ;;
+        *)
+            echo "Error: ${marker} must contain exactly 'desktop' or 'headless'. Fix: printf '%s' desktop > ${marker} (or headless)." >&2
+            return 1
+            ;;
+    esac
 }
 ```
+
+**Correction, 2026-08-10.** The shape pinned here originally read the Marker as
+`role=$(<"$marker" 2>/dev/null)`. Under bash the trailing redirect cancels the
+special `$(<file)` fast path, so the substitution yields the empty string for
+_every_ file, valid or not, and the reader rejects even a correct Marker. It
+happens to work under zsh, which is why an eyeballed copy looks fine. The
+readability guard above replaces it: still no subprocess, and no "No such file"
+spilled onto stderr when the Marker is absent. Found while implementing
+[theme-switch-expansion/issues/05](../../theme-switch-expansion/issues/05-role-gate-render-entrypoint.md);
+`theme-switch` carries the corrected form. Path, contract, and error wording are
+unchanged. Variables are braced and indented per `.editorconfig` and
+`require-variable-braces`, both of which postdate the original snippet.
 
 If ticket 11's "no shared library" answer is ever revisited, this is the one
 function that moves into it unchanged; until then it is duplicated on purpose,
