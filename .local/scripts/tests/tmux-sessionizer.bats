@@ -22,13 +22,13 @@ setup() {
     cat >"${STUB_BIN}/fzf" <<'STUB_EOF'
 #!/usr/bin/env bash
 cat >/dev/null
-printf '%s\n' "$FZF_DEFAULT_OPTS" >>"$FZF_LOG"
+printf '%s\n' "${FZF_DEFAULT_OPTS}" >>"${FZF_LOG}"
 exit 130
 STUB_EOF
     # Logs every subcommand; `has-session` reports "no such session".
     cat >"${STUB_BIN}/tmux" <<'STUB_EOF'
 #!/usr/bin/env bash
-printf '%s\n' "$*" >>"$TMUX_LOG"
+printf '%s\n' "$*" >>"${TMUX_LOG}"
 if [[ "$1" == "has-session" ]]; then
     exit 1
 fi
@@ -92,4 +92,21 @@ STUB_EOF
     [ "${status}" -eq 0 ]
     grep -qx "new-session -ds notes -c ${BATS_TEST_TMPDIR}/notes" "${TMUX_LOG}"
     grep -qx "switch-client -t notes" "${TMUX_LOG}"
+}
+
+@test "a colon in the directory name is translated out of the session name" {
+    mkdir -p "${BATS_TEST_TMPDIR}/lib:core"
+    setup_selecting_fzf_stub "${BATS_TEST_TMPDIR}/lib:core"
+
+    run "${SCRIPT}"
+    [ "${status}" -eq 0 ]
+    [ "$(cat "${TMUX_LOG}")" = "new-session -s lib_core -c ${BATS_TEST_TMPDIR}/lib:core" ]
+}
+
+@test "a second argument is rejected instead of silently opening the picker" {
+    run "${SCRIPT}" "${BATS_TEST_TMPDIR}" "${BATS_TEST_TMPDIR}"
+    [ "${status}" -ne 0 ]
+    [[ "${output}" == *"tmux-sessionizer: usage:"* ]]
+    [[ "${output}" == *"got 2"* ]]
+    [ ! -s "${FZF_LOG}" ]
 }

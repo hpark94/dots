@@ -22,6 +22,12 @@ check_installation() {
 
 convert() {
     local flac_file="$1"
+    # Outside the flac tree the prefix strip below is a no-op, and the absolute
+    # path would be mirrored wholesale underneath mp3/.
+    if [[ "${flac_file}" != "${MUSIC_DIR}/flac/"* ]]; then
+        log "ERROR" "${flac_file} is outside ${MUSIC_DIR}/flac, not converting it"
+        return
+    fi
     local relative
     relative="${flac_file#"${MUSIC_DIR}/flac/"}"
     local dir
@@ -49,4 +55,4 @@ while IFS= read -r -d '' file; do
     log "INFO" "${file} converting..."
     absolute_path=$(realpath "${file}")
     convert "${absolute_path}"
-done < <(find "${MUSIC_DIR}" -type f -name "*.flac" -print0)
+done < <(find "${MUSIC_DIR}" -type d -name "skipped" -prune -o -type f -name "*.flac" -print0)

@@ -1,12 +1,16 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-for cmd in fzf tmux; do
-    if ! command -v "${cmd}" >/dev/null 2>&1; then
-        echo "tmux-sessionizer: ${cmd} not available." >&2
-        exit 1
-    fi
-done
+if [[ $# -gt 1 ]]; then
+    echo "tmux-sessionizer: usage: tmux-sessionizer [directory]" >&2
+    echo "tmux-sessionizer: at most one directory argument allowed, got $#" >&2
+    exit 1
+fi
+
+if ! command -v tmux >/dev/null 2>&1; then
+    echo "tmux-sessionizer: tmux not available." >&2
+    exit 1
+fi
 
 fixed_paths=(
     ~/
@@ -29,6 +33,11 @@ if [[ $# -eq 1 ]]; then
     fi
     selected=$1
 else
+    if ! command -v fzf >/dev/null 2>&1; then
+        echo "tmux-sessionizer: fzf not available." >&2
+        exit 1
+    fi
+
     options=("${fixed_paths[@]}")
 
     while IFS= read -r line; do
@@ -51,7 +60,8 @@ if [[ -z ${selected} ]]; then
     exit 0
 fi
 
-selected_name=$(basename "${selected}" | tr . _)
+# A colon is tmux's session:window separator, so it can never match a session.
+selected_name=$(basename "${selected}" | tr '.:' '__')
 tmux_running=$(pgrep tmux) || true
 
 if [[ -z ${TMUX:-} ]] && [[ -z ${tmux_running} ]]; then

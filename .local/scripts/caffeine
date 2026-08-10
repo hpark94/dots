@@ -17,12 +17,24 @@ pid_file="${XDG_RUNTIME_DIR}/caffeine.pid"
 pid=$(cat "${pid_file}" 2>/dev/null || true)
 
 # A stale file, from an inhibitor that died with its session, falls through here
-# and is overwritten by the fresh one below.
-if [[ -n "${pid}" ]] && kill -0 "${pid}" 2>/dev/null; then
+# and is overwritten by the fresh one below. The name behind the PID is checked
+# too, because the kernel hands a dead PID out again to anyone.
+if [[ -n "${pid}" && -r "/proc/${pid}/comm" ]] \
+    && [[ "$(cat "/proc/${pid}/comm")" == "systemd-inhibit" ]]; then
     kill "${pid}"
     rm -f "${pid_file}"
     exit 0
 fi
 
 systemd-inhibit --what=idle --why="Caffeine mode" --who="User" sleep infinity &
-printf '%s\n' "$!" >"${pid_file}"
+inhibitor=$!
+printf '%s\n' "${inhibitor}" >"${pid_file}"
+
+# An unreachable logind lets systemd-inhibit exit at once, and the PID file alone
+# would then claim a lock nobody holds.
+sleep 0.2
+if ! kill -0 "${inhibitor}" 2>/dev/null; then
+    rm -f "${pid_file}"
+    echo "caffeine: systemd-inhibit exited immediately, no idle inhibitor taken." >&2
+    exit 1
+fi

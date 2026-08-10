@@ -21,7 +21,7 @@ for cmd in curl unzip fc-cache; do
 done
 
 temp_dir=$(mktemp -d)
-trap 'rm -rf "${temp_dir}"' EXIT
+trap 'rm -rf "${temp_dir}"' EXIT INT TERM
 
 install_font() {
     local font_name="$1"
@@ -31,7 +31,6 @@ install_font() {
     local temp_zip="${temp_dir}/${font_name}.zip"
     local temp_extract="${temp_dir}/${font_name}_extract"
 
-    mkdir -p "${target_dir}"
     mkdir -p "${temp_extract}"
 
     log "INFO" "Downloading ${font_name}..."
@@ -41,6 +40,8 @@ install_font() {
         log "ERROR" "Failed to download ${font_name} from ${font_url}. Aborting..."
         exit 1
     fi
+
+    mkdir -p "${target_dir}"
 
     log "INFO" "Extracting and filtering .ttf files..."
     unzip -oq "${temp_zip}" -d "${temp_extract}"

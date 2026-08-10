@@ -19,14 +19,21 @@ setup() {
     printf '#!/usr/bin/env bash\nexit 0\n' >"${STUB_BIN}/unzip"
     cat >"${STUB_BIN}/fc-cache" <<'STUB_EOF'
 #!/usr/bin/env bash
-printf '%s\n' "$*" >>"$FC_CACHE_LOG"
+printf '%s\n' "$*" >>"${FC_CACHE_LOG}"
 STUB_EOF
     chmod +x "${STUB_BIN}/unzip" "${STUB_BIN}/fc-cache"
 }
 
 @test "font-install aborts loudly when a download returns an HTTP error" {
-    # 22 is what curl -f exits with on a 4xx or 5xx response.
-    printf '#!/usr/bin/env bash\nexit 22\n' >"${STUB_BIN}/curl"
+    # A 404 answered the way curl does: exit 22 when -f asked it to treat the
+    # status as an error, otherwise exit 0 with the error page as the payload.
+    cat >"${STUB_BIN}/curl" <<'STUB_EOF'
+#!/usr/bin/env bash
+if [[ "$1" == -f* ]]; then
+    exit 22
+fi
+printf '<html>404 Not Found</html>\n' >"${@: -1}"
+STUB_EOF
     chmod +x "${STUB_BIN}/curl"
 
     run "${SCRIPT}"
@@ -34,6 +41,9 @@ STUB_EOF
     [[ "${output}" == *"[ERROR]"* ]]
     [[ "${output}" == *"Failed to download Maple_Mono_NF"* ]]
     [ ! -s "${FC_CACHE_LOG}" ]
+    # A run that aborts before installing anything must not leave the font's
+    # directory behind as evidence of a success.
+    [ ! -e "${HOME}/.local/share/fonts/Maple_Mono_NF" ]
 }
 
 @test "font-install downloads with -f into a private temporary directory" {
@@ -43,7 +53,7 @@ STUB_EOF
     # last argument, so the script's own cleanup finds something to remove.
     cat >"${STUB_BIN}/curl" <<'STUB_EOF'
 #!/usr/bin/env bash
-printf '%s\n' "$*" >>"$CURL_LOG"
+printf '%s\n' "$*" >>"${CURL_LOG}"
 : >"${@: -1}"
 STUB_EOF
     chmod +x "${STUB_BIN}/curl"
