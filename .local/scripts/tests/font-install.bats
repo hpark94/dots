@@ -24,6 +24,26 @@ STUB_EOF
     chmod +x "${STUB_BIN}/unzip" "${STUB_BIN}/fc-cache"
 }
 
+# Records its args and creates the empty file the -o path names, which is the
+# last argument, so the script's own cleanup finds something to remove.
+setup_logging_curl_stub() {
+    export CURL_LOG="${BATS_TEST_TMPDIR}/curl.log"
+    : >"${CURL_LOG}"
+    cat >"${STUB_BIN}/curl" <<'STUB_EOF'
+#!/usr/bin/env bash
+printf '%s\n' "$*" >>"${CURL_LOG}"
+: >"${@: -1}"
+STUB_EOF
+    chmod +x "${STUB_BIN}/curl"
+}
+
+# The directory the script downloaded into, read back off curl's -o argument.
+curl_temp_dir() {
+    local first
+    first=$(head -1 "${CURL_LOG}")
+    dirname "${first##* -o }"
+}
+
 @test "font-install aborts loudly when a download returns an HTTP error" {
     # A 404 answered the way curl does: exit 22 when -f asked it to treat the
     # status as an error, otherwise exit 0 with the error page as the payload.
@@ -47,16 +67,7 @@ STUB_EOF
 }
 
 @test "font-install downloads with -f into a private temporary directory" {
-    export CURL_LOG="${BATS_TEST_TMPDIR}/curl.log"
-    : >"${CURL_LOG}"
-    # Records its args and creates the empty file the -o path names, which is the
-    # last argument, so the script's own cleanup finds something to remove.
-    cat >"${STUB_BIN}/curl" <<'STUB_EOF'
-#!/usr/bin/env bash
-printf '%s\n' "$*" >>"${CURL_LOG}"
-: >"${@: -1}"
-STUB_EOF
-    chmod +x "${STUB_BIN}/curl"
+    setup_logging_curl_stub
 
     run "${SCRIPT}"
     [ "${status}" -eq 0 ]
@@ -65,4 +76,16 @@ STUB_EOF
     [[ "${first}" == "-fL http"* ]]
     # A fixed /tmp/<font>.zip is pre-creatable by anyone; mktemp -d is not.
     [[ "${first}" != *"-o /tmp/Maple_Mono_NF.zip" ]]
+}
+
+@test "font-install takes its temporary tree with it when the run ends" {
+    setup_logging_curl_stub
+
+    run "${SCRIPT}"
+    [ "${status}" -eq 0 ]
+    local temp_dir
+    temp_dir=$(curl_temp_dir)
+    # Guards the assertion below against a path that failed to parse.
+    [[ "${temp_dir}" == /* ]]
+    [ ! -e "${temp_dir}" ]
 }
