@@ -50,27 +50,34 @@ while IFS= read -r -d '' file; do
 
     # A failing tag lookup must leave the value empty for the check below, not
     # abort the whole run through pipefail.
-    artist=$(metaflac --show-tag=ARTIST "${absolute_path}" </dev/null | cut -d= -f2) || true
+    artist=$(metaflac --show-tag=ARTIST "${absolute_path}" </dev/null | cut -d= -f2-) || true
     artist=$(sanitize "${artist}")
-    album=$(metaflac --show-tag=ALBUM "${absolute_path}" </dev/null | cut -d= -f2) || true
+    album=$(metaflac --show-tag=ALBUM "${absolute_path}" </dev/null | cut -d= -f2-) || true
     album=$(sanitize "${album}")
-    title=$(metaflac --show-tag=TITLE "${absolute_path}" </dev/null | cut -d= -f2) || true
+    title=$(metaflac --show-tag=TITLE "${absolute_path}" </dev/null | cut -d= -f2-) || true
     title=$(sanitize "${title}")
-    track=$(metaflac --show-tag=TRACKNUMBER "${absolute_path}" </dev/null | cut -d= -f2 | cut -d/ -f1) || true
+    track=$(metaflac --show-tag=TRACKNUMBER "${absolute_path}" </dev/null | cut -d= -f2- | cut -d/ -f1) || true
 
-    if [[ -z ${artist} || -z ${album} || -z ${title} || -z ${track} ]]; then
-        log "ERROR" "${absolute_path}: metadata missing!"
+    # The track pattern is part of the completeness test because printf rejects
+    # anything non-decimal, and under errexit that would end the run instead of
+    # routing the file here.
+    if [[ -z ${artist} || -z ${album} || -z ${title} || ! ${track} =~ ^[0-9]+$ ]]; then
+        log "ERROR" "${absolute_path}: metadata missing or unusable!"
         skip_dir="${MUSIC_DIR}/skipped"
         skip_name=$(basename "${absolute_path}")
         skip_file="${skip_dir}/${skip_name}"
         mkdir -p "${skip_dir}"
-        mv "${absolute_path}" "${skip_file}"
+        if [[ -e "${skip_file}" ]]; then
+            log "ERROR" "${skip_file} already taken, leaving ${absolute_path} where it is"
+            continue
+        fi
+        mv -- "${absolute_path}" "${skip_file}"
         continue
     fi
 
-    # Only now: printf on an empty track fails, and under errexit that would end
-    # the run before the skipped/ branch above could catch the file.
-    track=$(printf "%02d" "${track}")
+    # Base 10 forced: bash reads a leading zero as octal, so the common 08 and 09
+    # would be errors and 010 would silently become 8.
+    track=$(printf "%02d" "$((10#${track}))")
 
     newpath="${MUSIC_DIR}/${ext}/${artist}/${album}"
 
@@ -80,7 +87,12 @@ while IFS= read -r -d '' file; do
     newname="${newpath}/${newname}"
 
     if [[ "${file}" == "${newname}" ]]; then
-        echo "Not changed: ${file}"
+        log "INFO" "Not changed: ${file}"
+        continue
+    fi
+
+    if [[ -e "${newname}" ]]; then
+        log "ERROR" "${newname} already taken, leaving ${file} where it is"
         continue
     fi
 
