@@ -6,6 +6,13 @@ end_of_line = lf
 trim_trailing_whitespace = true
 insert_final_newline = true
 
+# shfmt reads these; they only take effect on shell files.
+binary_next_line = true
+switch_case_indent = true
+space_redirects = false
+keep_padding = false
+function_next_line = false
+
 [*.{py,lua}]
 indent_style = space
 indent_size = 4
@@ -13,46 +20,14 @@ indent_size = 4
 [*.java]
 indent_style = space
 
-[*.sh]
+# The path separator anchors the whole section to this file's directory, so the
+# filename patterns need an explicit **/ to keep matching at any depth.
+[{**/*.sh,**/.bashrc,.local/scripts/*}]
 indent_style = space
 indent_size = 4
-
 shell_variant = bash
-binary_next_line = true
-switch_case_indent = true
-space_redirects = false
-keep_padding = false
-function_next_line = false
-
-[.local/scripts/*]
-indent_style = space
-indent_size = 4
-
-shell_variant = bash
-binary_next_line = true
-switch_case_indent = true
-space_redirects = false
-keep_padding = false
-function_next_line = false
 
 [*.bats]
 indent_style = space
 indent_size = 4
-
 shell_variant = bats
-binary_next_line = true
-switch_case_indent = true
-space_redirects = false
-keep_padding = false
-function_next_line = false
-
-[.bashrc]
-indent_style = space
-indent_size = 4
-
-shell_variant = bash
-binary_next_line = true
-switch_case_indent = true
-space_redirects = false
-keep_padding = false
-function_next_line = false
