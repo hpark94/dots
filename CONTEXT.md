@@ -2,7 +2,8 @@
 
 Vocabulary for this repo: the machine Roles it deploys onto, how it switches its
 terminal/editor/WM tooling between light and dark color themes from a single
-script, and how the music scripts turn audio tags into paths.
+script, how the file pickers preview what they are about to open, and how the
+music scripts turn audio tags into paths.
 
 ## Language
 
@@ -58,6 +59,22 @@ machine, and because it goes stale in anything outliving the shell that set it,
 notably a tmux server.\
 _Avoid_: runtime config, SSH check (SSH-ness is only a proxy for these, and a
 wrong one)
+
+**Client Terminal**:\
+The terminal emulator that actually draws what a program writes: inside tmux the
+one the attached client runs in, elsewhere the one that owns the tty. Read from
+`tmux display -p '#{client_termname}'` (`xterm-ghostty`), or
+`#{client_termtype}` where a version matters (`ghostty 1.3.1`), and from `$TERM`
+only outside tmux, since `$TERM` in a pane names tmux's own terminfo entry
+rather than any terminal. It is the Session Fact that has a way out of its own
+staleness: `TERM_PROGRAM` and `GHOSTTY_BIN_DIR` live on in the tmux server
+environment and keep naming whichever terminal started the server, so after a
+reattach from foot they still claim ghostty, while `#{client_termname}` is a
+property of the client and is therefore re-read on every attach. Consulted for
+what the terminal can draw, the Kitty graphics protocol or sixel, never for who
+or where the user is.\
+_Avoid_: `$TERM` (inside tmux that is a terminfo name, not a terminal), terminal
+emulator, outer terminal
 
 **Write-Back Config**:\
 A config file that its own tooling rewrites, rather than one only a human edits.
@@ -156,6 +173,48 @@ app's process did pick up the change, since that app's own portal subscription
 is live even though the switch script's write to it isn't tied to any per-app
 signal.\
 _Avoid_: static, cold
+
+### File picking
+
+**Previewer**:\
+The one executable behind every fzf preview window, `fzf-preview <path> [line]`,
+so a directory, a text file and an image look the same whether the window was
+drawn by `ffd`, `frg`, `_fzf_comprun` or fzf-tab. It takes a path and not a
+mode: what the target is, and therefore how it should be drawn, is the
+Previewer's question to answer, which is what keeps each caller down to a single
+`--preview` string and stops four of them drifting apart. The optional line
+number is the line `frg` matched, handed to `bat --highlight-line` so it stands
+out; the scrolling that brings it into view is fzf's own
+`--preview-window '+{2}-/2'`, not the Previewer's. It is not a second mode.
+Because it runs on every keystroke it may only read and draw, and every cost it
+carries is paid once per cursor move.\
+_Avoid_: preview command (that is fzf's `--preview` option, whose only job here
+is to name the Previewer), preview script
+
+**Opener**:\
+The command a picker hands its selection to once you accept it: the tool and
+flags `ffd` wraps around `{+}`, the `nvim {1} +{2}` and `nvim +cw -q {+f}` pair
+in `frg`. It is a string fzf expands and a shell then splits, never one this
+shell expands, which is why an Opener flag can carry neither a space nor a
+quote. Deliberately the Previewer's opposite number: the Previewer runs unbidden
+and changes nothing, while the Opener runs once, on an explicit key, and is
+allowed to.\
+_Avoid_: action, handler, editor (nvim is only the default; `ffd` opens with any
+tool on PATH)
+
+**Render Ladder**:\
+The ordered rungs the Previewer tries for one image: `kitten icat` under ghostty
+or kitty, `chafa -f sixels` under foot, and `chafa -f symbols` under anything
+else. Beneath all of them is the text path, the ladder's floor rather than a
+rung of it: it draws no image at all and exists only so a preview window is
+never blank. Each rung is guarded by the Client Terminal that can display it,
+read as a name rather than probed, because a probe is a terminal round trip per
+keystroke. A rung whose binary is missing or whose render fails drops to the
+next, which makes the bottom rung the one that cannot fail: symbol art is only
+text. Ordered by fidelity, so adding a renderer means placing it against the
+terminals that can draw it, never appending it (see ADR-0007).\
+_Avoid_: fallback chain (the order is fidelity, not failure), backend list,
+protocol detection (nothing is detected; the rung follows a name)
 
 ### Music library
 

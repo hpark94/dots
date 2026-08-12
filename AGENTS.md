@@ -65,8 +65,8 @@ it before adding a file to the repo root.
 - `mise install`: Sync toolchain from `.config/mise/config.toml`.
 - `bats .local/scripts/tests/` or `bats .local/scripts/tests/<test-file>.bats`:
   Run tests for bootstrap.sh, theme-switch, envs, fy, fp, delta-auto,
-  tmux-sessionizer, caffeine, cltex, font-install, organize_flac, and
-  sway-start-on-workspace.
+  tmux-sessionizer, caffeine, cltex, font-install, organize_flac,
+  sway-start-on-workspace, ffd, frg, and fzf-preview.
 - `nvim --headless '"+Lazy! sync' +qa`: Force nvim plugin sync.
 - `theme-switch dark|light|toggle`: Desktop-only; decides and applies Theme
   Mode.
@@ -77,6 +77,12 @@ it before adding a file to the repo root.
 - `fp [dir]`: Paste file from Wayland clipboard to directory.
 - `sway-start-on-workspace <workspace> <app_id> <command> [args...]`: Launch a
   command and move the first window it maps to that workspace, once.
+- `ffd [-b] [tool] [flags...]`: Pick files with fzf and hand every selection to
+  one invocation of the tool (`nvim` by default); `-b` detaches it.
+- `frg [query...]`: Live ripgrep through fzf, opening the match in nvim at its
+  line, or the whole selection as a quickfix list.
+- `fzf-preview <path> [line]`: The Previewer behind every fzf preview window:
+  eza for a directory, the image Render Ladder for an image, bat otherwise.
 
 ## Style
 

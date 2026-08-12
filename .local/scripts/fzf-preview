@@ -2,17 +2,92 @@
 set -euo pipefail
 
 # One renderer behind every fzf preview (ffd, frg, _fzf_comprun, fzf-tab), so a
-# directory and a file look the same wherever a preview window is drawn.
+# directory, a file and an image look the same wherever a preview window is
+# drawn.
+
+require() {
+    local cmd="$1"
+    if ! command -v "${cmd}" >/dev/null 2>&1; then
+        echo "fzf-preview: ${cmd} not available. Is ${cmd} installed?" >&2
+        exit 1
+    fi
+}
+
+is_image() {
+    # Without file(1) nothing can classify the target, and previewing it as text
+    # is exactly what this script did before there was an image branch.
+    command -v file >/dev/null 2>&1 || return 1
+    [[ "$(file --mime-type -b -- "$1")" == image/* ]]
+}
+
+# The pixels belong to the terminal the tmux client is attached to, not to this
+# pane. #{client_termname} is per client, so it stays true after reattaching
+# from a different terminal, which the tmux server environment does not.
+client_term() {
+    if [[ -n "${TMUX:-}" ]] && command -v tmux >/dev/null 2>&1; then
+        tmux display -p '#{client_termname}'
+    else
+        printf '%s\n' "${TERM:-}"
+    fi
+}
+
+render_kitty() {
+    local target="$1"
+    local geometry="$2"
+
+    command -v kitten >/dev/null 2>&1 || return 1
+
+    # --unicode-placeholder is not optional. It draws the image into the text
+    # grid, so the next preview redraw overwrites those cells and the image goes
+    # with them, and it makes the @0x0 of --place mean the cursor; without it
+    # kitten reads that origin as the top-left of the screen and paints a raw
+    # graphics command over fzf's own list, which no redraw erases. Inside tmux
+    # --passthrough implies the flag, outside tmux nothing does.
+    # --transfer-mode is pinned because detecting it costs a terminal round trip
+    # on every keystroke.
+    local args=(
+        --stdin=no --transfer-mode=memory
+        --unicode-placeholder --place "${geometry}@0x0"
+    )
+    if [[ -n "${TMUX:-}" ]]; then
+        args+=(--passthrough tmux)
+    fi
+
+    kitten icat "${args[@]}" "${target}"
+}
+
+render_chafa() {
+    local target="$1"
+    local geometry="$2"
+    local format="$3"
+
+    command -v chafa >/dev/null 2>&1 || return 1
+    chafa -f "${format}" -s "${geometry}" "${target}"
+}
+
+# Each rung is guarded by the terminal that can actually display it, and a rung
+# whose binary is missing or whose render fails drops to the symbol art every
+# terminal understands. Detection reads a name rather than probing the terminal
+# for protocol support, because a probe is a round trip per keystroke.
+render_image() {
+    local target="$1"
+    local geometry="${FZF_PREVIEW_COLUMNS:-80}x${FZF_PREVIEW_LINES:-24}"
+    local term
+    term=$(client_term)
+
+    case "${term}" in
+        *ghostty* | *kitty*)
+            render_kitty "${target}" "${geometry}" && return 0
+            ;;
+        *foot*)
+            render_chafa "${target}" "${geometry}" sixels && return 0
+            ;;
+    esac
+
+    render_chafa "${target}" "${geometry}" symbols
+}
 
 main() {
-    local cmd
-    for cmd in eza bat; do
-        if ! command -v "${cmd}" >/dev/null 2>&1; then
-            echo "fzf-preview: ${cmd} not available. Is ${cmd} installed?" >&2
-            exit 1
-        fi
-    done
-
     if [[ $# -lt 1 || $# -gt 2 ]]; then
         echo "fzf-preview: usage: fzf-preview <path> [line]" >&2
         exit 1
@@ -26,16 +101,25 @@ main() {
     fi
 
     if [[ -d "${target}" ]]; then
+        require eza
         # head closes the pipe once it has its 200 lines; feeding it from a
         # process substitution keeps eza's resulting SIGPIPE away from pipefail.
-        head -200 < <(eza --tree --color=always --level=2 "${target}")
+        head -200 < <(eza --tree --color=always --level=2 -- "${target}")
         return
     fi
 
+    # A failed ladder falls through to the text path rather than leaving the
+    # preview window blank.
+    if is_image "${target}" && render_image "${target}"; then
+        return
+    fi
+
+    require bat
+
     if [[ $# -eq 2 ]]; then
-        bat --style=numbers --color=always --highlight-line "$2" "${target}"
+        bat --style=numbers --color=always --highlight-line "$2" -- "${target}"
     else
-        bat --style=numbers --color=always "${target}"
+        bat --style=numbers --color=always -- "${target}"
     fi
 }
 
