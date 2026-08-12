@@ -13,6 +13,7 @@ delta = "0.19.2"
 
 bats = "1.13.0"
 claude = "latest"
+codex = "latest"
 lazygit = "0.63.1"
 neovim = "0.12.4"
 tmux = "3.7b"
