@@ -27,6 +27,9 @@ exec waybar -c ~/.config/waybar/sway_config.jsonc
 exec swaync
 exec_always ~/.local/scripts/autotiling
 exec pkill -f 'wl-paste.*cliphist' ; wl-paste --watch cliphist store
+exec ~/.local/scripts/sway-start-on-workspace 10 org.keepassxc.KeePassXC keepassxc
+exec ~/.local/scripts/sway-start-on-workspace 9 org.mozilla.thunderbird flatpak run org.mozilla.thunderbird
+exec ~/.local/scripts/sway-start-on-workspace 8 md.obsidian.Obsidian flatpak run md.obsidian.Obsidian
 
 input "type:keyboard" {
     xkb_layout de

@@ -65,7 +65,8 @@ it before adding a file to the repo root.
 - `mise install`: Sync toolchain from `.config/mise/config.toml`.
 - `bats .local/scripts/tests/` or `bats .local/scripts/tests/<test-file>.bats`:
   Run tests for bootstrap.sh, theme-switch, envs, fy, fp, delta-auto,
-  tmux-sessionizer, caffeine, cltex, font-install, and organize_flac.
+  tmux-sessionizer, caffeine, cltex, font-install, organize_flac, and
+  sway-start-on-workspace.
 - `nvim --headless '"+Lazy! sync' +qa`: Force nvim plugin sync.
 - `theme-switch dark|light|toggle`: Desktop-only; decides and applies Theme
   Mode.
@@ -74,6 +75,8 @@ it before adding a file to the repo root.
 - `fy <file>`: Copy a file reference (`file://` URI in `text/uri-list`) to the
   Wayland clipboard; pasteable via `fp`, in terminals, and into browser chats.
 - `fp [dir]`: Paste file from Wayland clipboard to directory.
+- `sway-start-on-workspace <workspace> <app_id> <command> [args...]`: Launch a
+  command and move the first window it maps to that workspace, once.
 
 ## Style
 

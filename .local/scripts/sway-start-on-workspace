@@ -1,0 +1,67 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Places the first window a launched app maps, once, instead of pinning it with
+# `assign`: KeePassXC gives its main window, its unlock dialog and its
+# access-request dialog one app_id, and the title is still null at map time, so
+# no assign criterion can tell them apart and the password prompt gets dragged
+# away from the browser that asked for it.
+
+if [[ $# -lt 3 ]]; then
+    echo "sway-start-on-workspace: usage: sway-start-on-workspace <workspace-number> <app_id> <command> [args...]" >&2
+    exit 1
+fi
+
+workspace="$1"
+app_id="$2"
+
+if [[ ! "${workspace}" =~ ^[1-9][0-9]*$ ]]; then
+    echo "sway-start-on-workspace: workspace must be a positive integer, got: ${workspace}" >&2
+    exit 1
+fi
+
+if ! command -v swaymsg >/dev/null 2>&1; then
+    echo "sway-start-on-workspace: swaymsg not available. Is sway running?" >&2
+    exit 1
+fi
+
+if ! command -v jq >/dev/null 2>&1; then
+    echo "sway-start-on-workspace: jq not available. Is jq installed?" >&2
+    exit 1
+fi
+
+if ! command -v "$3" >/dev/null 2>&1; then
+    echo "sway-start-on-workspace: command not found: $3" >&2
+    exit 1
+fi
+
+# Subscribe before launching, so a window that maps fast cannot be missed. The
+# subscription never ends on its own, so the timeout is what stops a window that
+# never appears from hanging this script forever.
+exec 3< <(timeout 60 swaymsg -t subscribe -m '["window"]')
+
+# sway 1.11 prints no acknowledgement for `-t subscribe -m`, so there is no line
+# to read as a sync point; this pause is what lets the subscription reach sway.
+sleep 0.5
+
+"${@:3}" &
+
+con_id=""
+while IFS= read -r event <&3; do
+    con_id=$(printf '%s' "${event}" \
+        | jq -r --arg app_id "${app_id}" \
+            'select(.change == "new" and .container.app_id == $app_id) | .container.id')
+    if [[ -n "${con_id}" ]]; then
+        break
+    fi
+done
+
+if [[ -z "${con_id}" ]]; then
+    echo "sway-start-on-workspace: no new ${app_id} window appeared before the subscription ended." >&2
+    exit 1
+fi
+
+if ! swaymsg "[con_id=${con_id}] move container to workspace number ${workspace}" >/dev/null; then
+    echo "sway-start-on-workspace: failed to move ${app_id} window ${con_id} to workspace ${workspace}." >&2
+    exit 1
+fi
