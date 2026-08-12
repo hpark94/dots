@@ -88,23 +88,6 @@ render_chafa() {
     chafa --probe=off -f "${format}" -s "${geometry}" "${target}"
 }
 
-# Outside tmux the name is the only thing on offer and it can say nothing at
-# all: foot unsets TERM_PROGRAM in the process it starts, and
-# `.config/foot/foot.ini` renames $TERM, so a foot window is anonymous. Where
-# the name yielded no rung, chafa asks the terminal itself and picks the format
-# from the answer; no -f, because choosing is the point. The question goes over
-# the controlling terminal, since a preview's stdout is fzf's pipe. The wait is
-# capped hard: this runs on every keystroke, and a terminal that never answers
-# must cost 0.2s, not chafa's default 5. A timeout is not a failure, it draws
-# the symbol art this path would have drawn anyway.
-render_probed_chafa() {
-    local target="$1"
-    local geometry="$2"
-
-    command -v chafa >/dev/null 2>&1 || return 1
-    chafa --probe=0.2 --probe-mode=ctty -s "${geometry}" "${target}"
-}
-
 # Fedora's tmux 3.7b is built without --enable-sixel, so it cannot re-render the
 # image, and handing it the escapes raw draws the picture for an instant before
 # tmux erases the cells. #{sixel_support} is the Capability Probe for that: it
@@ -120,10 +103,10 @@ sixel_survives_tmux() {
 
 # Each rung is guarded by the terminal that can actually display it, and a rung
 # whose binary is missing or whose render fails drops to the symbol art every
-# terminal understands. Detection reads the terminal's self-report rather than
-# probing it for protocol support, because a probe is a round trip per
-# keystroke; only where no self-report exists to read, outside tmux, is the
-# round trip worth its cost. Clients that disagree settle on symbol art: it is
+# terminal understands. Detection reads the terminal's self-report and never
+# questions the terminal from here: a preview does not own the terminal input,
+# fzf does, so the terminal's reply is read by fzf and typed into its query
+# instead of answering us. Clients that disagree settle on symbol art: it is
 # the only rung that is plain text, so it is the only one correct on all of
 # them at once.
 render_image() {
@@ -147,13 +130,6 @@ render_image() {
         sixels)
             sixel_survives_tmux \
                 && render_chafa "${target}" "${geometry}" sixels && return 0
-            ;;
-        symbols)
-            # Inside tmux the client's self-report already answered for free,
-            # so nothing here is worth a round trip.
-            if [[ -z "${TMUX:-}" ]]; then
-                render_probed_chafa "${target}" "${geometry}" && return 0
-            fi
             ;;
     esac
 

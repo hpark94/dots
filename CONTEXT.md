@@ -78,13 +78,18 @@ answer nothing at all, and for foot it does: foot's changelog records
 "`$TERM_PROGRAM` and `$TERM_PROGRAM_VERSION` environment variables unset in the
 slave process", so foot deliberately deletes the variable instead of setting it,
 and `foot.ini` renames `$TERM` to `xterm-256color`, so both sources are silent
-about the terminal actually drawing. Where that leaves no rung, and only there,
-the terminal is asked instead of named, by a `chafa` probe over the controlling
-terminal with a 0.2s cap (see ADR-0007). A name is not a terminal: `$TERM` in a
-pane names tmux's own terminfo entry, and `#{client_termname}` is only what the
-terminal was configured to claim, which `.config/foot/foot.ini` deliberately
-sets to `xterm-256color` so SSH to hosts without foot terminfo keeps working
-(see ADR-0007). It is the Session Fact that has a way out of its own staleness:
+about the terminal actually drawing. A terminal that says nothing stays unnamed,
+because asking it is not available here: the reply to such a question goes to
+whoever owns the terminal's input, which in a preview is fzf and never the
+preview, so it arrives as typing in fzf's query line rather than as an answer.
+So foot is given something to say rather than asked: `.config/foot/foot.ini`
+sets `TERM_PROGRAM=foot` in an `[environment]` section, the same variable
+ghostty and kitty already set, which is why no code here knows foot is special
+(see ADR-0007). A name is not a terminal: `$TERM` in a pane names tmux's own
+terminfo entry, and `#{client_termname}` is only what the terminal was
+configured to claim, which `.config/foot/foot.ini` deliberately sets to
+`xterm-256color` so SSH to hosts without foot terminfo keeps working (see
+ADR-0007). It is the Session Fact that has a way out of its own staleness:
 `TERM_PROGRAM` and `GHOSTTY_BIN_DIR` live on in the tmux server environment and
 keep naming whichever terminal started the server, so after a reattach from foot
 they still claim ghostty, while `#{client_termtype}` is a property of the client
@@ -231,26 +236,27 @@ foot-in-tmux symbol art until tmux gains that support (see ADR-0007). Beneath
 all of them is the text path, the ladder's floor rather than a rung of it: it
 draws no image at all and exists only so a preview window is never blank. Each
 rung is guarded by the Client Terminal that can display it, read from that
-terminal's self-report rather than probed from here, because a probe is a
-terminal round trip per keystroke. Where several Client Terminals draw the pane
-at once the rung is the one they all agree on, and any disagreement, like a
-session with no client attached at all, collapses to symbol art: it is the only
-rung that is plain text and therefore the only one correct on every attached
-terminal at once. The collapse self-heals, since detaching the weaker terminal
-puts the next preview back on the better rung with no state to clear. A rung
-whose binary is missing or whose render fails drops to the next, which makes the
-bottom rung the one that cannot fail: symbol art is only text. Ordered by
-fidelity, so adding a renderer means placing it against the terminals that can
-draw it, never appending it (see ADR-0007). One rung is reached by asking rather
-than naming: outside tmux, where nothing in the environment identifies foot, a
-Client Terminal that no name gives a rung is probed by chafa itself, over the
-controlling terminal, with no `-f` so the answer chooses the format and a 0.2s
-cap so a terminal that never answers cannot stall a per-keystroke preview.
-Inside tmux nothing is ever probed: `#{client_termtype}` already answers, for
-free and per client (see ADR-0007).\
+terminal's self-report and never asked of the terminal from here. Where several
+Client Terminals draw the pane at once the rung is the one they all agree on,
+and any disagreement, like a session with no client attached at all, collapses
+to symbol art: it is the only rung that is plain text and therefore the only one
+correct on every attached terminal at once. The collapse self-heals, since
+detaching the weaker terminal puts the next preview back on the better rung with
+no state to clear. A rung whose binary is missing or whose render fails drops to
+the next, which makes the bottom rung the one that cannot fail: symbol art is
+only text. Ordered by fidelity, so adding a renderer means placing it against
+the terminals that can draw it, never appending it (see ADR-0007). No rung asks
+the terminal anything, not even the one with no name to go on. Inside tmux the
+question is already answered, for free and per client, by the handshake tmux
+performs at attach when it does own the terminal; outside tmux a Client Terminal
+the environment names nowhere gets symbol art rather than a question, because a
+preview does not own the terminal's input and the reply would land in fzf's
+query line as typing. A terminal that erases its own name, as foot does, is
+therefore given one back in its own config rather than interrogated (see
+ADR-0007).\
 _Avoid_: fallback chain (the order is fidelity, not failure), backend list,
-protocol detection (the rung follows the terminal's self-report; the probe is
-the exception for a terminal with no self-report to read, not the rule)
+protocol detection (the rung follows the terminal's self-report, and nothing
+here asks the terminal which protocols it speaks)
 
 ### Music library
 
