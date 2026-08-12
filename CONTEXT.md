@@ -62,9 +62,15 @@ wrong one)
 
 **Client Terminal**:\
 The terminal emulator that actually draws what a program writes: inside tmux the
-one the attached client runs in, elsewhere the one that owns the tty. Identified
-by what it reports about itself, never by the terminfo name it claims: inside
-tmux `tmux display -p '#{client_termtype}'`, which is the terminal's own
+one an attached client runs in, elsewhere the one that owns the tty. There can
+be several at once, because tmux draws a pane on every client attached to its
+session and those clients need not be the same terminal, so the question has a
+list for an answer: `tmux list-clients -t "$TMUX_PANE" -F '#{client_termtype}'`,
+one self-report per client, targeted so that clients of other sessions on the
+same server stay out of it. `tmux display -p` answers for whichever client tmux
+last considered current, which is a coin toss the moment a second terminal
+attaches (see ADR-0007). Identified by what it reports about itself, never by
+the terminfo name it claims: `#{client_termtype}` is the terminal's own
 XTVERSION reply (`ghostty 1.3.1`, `foot(1.27.0)`), and outside tmux
 `$TERM_PROGRAM` (`ghostty`, `foot`), with `$TERM` left as the fallback for a
 terminal that exports neither. A name is not a terminal: `$TERM` in a pane names
@@ -79,7 +85,7 @@ and is therefore re-read on every attach. Consulted for what the terminal can
 draw, the Kitty graphics protocol or sixel, never for who or where the user is.\
 _Avoid_: `$TERM` (inside tmux that is a terminfo name, not a terminal),
 `#{client_termname}` (a claim a config can rewrite), terminal emulator, outer
-terminal
+terminal, _the_ Client Terminal (one pane can have several)
 
 **Write-Back Config**:\
 A config file that its own tooling rewrites, rather than one only a human edits.
@@ -219,11 +225,16 @@ all of them is the text path, the ladder's floor rather than a rung of it: it
 draws no image at all and exists only so a preview window is never blank. Each
 rung is guarded by the Client Terminal that can display it, read from that
 terminal's self-report rather than probed from here, because a probe is a
-terminal round trip per keystroke. A rung whose binary is missing or whose
-render fails drops to the next, which makes the bottom rung the one that cannot
-fail: symbol art is only text. Ordered by fidelity, so adding a renderer means
-placing it against the terminals that can draw it, never appending it (see
-ADR-0007).\
+terminal round trip per keystroke. Where several Client Terminals draw the pane
+at once the rung is the one they all agree on, and any disagreement, like a
+session with no client attached at all, collapses to symbol art: it is the only
+rung that is plain text and therefore the only one correct on every attached
+terminal at once. The collapse self-heals, since detaching the weaker terminal
+puts the next preview back on the better rung with no state to clear. A rung
+whose binary is missing or whose render fails drops to the next, which makes the
+bottom rung the one that cannot fail: symbol art is only text. Ordered by
+fidelity, so adding a renderer means placing it against the terminals that can
+draw it, never appending it (see ADR-0007).\
 _Avoid_: fallback chain (the order is fidelity, not failure), backend list,
 protocol detection (nothing is probed here; the rung follows the terminal's
 self-report)

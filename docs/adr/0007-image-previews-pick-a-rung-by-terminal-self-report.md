@@ -14,7 +14,8 @@ art every terminal understands; if that fails too the target falls through to
 the text path, so a preview window is never left blank.
 
 The Client Terminal is identified by what it says about itself, from
-`tmux display -p '#{client_termtype}'` inside tmux and from `$TERM_PROGRAM`,
+`tmux list-clients -t "$TMUX_PANE" -F '#{client_termtype}'` inside tmux, one
+line per client attached to the pane's session, and from `$TERM_PROGRAM`,
 falling back to `$TERM`, outside it. This decision first read the terminfo name
 instead, `#{client_termname}` and `$TERM`, and that was wrong in practice: this
 repo's own `.config/foot/foot.ini` sets `term=xterm-256color` so that SSH to
@@ -92,6 +93,52 @@ lived process is holding. Outside tmux there is no longer lived process holding
 a copy, which is what makes `TERM_PROGRAM` the right source exactly there and
 nowhere else.
 
+**Every attached client over the one tmux calls current.**
+`tmux display -p '#{client_termtype}'` is the shorter question and was this
+decision's first answer: one value in, one rung out. A pane is not drawn on one
+terminal, though. tmux draws it on every client attached to its session, all at
+the same time, and those clients need not run the same terminal. Measured here
+with two clients on one session, `/dev/pts/0` a foot window and `/dev/pts/8` a
+ghostty window, `display -p` answered `foot(1.27.0)` for every pane that asked,
+from either window, because "current client" is tmux's own notion of recency and
+not a property of the pane doing the asking. The ghostty window therefore got
+symbol art for as long as a foot window stayed attached, and had the recency
+gone the other way, foot would have got Kitty graphics escapes printed as
+literal garbage. `tmux list-clients -t "$TMUX_PANE" -F '#{client_termtype}'` is
+the honest question: it names every client of the pane's session, one
+self-report per line. The target matters as much as the subcommand. Untargeted,
+`list-clients` lists the clients of every session on the server, and a terminal
+attached to some other session, drawing none of this pane, would drag the rung
+down with it. A pane id is a valid target here: tmux 3.7b resolves `%5` to the
+session that owns it and lists exactly that session's clients, verified live
+against the running server.
+
+**Symbol art when the clients disagree, over picking a favourite among them.**
+Once the answer is a list, two terminals can deserve different rungs, and one
+preview command writes one stream of bytes into one pane: there is no per-client
+answer to give. Preferring the better terminal paints Kitty escapes into a foot
+window as garbage it will never erase; preferring the worse punishes a good
+terminal for the bad one's presence, and neither choice is stable, since which
+one wins would depend on the order tmux happens to list them in. Symbol art is
+the only rung that is plain text, so it is the only rung that is correct on all
+of them at once. That makes the disagreement collapse the same rule the ladder
+already applies to a missing binary: where a rung cannot be right everywhere the
+pane is drawn, drop to the one that cannot fail. It costs nothing permanent
+either, because it is recomputed per keystroke from the live client list: detach
+the weaker terminal and the next preview is back on the better rung, with no
+cache to clear and nothing to restart.
+
+The whole rule, measured against a stubbed tmux:
+
+| Clients attached to the pane's session | Rung           |
+| -------------------------------------- | -------------- |
+| ghostty alone                          | Kitty graphics |
+| foot alone, tmux without sixel support | symbol art     |
+| foot alone, tmux with sixel support    | sixels         |
+| ghostty and foot                       | symbol art     |
+| two ghostty clients                    | Kitty graphics |
+| none                                   | symbol art     |
+
 **A self-report over `#{sixel_support}` for identifying the terminal.** tmux
 exposes `#{sixel_support}`, so it is tempting to let that one flag choose the
 rung. It is one boolean about one protocol, though: it says nothing about the
@@ -159,7 +206,20 @@ the rung that always works rather than the only rung.
   deliberately not consulted to fill that gap: it is the source this decision
   stopped trusting, both terminals on the upper rungs do answer, and the only
   thing such a fallback could buy is a wrong rung for a terminal nobody here
-  runs.
+  runs. Such a client is one client among however many, so it does not only land
+  itself on symbol art: it holds every other client there with it.
+- Attaching a second terminal to a session can visibly downgrade previews in the
+  first one, with nothing in the preview window explaining why. That is the
+  honest outcome rather than a regression: the pane is being drawn on both
+  screens, and the better rung was only ever correct while one terminal was
+  watching. It reverses on detach, at the next keystroke.
+- A session with no attached client previews as symbol art. Nothing is drawing
+  pixels, so there is no terminal to be right about, and the rung that cannot
+  fail is the only defensible answer for whatever reads the pane later.
+- The client list is read on every keystroke, which is one more tmux round trip
+  per preview than `display -p` was. It is a query to a local server over a unix
+  socket, not a terminal round trip with a timeout behind it, which is the cost
+  this decision was avoiding.
 - `--place ...@0x0` means the cursor only under Unicode placeholders. Plain
   `kitten icat` reads that origin as the top-left of the screen, so the same
   flag that keeps the image out of the terminal's raw graphics layer is also the

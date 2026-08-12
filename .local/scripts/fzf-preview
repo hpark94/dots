@@ -30,12 +30,24 @@ is_image() {
 # reattaching from a different terminal, which the tmux server environment does
 # not. TERM_PROGRAM is the same self-report outside tmux, where no server holds
 # a stale copy of it.
-client_term_self_report() {
+# One per attached client, because a pane is drawn on every client at once and
+# they need not be the same terminal. `tmux display -p` would answer for
+# whichever client tmux last considered current, which is a coin toss the moment
+# a second terminal is attached.
+client_self_reports() {
     if [[ -n "${TMUX:-}" ]] && command -v tmux >/dev/null 2>&1; then
-        tmux display -p '#{client_termtype}'
+        tmux list-clients ${TMUX_PANE:+-t "${TMUX_PANE}"} -F '#{client_termtype}'
     else
         printf '%s\n' "${TERM_PROGRAM:-${TERM:-}}"
     fi
+}
+
+rung_for() {
+    case "$1" in
+        *ghostty* | *kitty*) printf 'kitty\n' ;;
+        *foot*) printf 'sixels\n' ;;
+        *) printf 'symbols\n' ;;
+    esac
 }
 
 render_kitty() {
@@ -89,18 +101,27 @@ sixel_survives_tmux() {
 # whose binary is missing or whose render fails drops to the symbol art every
 # terminal understands. Detection reads the terminal's self-report rather than
 # probing it for protocol support, because a probe is a round trip per
-# keystroke.
+# keystroke. Clients that disagree settle on symbol art: it is the only rung
+# that is plain text, so it is the only one correct on all of them at once.
 render_image() {
     local target="$1"
     local geometry="${FZF_PREVIEW_COLUMNS:-80}x${FZF_PREVIEW_LINES:-24}"
-    local term
-    term=$(client_term_self_report)
+    local rung="" report client_rung
 
-    case "${term}" in
-        *ghostty* | *kitty*)
+    while IFS= read -r report; do
+        client_rung=$(rung_for "${report}")
+        if [[ -z "${rung}" ]]; then
+            rung="${client_rung}"
+        elif [[ "${rung}" != "${client_rung}" ]]; then
+            rung=symbols
+        fi
+    done < <(client_self_reports)
+
+    case "${rung}" in
+        kitty)
             render_kitty "${target}" "${geometry}" && return 0
             ;;
-        *foot*)
+        sixels)
             sixel_survives_tmux \
                 && render_chafa "${target}" "${geometry}" sixels && return 0
             ;;

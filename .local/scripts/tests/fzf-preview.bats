@@ -11,12 +11,16 @@ SCRIPT="${BATS_TEST_DIRNAME}/../fzf-preview"
 # Writes an executable stub that records its args, with the body read from
 # stdin. A stub answers out of the environment rather than out of a file,
 # because a PATH stripped down to the stubs has no coreutils left to read one.
+# `.args` holds the last call, one argument per line, so an assertion can see
+# argument boundaries; `.log` appends one line per call, so a command the script
+# invokes more than once still shows every question it asked.
 stub() {
     local name="$1"
 
     {
         printf '#!/usr/bin/env bash\n'
         printf 'printf "%%s\\n" "$@" >"%s"\n' "${BATS_TEST_TMPDIR}/${name}.args"
+        printf 'printf "%%s\\n" "$*" >>"%s"\n' "${BATS_TEST_TMPDIR}/${name}.log"
         cat
     } >"${STUB_BIN}/${name}"
     chmod +x "${STUB_BIN}/${name}"
@@ -31,12 +35,13 @@ setup() {
     BAT_ARGS="${BATS_TEST_TMPDIR}/bat.args"
     FILE_ARGS="${BATS_TEST_TMPDIR}/file.args"
     TMUX_ARGS="${BATS_TEST_TMPDIR}/tmux.args"
+    TMUX_LOG="${BATS_TEST_TMPDIR}/tmux.log"
     KITTEN_ARGS="${BATS_TEST_TMPDIR}/kitten.args"
     CHAFA_ARGS="${BATS_TEST_TMPDIR}/chafa.args"
 
-    # What the stubbed file(1) and tmux(1) answer, overridden per test. The two
-    # tmux answers differ everywhere it matters, so a test can prove which
-    # format string the script asked for.
+    # What the stubbed file(1) and tmux(1) answer, overridden per test. The
+    # tmux answers differ per subcommand and per format string, so a test can
+    # prove which question the script asked and not merely which words it used.
     export STUB_MIME="text/plain"
     export STUB_TERMTYPE="xterm(390)"
     export STUB_TERMNAME="xterm-256color"
@@ -53,11 +58,28 @@ STUB_EOF
     stub file <<'STUB_EOF'
 printf '%s\n' "${STUB_MIME}"
 STUB_EOF
+    # `display` still answers every format string a single-client tmux would,
+    # so a test that asserts on `list-clients` proves the script asked the
+    # honest question rather than one that merely mentions the same words.
     stub tmux <<'STUB_EOF'
-case "$*" in
-    *client_termtype*) printf '%s\n' "${STUB_TERMTYPE}" ;;
-    *client_termname*) printf '%s\n' "${STUB_TERMNAME}" ;;
-    *sixel_support*) printf '%s\n' "${STUB_SIXEL}" ;;
+case "$1" in
+    list-clients)
+        # One line per attached client. STUB_CLIENTS is that answer verbatim,
+        # so a test can describe several clients or none at all; leaving it
+        # unset means the one client STUB_TERMTYPE describes.
+        if [[ -n "${STUB_CLIENTS+set}" ]]; then
+            printf '%s' "${STUB_CLIENTS}"
+        else
+            printf '%s\n' "${STUB_TERMTYPE}"
+        fi
+        ;;
+    display)
+        case "$*" in
+            *client_termtype*) printf '%s\n' "${STUB_TERMTYPE}" ;;
+            *client_termname*) printf '%s\n' "${STUB_TERMNAME}" ;;
+            *sixel_support*) printf '%s\n' "${STUB_SIXEL}" ;;
+        esac
+        ;;
 esac
 STUB_EOF
     stub kitten <<'STUB_EOF'
@@ -68,8 +90,9 @@ printf 'chafa render\n'
 STUB_EOF
 
     # The suite itself runs inside some terminal, usually inside tmux; the
-    # script must see only what each test says it should.
-    unset TMUX TERM_PROGRAM
+    # script must see only what each test says it should, TMUX_PANE included,
+    # since it decides whether the client list is targeted at a session.
+    unset TMUX TMUX_PANE TERM_PROGRAM
     export TERM="xterm-256color"
     export FZF_PREVIEW_COLUMNS=40
     export FZF_PREVIEW_LINES=20
@@ -314,6 +337,103 @@ STUB_EOF
     [ ! -e "${CHAFA_ARGS}" ]
 }
 
+# `display -p` answers for whichever client tmux last considered current, which
+# is a coin toss once a second terminal is attached to the session. Only the
+# client list names them all, so the format string alone does not prove the
+# script asked the right question.
+@test "the self-report is read from the client list, not from display -p" {
+    an_image
+    STUB_TERMTYPE="ghostty 1.3.1"
+    export TMUX="/tmp/fake,1,0"
+
+    run "${SCRIPT}" "${IMAGE}"
+    [ "${status}" -eq 0 ]
+    grep -q 'list-clients .*#{client_termtype}' "${TMUX_LOG}"
+    ! grep -q 'display .*client_termtype' "${TMUX_LOG}"
+    [ -e "${KITTEN_ARGS}" ]
+}
+
+# An untargeted `list-clients` lists every client of every session, including
+# the ones drawing nothing of this pane.
+@test "the client list is targeted at the pane" {
+    an_image
+    STUB_TERMTYPE="ghostty 1.3.1"
+    export TMUX="/tmp/fake,1,0"
+    export TMUX_PANE="%7"
+
+    run "${SCRIPT}" "${IMAGE}"
+    [ "${status}" -eq 0 ]
+    [[ "$(cat "${TMUX_ARGS}")" == *$'-t\n%7'* ]]
+}
+
+@test "without TMUX_PANE the client list is not targeted at all" {
+    an_image
+    STUB_TERMTYPE="ghostty 1.3.1"
+    export TMUX="/tmp/fake,1,0"
+
+    run "${SCRIPT}" "${IMAGE}"
+    [ "${status}" -eq 0 ]
+    ! grep -qxF -- '-t' "${TMUX_ARGS}"
+    grep -qxF -- '#{client_termtype}' "${TMUX_ARGS}"
+}
+
+# The pane is drawn on both terminals at once, so neither the Kitty protocol nor
+# sixels can be right for both. Symbol art is plain text, so it is.
+@test "clients that disagree settle on symbol art" {
+    an_image
+    export TMUX="/tmp/fake,1,0"
+    export STUB_CLIENTS=$'ghostty 1.3.1\nfoot(1.27.0)\n'
+    # What `display -p` answered on the machine this was measured on, and what
+    # taking either client's word for it would have drawn.
+    STUB_TERMTYPE="foot(1.27.0)"
+    STUB_SIXEL="1"
+
+    run "${SCRIPT}" "${IMAGE}"
+    [ "${status}" -eq 0 ]
+    [[ "$(cat "${CHAFA_ARGS}")" == *$'-f\nsymbols'* ]]
+    [[ "$(cat "${CHAFA_ARGS}")" != *"sixels"* ]]
+    [ ! -e "${KITTEN_ARGS}" ]
+}
+
+@test "clients that agree keep their rung" {
+    an_image
+    export TMUX="/tmp/fake,1,0"
+    export STUB_CLIENTS=$'ghostty 1.3.1\nghostty 1.3.1\n'
+
+    run "${SCRIPT}" "${IMAGE}"
+    [ "${status}" -eq 0 ]
+    [ "${output}" = "kitten render" ]
+    [ ! -e "${CHAFA_ARGS}" ]
+}
+
+# A detached session still previews, for a client that may attach later and for
+# `capture-pane`; nothing is drawing pixels, so the rung that cannot fail wins.
+@test "a session with no attached client gets symbol art" {
+    an_image
+    export TMUX="/tmp/fake,1,0"
+    export STUB_CLIENTS=""
+    STUB_TERMTYPE="ghostty 1.3.1"
+
+    run "${SCRIPT}" "${IMAGE}"
+    [ "${status}" -eq 0 ]
+    [[ "$(cat "${CHAFA_ARGS}")" == *$'-f\nsymbols'* ]]
+    [ ! -e "${KITTEN_ARGS}" ]
+}
+
+# A terminal that answers no XTVERSION is a client like any other: it cannot be
+# told to draw Kitty graphics, so it holds the whole set down.
+@test "a client answering nothing collapses the set to symbol art" {
+    an_image
+    export TMUX="/tmp/fake,1,0"
+    export STUB_CLIENTS=$'ghostty 1.3.1\n\n'
+    STUB_TERMTYPE="ghostty 1.3.1"
+
+    run "${SCRIPT}" "${IMAGE}"
+    [ "${status}" -eq 0 ]
+    [[ "$(cat "${CHAFA_ARGS}")" == *$'-f\nsymbols'* ]]
+    [ ! -e "${KITTEN_ARGS}" ]
+}
+
 # Inside tmux TERM_PROGRAM reads `tmux`, and the copy in the server environment
 # goes stale on a reattach from another terminal, so it may not be consulted.
 @test "inside tmux TERM_PROGRAM loses to the tmux client" {
@@ -341,6 +461,7 @@ STUB_EOF
     [[ "$(cat "${CHAFA_ARGS}")" == *$'-f\nsixels'* ]]
     [ ! -e "${KITTEN_ARGS}" ]
     [ ! -e "${TMUX_ARGS}" ]
+    [ ! -e "${TMUX_LOG}" ]
 }
 
 @test "outside tmux TERM is the fallback, and nothing is passed through" {
