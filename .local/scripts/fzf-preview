@@ -21,13 +21,20 @@ is_image() {
 }
 
 # The pixels belong to the terminal the tmux client is attached to, not to this
-# pane. #{client_termname} is per client, so it stays true after reattaching
-# from a different terminal, which the tmux server environment does not.
-client_term() {
+# pane, and what identifies that terminal is what it says about itself, never
+# the terminfo name it claims: `.config/foot/foot.ini` sets
+# `term=xterm-256color` so SSH to hosts without foot terminfo keeps working,
+# which leaves #{client_termname} reading `xterm-256color` for a foot window.
+# #{client_termtype} carries the terminal's own XTVERSION reply
+# (`foot(1.27.0)`, `ghostty 1.3.1`) and is per client, so it stays true after
+# reattaching from a different terminal, which the tmux server environment does
+# not. TERM_PROGRAM is the same self-report outside tmux, where no server holds
+# a stale copy of it.
+client_term_self_report() {
     if [[ -n "${TMUX:-}" ]] && command -v tmux >/dev/null 2>&1; then
-        tmux display -p '#{client_termname}'
+        tmux display -p '#{client_termtype}'
     else
-        printf '%s\n' "${TERM:-}"
+        printf '%s\n' "${TERM_PROGRAM:-${TERM:-}}"
     fi
 }
 
@@ -65,22 +72,37 @@ render_chafa() {
     chafa -f "${format}" -s "${geometry}" "${target}"
 }
 
+# Fedora's tmux 3.7b is built without --enable-sixel, so it cannot re-render the
+# image, and handing it the escapes raw draws the picture for an instant before
+# tmux erases the cells. #{sixel_support} is the Capability Probe for that: it
+# gives the rung back the moment a sixel-enabled tmux is running, where pinning
+# a version number here would only guess at when that happens.
+sixel_survives_tmux() {
+    if [[ -z "${TMUX:-}" ]] || ! command -v tmux >/dev/null 2>&1; then
+        return 0
+    fi
+
+    [[ "$(tmux display -p '#{sixel_support}')" == 1 ]]
+}
+
 # Each rung is guarded by the terminal that can actually display it, and a rung
 # whose binary is missing or whose render fails drops to the symbol art every
-# terminal understands. Detection reads a name rather than probing the terminal
-# for protocol support, because a probe is a round trip per keystroke.
+# terminal understands. Detection reads the terminal's self-report rather than
+# probing it for protocol support, because a probe is a round trip per
+# keystroke.
 render_image() {
     local target="$1"
     local geometry="${FZF_PREVIEW_COLUMNS:-80}x${FZF_PREVIEW_LINES:-24}"
     local term
-    term=$(client_term)
+    term=$(client_term_self_report)
 
     case "${term}" in
         *ghostty* | *kitty*)
             render_kitty "${target}" "${geometry}" && return 0
             ;;
         *foot*)
-            render_chafa "${target}" "${geometry}" sixels && return 0
+            sixel_survives_tmux \
+                && render_chafa "${target}" "${geometry}" sixels && return 0
             ;;
     esac
 

@@ -34,9 +34,15 @@ setup() {
     KITTEN_ARGS="${BATS_TEST_TMPDIR}/kitten.args"
     CHAFA_ARGS="${BATS_TEST_TMPDIR}/chafa.args"
 
-    # What the stubbed file(1) and tmux(1) answer, overridden per test.
+    # What the stubbed file(1) and tmux(1) answer, overridden per test. The two
+    # tmux answers differ everywhere it matters, so a test can prove which
+    # format string the script asked for.
     export STUB_MIME="text/plain"
+    export STUB_TERMTYPE="xterm(390)"
     export STUB_TERMNAME="xterm-256color"
+    # This machine's tmux, built without --enable-sixel; a test wanting the
+    # sixel rung has to say so.
+    export STUB_SIXEL="0"
 
     stub eza <<'STUB_EOF'
 printf 'tree line\n'
@@ -48,7 +54,11 @@ STUB_EOF
 printf '%s\n' "${STUB_MIME}"
 STUB_EOF
     stub tmux <<'STUB_EOF'
-printf '%s\n' "${STUB_TERMNAME}"
+case "$*" in
+    *client_termtype*) printf '%s\n' "${STUB_TERMTYPE}" ;;
+    *client_termname*) printf '%s\n' "${STUB_TERMNAME}" ;;
+    *sixel_support*) printf '%s\n' "${STUB_SIXEL}" ;;
+esac
 STUB_EOF
     stub kitten <<'STUB_EOF'
 printf 'kitten render\n'
@@ -59,7 +69,7 @@ STUB_EOF
 
     # The suite itself runs inside some terminal, usually inside tmux; the
     # script must see only what each test says it should.
-    unset TMUX
+    unset TMUX TERM_PROGRAM
     export TERM="xterm-256color"
     export FZF_PREVIEW_COLUMNS=40
     export FZF_PREVIEW_LINES=20
@@ -197,9 +207,10 @@ STUB_EOF
     [ ! -e "${BAT_ARGS}" ]
 }
 
-@test "an image under ghostty is rendered with kitten" {
+@test "an image under ghostty is rendered with kitten despite the claimed name" {
     an_image
-    STUB_TERMNAME="xterm-ghostty"
+    STUB_TERMTYPE="ghostty 1.3.1"
+    STUB_TERMNAME="xterm-256color"
     export TMUX="/tmp/fake,1,0"
 
     run "${SCRIPT}" "${IMAGE}"
@@ -220,7 +231,7 @@ STUB_EOF
 
 @test "an image under kitty is rendered with kitten" {
     an_image
-    STUB_TERMNAME="xterm-kitty"
+    STUB_TERMTYPE="kitty(0.47.1)"
     export TMUX="/tmp/fake,1,0"
 
     run "${SCRIPT}" "${IMAGE}"
@@ -229,9 +240,13 @@ STUB_EOF
     [ ! -e "${CHAFA_ARGS}" ]
 }
 
-@test "an image under foot is rendered as sixels" {
+# foot.ini sets `term=xterm-256color`, so the claimed name never says foot and
+# only the self-report can put this window on the sixel rung.
+@test "an image under foot is rendered as sixels despite the claimed name" {
     an_image
-    STUB_TERMNAME="foot"
+    STUB_TERMTYPE="foot(1.27.0)"
+    STUB_TERMNAME="xterm-256color"
+    STUB_SIXEL="1"
     export TMUX="/tmp/fake,1,0"
 
     run "${SCRIPT}" "${IMAGE}"
@@ -243,9 +258,25 @@ STUB_EOF
     [ ! -e "${BAT_ARGS}" ]
 }
 
+# A tmux built without --enable-sixel erases the image a moment after drawing
+# it, which is worse than blocky art that stays on the screen.
+@test "under foot a tmux without sixel support gets symbols, not sixels" {
+    an_image
+    STUB_TERMTYPE="foot(1.27.0)"
+    STUB_SIXEL="0"
+    export TMUX="/tmp/fake,1,0"
+
+    run "${SCRIPT}" "${IMAGE}"
+    [ "${status}" -eq 0 ]
+    [[ "$(cat "${CHAFA_ARGS}")" == *$'-f\nsymbols'* ]]
+    [[ "$(cat "${CHAFA_ARGS}")" != *"sixels"* ]]
+    [[ "$(cat "${TMUX_ARGS}")" == *"sixel_support"* ]]
+    [ ! -e "${KITTEN_ARGS}" ]
+}
+
 @test "an image under an unknown terminal is rendered as symbols" {
     an_image
-    STUB_TERMNAME="screen-256color"
+    STUB_TERMTYPE="xterm(390)"
     export TMUX="/tmp/fake,1,0"
 
     run "${SCRIPT}" "${IMAGE}"
@@ -254,20 +285,65 @@ STUB_EOF
     [ ! -e "${KITTEN_ARGS}" ]
 }
 
-@test "the terminal name comes from the tmux client, not from TERM" {
+# A terminal that answers no XTVERSION leaves #{client_termtype} empty, and the
+# claimed name is not consulted to fill the gap: it is the source this ladder
+# stopped trusting, and the empty string lands on the rung that cannot fail.
+@test "an empty self-report is symbols, not a fall back to the claimed name" {
     an_image
-    STUB_TERMNAME="xterm-ghostty"
+    STUB_TERMTYPE=""
+    STUB_TERMNAME="foot"
+    export TMUX="/tmp/fake,1,0"
+
+    run "${SCRIPT}" "${IMAGE}"
+    [ "${status}" -eq 0 ]
+    [[ "$(cat "${CHAFA_ARGS}")" == *$'-f\nsymbols'* ]]
+    [ ! -e "${KITTEN_ARGS}" ]
+}
+
+@test "the self-report comes from the tmux client, not from TERM" {
+    an_image
+    STUB_TERMTYPE="ghostty 1.3.1"
     export TMUX="/tmp/fake,1,0"
     export TERM="foot"
 
     run "${SCRIPT}" "${IMAGE}"
     [ "${status}" -eq 0 ]
-    [[ "$(cat "${TMUX_ARGS}")" == *"client_termname"* ]]
+    [[ "$(cat "${TMUX_ARGS}")" == *"client_termtype"* ]]
+    [[ "$(cat "${TMUX_ARGS}")" != *"client_termname"* ]]
     [ -e "${KITTEN_ARGS}" ]
     [ ! -e "${CHAFA_ARGS}" ]
 }
 
-@test "outside tmux the terminal name comes from TERM and nothing is passed through" {
+# Inside tmux TERM_PROGRAM reads `tmux`, and the copy in the server environment
+# goes stale on a reattach from another terminal, so it may not be consulted.
+@test "inside tmux TERM_PROGRAM loses to the tmux client" {
+    an_image
+    STUB_TERMTYPE="foot(1.27.0)"
+    STUB_SIXEL="1"
+    export TMUX="/tmp/fake,1,0"
+    export TERM_PROGRAM="ghostty"
+
+    run "${SCRIPT}" "${IMAGE}"
+    [ "${status}" -eq 0 ]
+    [[ "$(cat "${CHAFA_ARGS}")" == *$'-f\nsixels'* ]]
+    [ ! -e "${KITTEN_ARGS}" ]
+}
+
+# Outside tmux nothing stands between chafa and the terminal, so the sixel rung
+# is not gated and tmux is not consulted at all.
+@test "outside tmux TERM_PROGRAM is the self-report, over TERM" {
+    an_image
+    export TERM_PROGRAM="foot"
+    export TERM="xterm-256color"
+
+    run "${SCRIPT}" "${IMAGE}"
+    [ "${status}" -eq 0 ]
+    [[ "$(cat "${CHAFA_ARGS}")" == *$'-f\nsixels'* ]]
+    [ ! -e "${KITTEN_ARGS}" ]
+    [ ! -e "${TMUX_ARGS}" ]
+}
+
+@test "outside tmux TERM is the fallback, and nothing is passed through" {
     an_image
     export TERM="xterm-ghostty"
 
@@ -281,7 +357,7 @@ STUB_EOF
 
 @test "a rung whose binary is missing falls through to the next" {
     an_image
-    STUB_TERMNAME="xterm-ghostty"
+    STUB_TERMTYPE="ghostty 1.3.1"
     export TMUX="/tmp/fake,1,0"
 
     run env PATH="$(path_without kitten)" "${BASH}" "${SCRIPT}" "${IMAGE}"
@@ -293,7 +369,7 @@ STUB_EOF
 
 @test "a rung whose binary fails falls through to the next" {
     an_image
-    STUB_TERMNAME="xterm-ghostty"
+    STUB_TERMTYPE="ghostty 1.3.1"
     export TMUX="/tmp/fake,1,0"
     stub kitten <<'STUB_EOF'
 exit 1
@@ -328,7 +404,7 @@ STUB_EOF
     [ ! -e "${CHAFA_ARGS}" ]
 }
 
-@test "inside tmux without the tmux binary the name comes from TERM" {
+@test "inside tmux without the tmux binary the self-report comes from TERM" {
     an_image
     export TMUX="/tmp/fake,1,0"
     export TERM="xterm-ghostty"
@@ -341,7 +417,7 @@ STUB_EOF
 
 @test "an image still renders when eza is missing" {
     an_image
-    STUB_TERMNAME="xterm-ghostty"
+    STUB_TERMTYPE="ghostty 1.3.1"
     export TMUX="/tmp/fake,1,0"
 
     run env PATH="$(path_without eza)" "${BASH}" "${SCRIPT}" "${IMAGE}"

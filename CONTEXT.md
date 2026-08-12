@@ -62,19 +62,24 @@ wrong one)
 
 **Client Terminal**:\
 The terminal emulator that actually draws what a program writes: inside tmux the
-one the attached client runs in, elsewhere the one that owns the tty. Read from
-`tmux display -p '#{client_termname}'` (`xterm-ghostty`), or
-`#{client_termtype}` where a version matters (`ghostty 1.3.1`), and from `$TERM`
-only outside tmux, since `$TERM` in a pane names tmux's own terminfo entry
-rather than any terminal. It is the Session Fact that has a way out of its own
-staleness: `TERM_PROGRAM` and `GHOSTTY_BIN_DIR` live on in the tmux server
-environment and keep naming whichever terminal started the server, so after a
-reattach from foot they still claim ghostty, while `#{client_termname}` is a
-property of the client and is therefore re-read on every attach. Consulted for
-what the terminal can draw, the Kitty graphics protocol or sixel, never for who
-or where the user is.\
-_Avoid_: `$TERM` (inside tmux that is a terminfo name, not a terminal), terminal
-emulator, outer terminal
+one the attached client runs in, elsewhere the one that owns the tty. Identified
+by what it reports about itself, never by the terminfo name it claims: inside
+tmux `tmux display -p '#{client_termtype}'`, which is the terminal's own
+XTVERSION reply (`ghostty 1.3.1`, `foot(1.27.0)`), and outside tmux
+`$TERM_PROGRAM` (`ghostty`, `foot`), with `$TERM` left as the fallback for a
+terminal that exports neither. A name is not a terminal: `$TERM` in a pane names
+tmux's own terminfo entry, and `#{client_termname}` is only what the terminal
+was configured to claim, which `.config/foot/foot.ini` deliberately sets to
+`xterm-256color` so SSH to hosts without foot terminfo keeps working (see
+ADR-0007). It is the Session Fact that has a way out of its own staleness:
+`TERM_PROGRAM` and `GHOSTTY_BIN_DIR` live on in the tmux server environment and
+keep naming whichever terminal started the server, so after a reattach from foot
+they still claim ghostty, while `#{client_termtype}` is a property of the client
+and is therefore re-read on every attach. Consulted for what the terminal can
+draw, the Kitty graphics protocol or sixel, never for who or where the user is.\
+_Avoid_: `$TERM` (inside tmux that is a terminfo name, not a terminal),
+`#{client_termname}` (a claim a config can rewrite), terminal emulator, outer
+terminal
 
 **Write-Back Config**:\
 A config file that its own tooling rewrites, rather than one only a human edits.
@@ -204,17 +209,24 @@ tool on PATH)
 
 **Render Ladder**:\
 The ordered rungs the Previewer tries for one image: `kitten icat` under ghostty
-or kitty, `chafa -f sixels` under foot, and `chafa -f symbols` under anything
-else. Beneath all of them is the text path, the ladder's floor rather than a
-rung of it: it draws no image at all and exists only so a preview window is
-never blank. Each rung is guarded by the Client Terminal that can display it,
-read as a name rather than probed, because a probe is a terminal round trip per
-keystroke. A rung whose binary is missing or whose render fails drops to the
-next, which makes the bottom rung the one that cannot fail: symbol art is only
-text. Ordered by fidelity, so adding a renderer means placing it against the
-terminals that can draw it, never appending it (see ADR-0007).\
+or kitty, `chafa -f sixels` under foot where the sixels can reach it, and
+`chafa -f symbols` under anything else. The sixel rung carries a second guard
+because a tmux built without `--enable-sixel` erases the image a moment after
+drawing it: inside tmux the rung is taken only when the `#{sixel_support}`
+Capability Probe says tmux can carry it, which is `0` on this machine and makes
+foot-in-tmux symbol art until tmux gains that support (see ADR-0007). Beneath
+all of them is the text path, the ladder's floor rather than a rung of it: it
+draws no image at all and exists only so a preview window is never blank. Each
+rung is guarded by the Client Terminal that can display it, read from that
+terminal's self-report rather than probed from here, because a probe is a
+terminal round trip per keystroke. A rung whose binary is missing or whose
+render fails drops to the next, which makes the bottom rung the one that cannot
+fail: symbol art is only text. Ordered by fidelity, so adding a renderer means
+placing it against the terminals that can draw it, never appending it (see
+ADR-0007).\
 _Avoid_: fallback chain (the order is fidelity, not failure), backend list,
-protocol detection (nothing is detected; the rung follows a name)
+protocol detection (nothing is probed here; the rung follows the terminal's
+self-report)
 
 ### Music library
 
