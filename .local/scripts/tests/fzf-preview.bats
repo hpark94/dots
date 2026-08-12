@@ -38,6 +38,7 @@ setup() {
     TMUX_LOG="${BATS_TEST_TMPDIR}/tmux.log"
     KITTEN_ARGS="${BATS_TEST_TMPDIR}/kitten.args"
     CHAFA_ARGS="${BATS_TEST_TMPDIR}/chafa.args"
+    CHAFA_LOG="${BATS_TEST_TMPDIR}/chafa.log"
 
     # What the stubbed file(1) and tmux(1) answer, overridden per test. The
     # tmux answers differ per subcommand and per format string, so a test can
@@ -308,6 +309,19 @@ STUB_EOF
     [ ! -e "${KITTEN_ARGS}" ]
 }
 
+# chafa questions the terminal even when -f already decided the format, and
+# waits its default 5 seconds for an answer that a tty console or an ssh session
+# never sends. That would be a 5 second stall on every keystroke of a preview.
+@test "a rung that already knows its format does not question the terminal" {
+    an_image
+    STUB_TERMTYPE="xterm(390)"
+    export TMUX="/tmp/fake,1,0"
+
+    run "${SCRIPT}" "${IMAGE}"
+    [ "${status}" -eq 0 ]
+    [[ "$(cat "${CHAFA_ARGS}")" == *"--probe=off"* ]]
+}
+
 # A terminal that answers no XTVERSION leaves #{client_termtype} empty, and the
 # claimed name is not consulted to fill the gap: it is the source this ladder
 # stopped trusting, and the empty string lands on the rung that cannot fail.
@@ -349,7 +363,12 @@ STUB_EOF
     run "${SCRIPT}" "${IMAGE}"
     [ "${status}" -eq 0 ]
     grep -q 'list-clients .*#{client_termtype}' "${TMUX_LOG}"
-    ! grep -q 'display .*client_termtype' "${TMUX_LOG}"
+    # Not `! grep`: a negated command is exempt from errexit, so it would assert
+    # nothing here.
+    if grep -q 'display .*client_termtype' "${TMUX_LOG}"; then
+        echo "the self-report was read with display -p" >&2
+        return 1
+    fi
     [ -e "${KITTEN_ARGS}" ]
 }
 
@@ -373,7 +392,10 @@ STUB_EOF
 
     run "${SCRIPT}" "${IMAGE}"
     [ "${status}" -eq 0 ]
-    ! grep -qxF -- '-t' "${TMUX_ARGS}"
+    if grep -qxF -- '-t' "${TMUX_ARGS}"; then
+        echo "the client list was targeted although TMUX_PANE was unset" >&2
+        return 1
+    fi
     grep -qxF -- '#{client_termtype}' "${TMUX_ARGS}"
 }
 
@@ -474,6 +496,74 @@ STUB_EOF
     [[ "$(cat "${KITTEN_ARGS}")" != *"--passthrough"* ]]
     [[ "$(cat "${KITTEN_ARGS}")" == *"--unicode-placeholder"* ]]
     [ ! -e "${TMUX_ARGS}" ]
+    [ ! -e "${CHAFA_ARGS}" ]
+}
+
+# A name that identifies the terminal is the whole answer, so the terminal is
+# never asked and the common case pays nothing for the probe existing.
+@test "outside tmux a name that gives a rung is never followed by a probe" {
+    an_image
+    export TERM_PROGRAM="kitty"
+
+    run "${SCRIPT}" "${IMAGE}"
+    [ "${status}" -eq 0 ]
+    [ "${output}" = "kitten render" ]
+    [ ! -e "${CHAFA_ARGS}" ]
+}
+
+# foot unsets TERM_PROGRAM in the process it starts and foot.ini renames $TERM,
+# so outside tmux nothing in the environment names it. chafa asks the terminal
+# instead, and no -f, because the answer is what chooses the format.
+@test "outside tmux a name that gives no rung lets chafa probe the terminal" {
+    an_image
+    export TERM="xterm-256color"
+
+    run "${SCRIPT}" "${IMAGE}"
+    [ "${status}" -eq 0 ]
+    [ "${output}" = "chafa render" ]
+    # Newline-delimited on both sides, so `-f` is looked for as a whole
+    # argument: `set -e` ignores a `!`-negated command, so a bare `! grep`
+    # here would assert nothing.
+    local args
+    args=$'\n'
+    args+="$(cat "${CHAFA_ARGS}")"$'\n'
+    [[ "${args}" == *$'\n--probe=0.2\n'* ]]
+    [[ "${args}" == *$'\n--probe-mode=ctty\n'* ]]
+    [[ "${args}" == *$'\n-s\n40x20\n'* ]]
+    [[ "${args}" == *$'\n'"${IMAGE}"$'\n'* ]]
+    [[ "${args}" != *$'\n-f\n'* ]]
+    [ "$(wc -l <"${CHAFA_LOG}")" -eq 1 ]
+}
+
+# Inside tmux the client's self-report already answered, for free and per
+# client, so the round trip the probe costs buys nothing here.
+@test "inside tmux a self-report that gives no rung still never probes" {
+    an_image
+    STUB_TERMTYPE=""
+    export TMUX="/tmp/fake,1,0"
+
+    run "${SCRIPT}" "${IMAGE}"
+    [ "${status}" -eq 0 ]
+    [[ "$(cat "${CHAFA_ARGS}")" == *$'-f\nsymbols'* ]]
+    # --probe-mode, not --probe: the -f rungs carry --probe=off, which is the
+    # opposite of a probe and would match a looser pattern.
+    [[ "$(cat "${CHAFA_LOG}")" != *"--probe-mode"* ]]
+    [[ "$(cat "${CHAFA_LOG}")" != *"--probe=0"* ]]
+}
+
+@test "outside tmux a failing probe still leaves a usable preview" {
+    an_image
+    export TERM="xterm-256color"
+    stub chafa <<'STUB_EOF'
+exit 1
+STUB_EOF
+
+    run "${SCRIPT}" "${IMAGE}"
+    [ "${status}" -eq 0 ]
+    [ "${output}" = "file line" ]
+    grep -q -- '--probe=0.2' "${CHAFA_LOG}"
+    grep -q -- '-f symbols' "${CHAFA_LOG}"
+    [[ "$(cat "${BAT_ARGS}")" == *"${IMAGE}"* ]]
 }
 
 @test "a rung whose binary is missing falls through to the next" {

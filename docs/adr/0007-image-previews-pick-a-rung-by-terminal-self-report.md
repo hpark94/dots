@@ -9,9 +9,12 @@ untouched.
 
 The rungs, in order, are `kitten icat` under ghostty or kitty, `chafa -f sixels`
 under foot where the sixels can reach it, and `chafa -f symbols` under anything
-else. A rung whose binary is missing, or whose render fails, drops to the symbol
-art every terminal understands; if that fails too the target falls through to
-the text path, so a preview window is never left blank.
+else. Outside tmux the bottom rung is reached by way of one more step, a `chafa`
+that probes the terminal and picks its own format, because outside tmux the
+terminal can be anonymous; that is the second decision recorded here. A rung
+whose binary is missing, or whose render fails, drops to the symbol art every
+terminal understands; if that fails too the target falls through to the text
+path, so a preview window is never left blank.
 
 The Client Terminal is identified by what it says about itself, from
 `tmux list-clients -t "$TMUX_PANE" -F '#{client_termtype}'` inside tmux, one
@@ -25,8 +28,9 @@ in foot fell to symbol art while ghostty got Kitty graphics. A terminal is free
 to be configured to claim any name. What it cannot be configured away from is
 its own answer to XTVERSION, which tmux keeps per client as
 `#{client_termtype}`: `foot(1.27.0)` and `ghostty 1.3.1`. Outside tmux the
-terminal states the same thing in `TERM_PROGRAM` (`foot`, `ghostty`). Both
-values are matched by the patterns the `case` had already, which are globs.
+terminal was assumed to state the same thing in `TERM_PROGRAM` (`ghostty`); foot
+turned out to state nothing there, which the next section takes up. Both values
+are matched by the patterns the `case` had already, which are globs.
 
 What each terminal is worth was measured on this machine: ghostty 1.3.1 speaks
 the Kitty graphics protocol including Unicode placeholders and does not speak
@@ -34,6 +38,38 @@ sixel; foot 1.27 speaks sixel and not the Kitty protocol; `kitten` 0.47.1 and
 `chafa` 1.18.2 are installed, while `timg`, `viu` and `ueberzugpp` are not.
 `.tmux.conf` already sets `allow-passthrough on`, so the graphics escapes reach
 the terminal through tmux.
+
+## Outside tmux the environment answers nothing, so chafa asks the terminal
+
+The paragraph above is wrong about foot outside tmux, and measuring it is what
+found that out. `$TERM_PROGRAM` does not name foot, because foot does not set
+it: its changelog records, under Removed, "`$TERM_PROGRAM` and
+`$TERM_PROGRAM_VERSION` environment variables unset in the slave process". foot
+deliberately deletes the variable from the environment it hands the shell rather
+than filling it in, so it is not merely absent, it is absent on purpose and will
+stay that way. Confirmed live: in a foot window outside tmux, `TERM_PROGRAM` is
+unset. `$TERM` cannot cover for it either, for the reason this ADR already
+records at length, `.config/foot/foot.ini` sets `term=xterm-256color`, so
+`$TERM` reads `xterm-256color` and names nothing. Outside tmux, therefore,
+nothing in the environment identifies the Client Terminal at all, and every
+image preview in foot fell to symbol art, which is the exact failure this ADR
+was written to fix, surviving in the one place it was not measured.
+
+There is no name left to read, so the decision is to ask the terminal. Outside
+tmux, and only where the name has already failed to give a rung, the ladder runs
+`chafa --probe=0.2 --probe-mode=ctty -s "${geometry}" "${target}"` and lets
+chafa choose the format from what the terminal answers. No `-f`: choosing is the
+whole point of that call. The probe question goes over the controlling terminal
+because a preview's stdout is fzf's pipe, and an escape sequence written there
+would be garbage in the preview window with no reply ever coming back. The
+timeout is explicit and short because this runs on every keystroke.
+
+Inside tmux nothing changes. `#{client_termtype}` per attached client, the rule
+that disagreeing clients collapse to symbol art, and the `#{sixel_support}` gate
+all stand exactly as they were, and no probe is issued there whatever the
+self-report says. The name is still consulted first outside tmux too, so ghostty
+(`xterm-ghostty`) and kitty still take the top rung at no cost, and only the
+case with no cheaper answer pays for the round trip.
 
 ## Considered Options
 
@@ -80,6 +116,23 @@ cache, kept by the process that already knows when the client changes. What it
 costs is a rung chosen from a list of terminals rather than from what the
 terminal can actually do.
 
+That rejection was right for the general case and is kept everywhere a
+self-report exists to read, which is everywhere inside tmux. It was wrong as a
+blanket rule, because it assumed a self-report always exists, and outside tmux
+in foot there is none: the probe there is not a round trip instead of a free
+answer, it is a round trip instead of no answer. The cost is bounded rather than
+argued away. `--probe` takes a number of seconds, and the ladder passes `0.2`
+against chafa's default of `5.0`; measured against a pty that never answers, the
+call returned in 0.213s at `0.2` and 5.018s at the default, so the cap is
+honoured to the millisecond and a silent terminal costs a fifth of a second per
+keystroke, not five seconds. Measured against a pty answering as a sixel
+terminal, the same call returned in 0.012s and emitted sixel where it had
+emitted symbol art, so the probe is fast when a terminal is listening and it
+does change the rung. A timeout is not a failure either: chafa still renders, in
+symbol art, which is exactly what this path drew before. No cache is added, so
+nothing goes stale, and the terminal is asked afresh on each keystroke it cannot
+be named on.
+
 **The tmux client over the environment.** `TERM_PROGRAM` and `GHOSTTY_BIN_DIR`
 are the obvious way to recognise the terminal and would need no tmux call at
 all. Inside tmux both are wrong: tmux overwrites `TERM_PROGRAM` with `tmux` in a
@@ -91,7 +144,8 @@ client and stays correct across a reattach. This is the Session Fact rule
 applied to a terminal: probe the connection, never the environment a longer
 lived process is holding. Outside tmux there is no longer lived process holding
 a copy, which is what makes `TERM_PROGRAM` the right source exactly there and
-nowhere else.
+nowhere else. It is a source only where the terminal sets it at all, and foot
+does not, which is what the section above resolves.
 
 **Every attached client over the one tmux calls current.**
 `tmux display -p '#{client_termtype}'` is the shorter question and was this
@@ -235,3 +289,26 @@ the rung that always works rather than the only rung.
 - Adding a terminal to a rung is a pattern in one `case`. Adding a rung is a
   function plus an arm, which is the shape to keep: the ladder is ordered by
   fidelity, and the bottom rung must remain the one that cannot fail.
+- Outside tmux, an image preview in a terminal no name identifies costs up to
+  0.2s per keystroke, measured at 0.213s against a pty that never answers. That
+  is the price of the only rung better than symbol art such a terminal can be
+  given, and it is paid only there: a named terminal never reaches the probe, so
+  ghostty and kitty previews are unchanged.
+- The probe picks the format, so it can pick the Kitty graphics protocol, and
+  `chafa` writes that without Unicode placeholders, which is the residue problem
+  the top rung uses `kitten icat` to avoid. Every terminal on this machine that
+  speaks the protocol is named in the `case` and never reaches the probe, so
+  this is reachable only from a wezterm or konsole outside tmux. The
+  lower-fidelity answer for an unnamed terminal was symbol art with no image at
+  all, so a picture that may need a redraw is not a regression, but it is the
+  one way this path can be worse than what it replaced.
+- `chafa` probes the terminal by default, even when `-f` has already decided the
+  format: measured on 1.18.2, `chafa -f symbols` with no probe option at all
+  sends `OSC 10`, `OSC 11`, `CSI 18t`, `CSI 14t`, `CSI 16t` and `CSI 0c` over
+  the controlling terminal and waits 5.016s for a reply that never comes. That
+  is a five-second stall per keystroke in front of anything that answers
+  nothing, an ssh session or a tty console, and it costs a rung that already
+  knows its format precisely nothing to avoid. Both `-f` rungs therefore pass
+  `--probe=off`, whose output is byte-identical to leaving it out. Only the rung
+  that has no name to go on asks a question, which is the whole point of that
+  rung.

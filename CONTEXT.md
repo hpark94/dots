@@ -72,12 +72,19 @@ last considered current, which is a coin toss the moment a second terminal
 attaches (see ADR-0007). Identified by what it reports about itself, never by
 the terminfo name it claims: `#{client_termtype}` is the terminal's own
 XTVERSION reply (`ghostty 1.3.1`, `foot(1.27.0)`), and outside tmux
-`$TERM_PROGRAM` (`ghostty`, `foot`), with `$TERM` left as the fallback for a
-terminal that exports neither. A name is not a terminal: `$TERM` in a pane names
-tmux's own terminfo entry, and `#{client_termname}` is only what the terminal
-was configured to claim, which `.config/foot/foot.ini` deliberately sets to
-`xterm-256color` so SSH to hosts without foot terminfo keeps working (see
-ADR-0007). It is the Session Fact that has a way out of its own staleness:
+`$TERM_PROGRAM` (`ghostty`), with `$TERM` left as the fallback for a terminal
+that exports neither (`xterm-ghostty`). Outside tmux the environment can also
+answer nothing at all, and for foot it does: foot's changelog records
+"`$TERM_PROGRAM` and `$TERM_PROGRAM_VERSION` environment variables unset in the
+slave process", so foot deliberately deletes the variable instead of setting it,
+and `foot.ini` renames `$TERM` to `xterm-256color`, so both sources are silent
+about the terminal actually drawing. Where that leaves no rung, and only there,
+the terminal is asked instead of named, by a `chafa` probe over the controlling
+terminal with a 0.2s cap (see ADR-0007). A name is not a terminal: `$TERM` in a
+pane names tmux's own terminfo entry, and `#{client_termname}` is only what the
+terminal was configured to claim, which `.config/foot/foot.ini` deliberately
+sets to `xterm-256color` so SSH to hosts without foot terminfo keeps working
+(see ADR-0007). It is the Session Fact that has a way out of its own staleness:
 `TERM_PROGRAM` and `GHOSTTY_BIN_DIR` live on in the tmux server environment and
 keep naming whichever terminal started the server, so after a reattach from foot
 they still claim ghostty, while `#{client_termtype}` is a property of the client
@@ -234,10 +241,16 @@ puts the next preview back on the better rung with no state to clear. A rung
 whose binary is missing or whose render fails drops to the next, which makes the
 bottom rung the one that cannot fail: symbol art is only text. Ordered by
 fidelity, so adding a renderer means placing it against the terminals that can
-draw it, never appending it (see ADR-0007).\
+draw it, never appending it (see ADR-0007). One rung is reached by asking rather
+than naming: outside tmux, where nothing in the environment identifies foot, a
+Client Terminal that no name gives a rung is probed by chafa itself, over the
+controlling terminal, with no `-f` so the answer chooses the format and a 0.2s
+cap so a terminal that never answers cannot stall a per-keystroke preview.
+Inside tmux nothing is ever probed: `#{client_termtype}` already answers, for
+free and per client (see ADR-0007).\
 _Avoid_: fallback chain (the order is fidelity, not failure), backend list,
-protocol detection (nothing is probed here; the rung follows the terminal's
-self-report)
+protocol detection (the rung follows the terminal's self-report; the probe is
+the exception for a terminal with no self-report to read, not the rule)
 
 ### Music library
 
