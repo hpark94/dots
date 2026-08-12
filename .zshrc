@@ -34,7 +34,7 @@ zinit cdreplay -q
 zstyle ':completion:*' matcher-list 'm:{a-z}={A-Za-z}'
 zstyle ':completion:*' list-colors "${(s.:.)LS_COLORS}"
 zstyle ':completion:*' menu no
-zstyle ':fzf-tab:complete:*:*' fzf-preview 'if [[ -d $realpath ]]; then eza --tree --color=always --level=2 $realpath | head -200; else bat -n --color=always $realpath; fi'
+zstyle ':fzf-tab:complete:*:*' fzf-preview 'fzf-preview "${realpath}"'
 zstyle ':fzf-tab:*' use-fzf-default-opts yes
 
 _ffd() {

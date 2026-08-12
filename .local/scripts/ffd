@@ -1,0 +1,83 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Pick files with fzf and hand them to <tool>. A terminal tool replaces fzf via
+# `become` so it inherits the terminal; anything else is detached per file.
+
+main() {
+    local cmd
+    for cmd in fd fzf; do
+        if ! command -v "${cmd}" >/dev/null 2>&1; then
+            echo "ffd: ${cmd} not available. Is ${cmd} installed?" >&2
+            exit 1
+        fi
+    done
+
+    local tool="${1:-nvim}"
+    local flags=("${@:2}")
+
+    if ! command -v "${tool}" >/dev/null 2>&1; then
+        echo "ffd: '${tool}' is not installed or not in PATH" >&2
+        exit 1
+    fi
+
+    local is_terminal=false
+
+    case "${tool}" in
+        nvim | vim | vi | nano | emacs | less | more | cat | bat | ls | stat | file | wc)
+            is_terminal=true
+            ;;
+    esac
+
+    local opener
+    if [[ "${is_terminal}" == true ]]; then
+        opener="${tool} ${flags[*]} \"\$@\""
+    else
+        opener="
+if [[ \$FZF_SELECT_COUNT -eq 0 ]]; then
+    ${tool} ${flags[*]} \"\$1\" &>/dev/null &
+else
+    for file in \"\$@\"; do
+        ${tool} ${flags[*]} \"\$file\" &>/dev/null &
+    done
+fi"
+    fi
+
+    local options=(
+        --hidden
+        --exclude ".git/"
+    )
+
+    local keybinds=(
+        --bind "esc:abort"
+        --bind "enter:become:bash -c '${opener}' _ {+}"
+        --bind "ctrl-o:execute:bash -c '${opener}' _ {+}"
+        --bind "alt-a:select-all"
+        --bind "alt-d:deselect-all"
+        --bind "ctrl-/:toggle-preview"
+    )
+
+    local preview_opts=(
+        --preview "fzf-preview {}"
+        --preview-window "<80(up)"
+    )
+
+    local status=0
+    # fzf stops reading as soon as it has a selection, so a pipeline would hand
+    # pipefail fd's SIGPIPE status (141); a process substitution keeps the status
+    # fzf's own while fd's stderr still reaches the terminal.
+    fzf --ansi --multi \
+        "${keybinds[@]}" \
+        "${preview_opts[@]}" < <(fd -t f "." "${options[@]}") || status=$?
+
+    # fzf exits 1 on no match and 130 when the user aborts; neither is a failure
+    # of this script, while anything else is a real fzf error.
+    if [[ "${status}" -eq 1 || "${status}" -eq 130 ]]; then
+        return 0
+    fi
+    return "${status}"
+}
+
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+    main "$@"
+fi

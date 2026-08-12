@@ -1,0 +1,79 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Live ripgrep through fzf: fzf owns the query and re-runs rg on every
+# keystroke, so `--disabled` is what stops fzf from also filtering the results.
+# The opener and preview strings below are fzf's to expand, never this shell's.
+
+main() {
+    local cmd
+    for cmd in rg fzf bat; do
+        if ! command -v "${cmd}" >/dev/null 2>&1; then
+            echo "frg: ${cmd} not available. Is ${cmd} installed?" >&2
+            exit 1
+        fi
+    done
+
+    local query="$*"
+
+    local reload='reload:rg --column --hidden --color=always --smart-case --glob "!.git/**" {q} || :'
+
+    # shellcheck disable=SC2016
+    local opener='
+if [[ $FZF_SELECT_COUNT -eq 0 ]]; then
+    nvim {1} +{2}
+else
+    nvim +cw -q {+f}
+fi'
+
+    # shellcheck disable=SC2016
+    local preview_script='
+line={2}
+total=$(wc -l < {1})
+
+if [ $line -gt 10 ]; then
+    start=$((line-10))
+else
+    start=1
+fi
+
+bat --style=plain --color=always {1} | \
+tail -n +$start | \
+head -n 20 | \
+bat --style=plain --color=always --highlight-line $((line-start+1))'
+
+    local keybinds=(
+        --bind "esc:abort"
+        --bind "start:${reload}"
+        --bind "change:${reload}"
+        --bind "enter:become:${opener}"
+        --bind "ctrl-o:execute:${opener}"
+        --bind "alt-a:select-all"
+        --bind "alt-d:deselect-all"
+        --bind "ctrl-/:toggle-preview"
+    )
+
+    local fzf_opts=(
+        --disabled
+        --ansi
+        --multi
+        --delimiter ":"
+        --preview "${preview_script}"
+        --preview-window "<80(up)"
+        --query "${query}"
+    )
+
+    local status=0
+    fzf "${fzf_opts[@]}" "${keybinds[@]}" || status=$?
+
+    # fzf exits 1 on no match and 130 when the user aborts; neither is a failure
+    # of this script, while anything else is a real fzf error.
+    if [[ "${status}" -eq 1 || "${status}" -eq 130 ]]; then
+        return 0
+    fi
+    return "${status}"
+}
+
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+    main "$@"
+fi
