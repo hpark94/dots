@@ -1,3 +1,7 @@
+---
+status: superseded by ADR-0008
+---
+
 # One AGENTS.md for all agents
 
 Claude Code, OpenCode on Mistral Medium 3.5, and Codex now share one instruction
