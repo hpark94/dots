@@ -99,7 +99,7 @@ path_without() {
 @test "fzf centres the matched line itself" {
     run "${SCRIPT}"
     [ "${status}" -eq 0 ]
-    [[ "$(cat "${FZF_ARGS}")" == *$'--preview-window\n+{2}-/2,<80(up)'* ]]
+    [[ "$(cat "${FZF_ARGS}")" == *$'--preview-window\n+{2}-/2,<50(up)'* ]]
 }
 
 @test "no hand-rolled preview window is left in the fzf arguments" {

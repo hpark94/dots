@@ -62,9 +62,12 @@ main() {
         --bind "ctrl-/:toggle-preview"
     )
 
+    # fzf measures the threshold against the preview window, not the terminal,
+    # so 50 at the default half split means "put the preview above whenever the
+    # terminal is narrower than 100 columns".
     local preview_opts=(
         --preview "fzf-preview {}"
-        --preview-window "<80(up)"
+        --preview-window "<50(up)"
     )
 
     local status=0

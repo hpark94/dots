@@ -176,7 +176,7 @@ STUB_EOF
     local args
     args=$(cat "${FZF_ARGS}")
     [[ "${args}" == *$'--preview\nfzf-preview {}'* ]]
-    [[ "${args}" == *$'--preview-window\n<80(up)'* ]]
+    [[ "${args}" == *$'--preview-window\n<50(up)'* ]]
     [[ "${args}" == *"--multi"* ]]
     [[ "${args}" == *"--ansi"* ]]
 }

@@ -38,14 +38,16 @@ fi'
     )
 
     # +{2} scrolls the preview to the matched line and -/2 backs it off by half
-    # the window, which is what puts the match in the middle.
+    # the window, which is what puts the match in the middle. fzf measures the
+    # size threshold against the preview window, not the terminal, so 50 at the
+    # default half split means "above whenever the terminal is under 100 columns".
     local fzf_opts=(
         --disabled
         --ansi
         --multi
         --delimiter ":"
         --preview "fzf-preview {1} {2}"
-        --preview-window "+{2}-/2,<80(up)"
+        --preview-window "+{2}-/2,<50(up)"
         --query "${query}"
     )
 
