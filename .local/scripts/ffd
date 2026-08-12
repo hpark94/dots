@@ -1,8 +1,13 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Pick files with fzf and hand them to <tool>. A terminal tool replaces fzf via
-# `become` so it inherits the terminal; anything else is detached per file.
+# Pick files with fzf and hand every selection to one invocation of <tool>.
+# Usage: ffd [-b] [tool] [flags...]
+# A flag cannot carry a space or a quote: the flags become part of a string fzf
+# hands to a shell, which splits them again on whitespace.
+# Whether a tool wants the terminal or a window of its own is not knowable
+# before it runs, so the foreground is the default and -b is the explicit ask
+# for a detached launch.
 
 main() {
     local cmd
@@ -13,34 +18,35 @@ main() {
         fi
     done
 
+    local background=false
+    if [[ "${1:-}" == "-b" ]]; then
+        background=true
+        shift
+    fi
+
     local tool="${1:-nvim}"
     local flags=("${@:2}")
 
-    if ! command -v "${tool}" >/dev/null 2>&1; then
+    # Without --, command -v reads a leading-dash tool name as its own option and
+    # reports success for it, so the failure would only surface after the pick.
+    if ! command -v -- "${tool}" >/dev/null 2>&1; then
         echo "ffd: '${tool}' is not installed or not in PATH" >&2
         exit 1
     fi
 
-    local is_terminal=false
+    # fzf shell-quotes {+} itself, so every selection reaches one invocation of
+    # the tool under its real name, quotes and spaces included.
+    local opener=("${tool}" "${flags[@]}" "{+}")
 
-    case "${tool}" in
-        nvim | vim | vi | nano | emacs | less | more | cat | bat | ls | stat | file | wc)
-            is_terminal=true
-            ;;
-    esac
-
-    local opener
-    if [[ "${is_terminal}" == true ]]; then
-        opener="${tool} ${flags[*]} \"\$@\""
-    else
-        opener="
-if [[ \$FZF_SELECT_COUNT -eq 0 ]]; then
-    ${tool} ${flags[*]} \"\$1\" &>/dev/null &
-else
-    for file in \"\$@\"; do
-        ${tool} ${flags[*]} \"\$file\" &>/dev/null &
-    done
-fi"
+    if [[ "${background}" == true ]]; then
+        if ! command -v setsid >/dev/null 2>&1; then
+            echo "ffd: setsid not available, cannot run '${tool}' in the background" >&2
+            exit 1
+        fi
+        # setsid only forks when it already leads a process group, which it does
+        # not here; without --fork it would exec the tool in place and hold the
+        # terminal, which is the opposite of what -b asks for.
+        opener=(setsid --fork "${opener[@]}")
     fi
 
     local options=(
@@ -49,9 +55,8 @@ fi"
     )
 
     local keybinds=(
-        --bind "esc:abort"
-        --bind "enter:become:bash -c '${opener}' _ {+}"
-        --bind "ctrl-o:execute:bash -c '${opener}' _ {+}"
+        --bind "enter:become:${opener[*]}"
+        --bind "ctrl-o:execute:${opener[*]}"
         --bind "alt-a:select-all"
         --bind "alt-d:deselect-all"
         --bind "ctrl-/:toggle-preview"
