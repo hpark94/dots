@@ -7,7 +7,7 @@ set -euo pipefail
 
 main() {
     local cmd
-    for cmd in rg fzf bat; do
+    for cmd in rg fzf; do
         if ! command -v "${cmd}" >/dev/null 2>&1; then
             echo "frg: ${cmd} not available. Is ${cmd} installed?" >&2
             exit 1
@@ -26,22 +26,6 @@ else
     nvim +cw -q {+f}
 fi'
 
-    # shellcheck disable=SC2016
-    local preview_script='
-line={2}
-total=$(wc -l < {1})
-
-if [ $line -gt 10 ]; then
-    start=$((line-10))
-else
-    start=1
-fi
-
-bat --style=plain --color=always {1} | \
-tail -n +$start | \
-head -n 20 | \
-bat --style=plain --color=always --highlight-line $((line-start+1))'
-
     local keybinds=(
         --bind "esc:abort"
         --bind "start:${reload}"
@@ -53,13 +37,15 @@ bat --style=plain --color=always --highlight-line $((line-start+1))'
         --bind "ctrl-/:toggle-preview"
     )
 
+    # +{2} scrolls the preview to the matched line and -/2 backs it off by half
+    # the window, which is what puts the match in the middle.
     local fzf_opts=(
         --disabled
         --ansi
         --multi
         --delimiter ":"
-        --preview "${preview_script}"
-        --preview-window "<80(up)"
+        --preview "fzf-preview {1} {2}"
+        --preview-window "+{2}-/2,<80(up)"
         --query "${query}"
     )
 

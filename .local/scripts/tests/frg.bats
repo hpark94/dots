@@ -4,8 +4,8 @@ bats_require_minimum_version 1.5.0
 
 # fzf is stubbed on a prepended PATH and records every argument on its own line,
 # so the reload, opener and preview strings can be asserted verbatim without
-# starting an interactive picker; rg and bat only need to exist on PATH, because
-# frg never runs them itself, fzf does.
+# starting an interactive picker; rg only needs to exist on PATH, because frg
+# never runs it itself, fzf does.
 
 SCRIPT="${BATS_TEST_DIRNAME}/../frg"
 
@@ -16,11 +16,8 @@ setup() {
 
     FZF_ARGS="${BATS_TEST_TMPDIR}/fzf.args"
 
-    local cmd
-    for cmd in rg bat; do
-        printf '#!/usr/bin/env bash\nexit 0\n' >"${STUB_BIN}/${cmd}"
-        chmod +x "${STUB_BIN}/${cmd}"
-    done
+    printf '#!/usr/bin/env bash\nexit 0\n' >"${STUB_BIN}/rg"
+    chmod +x "${STUB_BIN}/rg"
 
     make_fzf_stub 0
 }
@@ -40,7 +37,7 @@ path_without() {
     local missing="$1" cmd
     local dir="${BATS_TEST_TMPDIR}/without-${missing}"
     mkdir -p "${dir}"
-    for cmd in rg bat fzf; do
+    for cmd in rg fzf; do
         [[ "${cmd}" == "${missing}" ]] && continue
         ln -sf "${STUB_BIN}/${cmd}" "${dir}/${cmd}"
     done
@@ -58,13 +55,6 @@ path_without() {
     run env PATH="$(path_without fzf)" "${BASH}" "${SCRIPT}"
     [ "${status}" -ne 0 ]
     [[ "${output}" == *"fzf not available"* ]]
-}
-
-@test "a missing bat fails loudly" {
-    run env PATH="$(path_without bat)" "${BASH}" "${SCRIPT}"
-    [ "${status}" -ne 0 ]
-    [[ "${output}" == *"bat not available"* ]]
-    [ ! -e "${FZF_ARGS}" ]
 }
 
 @test "fzf drives rg instead of filtering itself" {
@@ -98,15 +88,31 @@ path_without() {
     [[ "${args}" == *"ctrl-/:toggle-preview"* ]]
 }
 
-@test "the preview highlights the matched line in context" {
+@test "the preview is the shared renderer, told which line matched" {
     run "${SCRIPT}"
     [ "${status}" -eq 0 ]
     local args
     args=$(cat "${FZF_ARGS}")
-    [[ "${args}" == *"bat --style=plain --color=always {1}"* ]]
-    [[ "${args}" == *'tail -n +$start'* ]]
-    [[ "${args}" == *'--highlight-line $((line-start+1))'* ]]
-    [[ "${args}" == *$'--preview-window\n<80(up)'* ]]
+    [[ "${args}" == *$'--preview\nfzf-preview {1} {2}'* ]]
+}
+
+@test "fzf centres the matched line itself" {
+    run "${SCRIPT}"
+    [ "${status}" -eq 0 ]
+    [[ "$(cat "${FZF_ARGS}")" == *$'--preview-window\n+{2}-/2,<80(up)'* ]]
+}
+
+@test "no hand-rolled preview window is left in the fzf arguments" {
+    run "${SCRIPT}"
+    [ "${status}" -eq 0 ]
+    local args
+    args=$(cat "${FZF_ARGS}")
+    # Matched on the invocation shapes, not the bare names: fzf's own --header
+    # and --tail options contain "head" and "tail" as substrings.
+    [[ "${args}" != *"wc -l"* ]]
+    [[ "${args}" != *"tail -n"* ]]
+    [[ "${args}" != *"head -n"* ]]
+    [[ "${args}" != *"bat --style"* ]]
 }
 
 @test "an fzf abort is not an error" {

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# One renderer behind every fzf preview (ffd, _fzf_comprun, fzf-tab), so a
+# One renderer behind every fzf preview (ffd, frg, _fzf_comprun, fzf-tab), so a
 # directory and a file look the same wherever a preview window is drawn.
 
 main() {
