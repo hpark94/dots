@@ -29,14 +29,14 @@ value is still validated, so a file with neither tag is quarantined as before.
 
 The fallback deliberately sits in the tag layer, ahead of slugging, so it fires
 only on a tag that is truly absent or empty. An `ALBUMARTIST` that is present
-but blank or pure punctuation is a real value as far as this rule is concerned:
-it slugs to nothing, fails the completeness check, and quarantines the file even
-though `ARTIST` would have served. Moving the fallback behind slugging would
-absorb that case in one line and was rejected on purpose. A tag that is present
-and unusable is a tagging error, and this repo's shells answer those by failing
-loudly rather than by papering over them; quarantine costs one retag and loses
-nothing, while a silent substitution would file the release under a name its own
-metadata never claimed.
+but whitespace or pure punctuation is a real value as far as this rule is
+concerned: it slugs to nothing, fails the completeness check, and quarantines
+the file even though `ARTIST` would have served. Moving the fallback behind
+slugging would absorb that case in one line and was rejected on purpose. A tag
+that is present and unusable is a tagging error, and this repo's shells answer
+those by failing loudly rather than by papering over them; quarantine costs one
+retag and loses nothing, while a silent substitution would file the release
+under a name its own metadata never claimed.
 
 **Track Artist kept in the filename.** Once the directory stops recording the
 collaboration, the filename is the only place it can survive. Naming the Album

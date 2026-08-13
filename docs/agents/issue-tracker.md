@@ -10,8 +10,14 @@ files in `.scratch/`.
 - Implementation issues are one file per ticket at
   `.scratch/<feature-slug>/issues/<NN>-<slug>.md`, numbered from `01`, never a
   single combined tickets file
-- Triage state is recorded as a `Status:` line near the top of each issue file
-  (see `triage-labels.md` for the role strings)
+- Triage state is recorded as a `Status:` line near the top of each issue file,
+  and on the spec in the same vocabulary (see `triage-labels.md` for the role
+  strings). Wayfinding tickets and research documents carry their own values,
+  below
+- Two values take such an issue or spec out of the triage vocabulary: `done`,
+  once the work is implemented and the acceptance criteria are checked off, and
+  `obsolete` for a ticket overtaken before implementation, with the reason on
+  the same line
 - Comments and conversation history append to the bottom of the file under a
   `## Comments` heading
 
@@ -34,6 +40,9 @@ Used by `/wayfinder`. The **map** is a file with one **child** file per ticket.
   with the question in the body. A `Type:` line records the ticket type
   (`research`/`prototype`/`grilling`/`task`); a `Status:` line records
   `claimed`/`resolved`.
+- **Research document**: `.scratch/<effort>/research/NN-<slug>.md`, what a
+  research ticket found. `Status: facts only` says it records findings and
+  decides nothing; the deciding happens in the ticket that cites it.
 - **Blocking**: a `Blocked by: NN, NN` line near the top. A ticket is unblocked
   when every file it lists is `resolved`.
 - **Frontier**: scan `.scratch/<effort>/issues/` for files that are open,

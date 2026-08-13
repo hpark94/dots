@@ -200,17 +200,19 @@ _Avoid_: static, cold
 ### File picking
 
 **Previewer**:\
-The one executable behind every fzf preview window, `fzf-preview <path> [line]`,
-so a directory, a text file and an image look the same whether the window was
-drawn by `ffd`, `frg`, `_fzf_comprun` or fzf-tab. It takes a path and not a
-mode: what the target is, and therefore how it should be drawn, is the
-Previewer's question to answer, which is what keeps each caller down to a single
-`--preview` string and stops four of them drifting apart. The optional line
-number is the line `frg` matched, handed to `bat --highlight-line` so it stands
-out; the scrolling that brings it into view is fzf's own
-`--preview-window '+{2}-/2'`, not the Previewer's. It is not a second mode.
-Because it runs on every keystroke it may only read and draw, and every cost it
-carries is paid once per cursor move.\
+The one executable behind every fzf preview window whose candidates are paths,
+`fzf-preview <path> [line]`, so a directory, a text file and an image look the
+same whether the window was drawn by `ffd`, `frg`, `_fzf_comprun` or fzf-tab. It
+takes a path and not a mode: what the target is, and therefore how it should be
+drawn, is the Previewer's question to answer, which is what keeps each caller
+down to a single `--preview` string and stops four of them drifting apart. A
+completion whose candidates are not paths has nothing to hand it, so
+`_fzf_comprun` answers those itself: `export` and `unset` preview a variable's
+value, `ssh` a `dig` lookup. The optional line number is the line `frg` matched,
+handed to `bat --highlight-line` so it stands out; the scrolling that brings it
+into view is fzf's own `--preview-window '+{2}-/2'`, not the Previewer's. It is
+not a second mode. Because it runs on every keystroke it may only read and draw,
+and every cost it carries is paid once per cursor move.\
 _Avoid_: preview command (that is fzf's `--preview` option, whose only job here
 is to name the Previewer), preview script
 

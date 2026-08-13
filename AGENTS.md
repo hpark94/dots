@@ -21,7 +21,7 @@ it before adding a file to the repo root.
   Run tests for bootstrap.sh, theme-switch, envs, fy, fp, delta-auto,
   tmux-sessionizer, caffeine, cltex, font-install, organize_flac,
   sway-start-on-workspace, ffd, frg, and fzf-preview.
-- `nvim --headless '"+Lazy! sync' +qa`: Force nvim plugin sync.
+- `nvim --headless '+Lazy! sync' +qa`: Force nvim plugin sync.
 - `theme-switch dark|light|toggle`: Desktop-only; decides and applies Theme
   Mode.
 - `theme-switch --render dark|light`: Role-agnostic; applies a mode decided
@@ -35,8 +35,9 @@ it before adding a file to the repo root.
   one invocation of the tool (`nvim` by default); `-b` detaches it.
 - `frg [query...]`: Live ripgrep through fzf, opening the match in nvim at its
   line, or the whole selection as a quickfix list.
-- `fzf-preview <path> [line]`: The Previewer behind every fzf preview window:
-  eza for a directory, the image Render Ladder for an image, bat otherwise.
+- `fzf-preview <path> [line]`: The Previewer behind every fzf preview window
+  whose candidates are paths: eza for a directory, the image Render Ladder for
+  an image, bat otherwise.
 
 ## Style
 
