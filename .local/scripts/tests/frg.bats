@@ -91,7 +91,13 @@ command="${command//\{1\}/$(quote "${file}")}"
 command="${command//\{2\}/$(quote "${line}")}"
 command="${command//\{+f\}/$(quote "${list}")}"
 
-export FZF_SELECT_COUNT="${FRG_SELECT_COUNT}"
+# The literal `unset` stands for fzf not setting the variable at all, which is
+# what the opener's default guards against.
+if [[ "${FRG_SELECT_COUNT}" == unset ]]; then
+    unset FZF_SELECT_COUNT
+else
+    export FZF_SELECT_COUNT="${FRG_SELECT_COUNT}"
+fi
 exec sh -c "${command}"
 STUB_EOF
     chmod +x "${STUB_BIN}/fzf"
@@ -158,7 +164,8 @@ path_without() {
     [ "${status}" -eq 0 ]
     local args
     args=$(cat "${FZF_ARGS}")
-    [[ "${args}" == *'if [[ $FZF_SELECT_COUNT -eq 0 ]]; then'* ]]
+    # POSIX `[`, not `[[`: fzf hands this to whatever ${SHELL} names.
+    [[ "${args}" == *'if [ "${FZF_SELECT_COUNT:-0}" -eq 0 ]; then'* ]]
     [[ "${args}" == *"nvim {1} +{2}"* ]]
     [[ "${args}" == *"nvim +cw -q {+f}"* ]]
     [[ "${args}" == *"esc:abort"* ]]
@@ -205,6 +212,48 @@ path_without() {
     [ "$(grep -c 'exit 121' <<<"${args}")" -eq 1 ]
     # `${s}` would reach fzf as its own {s} placeholder, not as a variable.
     [[ "${args}" != *'{s}'* ]]
+}
+
+@test "a single match opens in nvim at its line" {
+    make_fzf_runner 0 "src/a.txt:12:3:a hit"
+
+    run "${SCRIPT}"
+    [ "${status}" -eq 0 ]
+    local -a args
+    mapfile -t args <"${FRG_RUN_LOG}"
+    [ "${args[0]}" = "src/a.txt" ]
+    [ "${args[1]}" = "+12" ]
+    [ "${#args[@]}" -eq 2 ]
+}
+
+@test "an unset select count opens the single match, not the quickfix list" {
+    make_fzf_runner unset "src/a.txt:12:3:a hit"
+
+    run "${SCRIPT}"
+    [ "${status}" -eq 0 ]
+    local -a args
+    mapfile -t args <"${FRG_RUN_LOG}"
+    [ "${args[0]}" = "src/a.txt" ]
+    [ "${args[1]}" = "+12" ]
+    [ "${#args[@]}" -eq 2 ]
+}
+
+@test "a multi-selection opens as a quickfix list" {
+    make_fzf_runner 2 "src/a.txt:12:3:a hit" "src/b.txt:4:1:another hit"
+
+    run "${SCRIPT}"
+    [ "${status}" -eq 0 ]
+    local -a args
+    mapfile -t args <"${FRG_RUN_LOG}"
+    [ "${args[0]}" = "+cw" ]
+    [ "${args[1]}" = "-q" ]
+    [ "${#args[@]}" -eq 3 ]
+    # The third argument is fzf's {+f}: the file holding the whole selection.
+    local -a picked
+    mapfile -t picked <"${args[2]}"
+    [ "${picked[0]}" = "src/a.txt:12:3:a hit" ]
+    [ "${picked[1]}" = "src/b.txt:4:1:another hit" ]
+    [ "${#picked[@]}" -eq 2 ]
 }
 
 @test "an opener that failed is not reported as an empty pick" {

@@ -18,9 +18,14 @@ main() {
 
     local reload='reload:rg --column --hidden --color=always --smart-case --glob "!.git/**" {q} || :'
 
+    # fzf runs this through whatever ${SHELL} names, which need not have `[[`:
+    # under dash the condition would fail as an unknown command and a single
+    # match would silently take the quickfix branch. The default is what `[[`
+    # gave for free: it read an unset count as 0 in arithmetic context, while
+    # `[` would fail on the empty string and take the quickfix branch instead.
     # shellcheck disable=SC2016
     local opener='
-if [[ $FZF_SELECT_COUNT -eq 0 ]]; then
+if [ "${FZF_SELECT_COUNT:-0}" -eq 0 ]; then
     nvim {1} +{2}
 else
     nvim +cw -q {+f}
