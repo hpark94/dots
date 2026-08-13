@@ -1,6 +1,6 @@
 # Spec: `fy` - File Reference to Clipboard Script
 
-Status: implemented
+Status: done
 
 ## Problem Statement
 

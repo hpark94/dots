@@ -12,18 +12,18 @@ prompt (ticket 02).
 
 **Blocked by:** None, can start immediately.
 
-**Status:** implemented
+**Status:** done
 
-- [ ] The shell-env fragment is produced via a same-directory temp file plus
+- [x] The shell-env fragment is produced via a same-directory temp file plus
       `mv`, not truncate-in-place.
-- [ ] The existing `generate_shell_env` assertions still hold:
+- [x] The existing `generate_shell_env` assertions still hold:
       `FZF_DEFAULT_OPTS` and `BAT_THEME` are correct for both the light and dark
       palettes.
-- [ ] After generation, no stray temporary file is left behind in the output
+- [x] After generation, no stray temporary file is left behind in the output
       directory.
-- [ ] The bats suite covers the above through the existing seam (source
+- [x] The bats suite covers the above through the existing seam (source
       `theme-switch`, call the generator against a temp output dir, inspect the
       result). No new seam is introduced.
-- [ ] Only the shell-env generator is touched; no other generator or apply step
+- [x] Only the shell-env generator is touched; no other generator or apply step
       changes.
-- [ ] Formatter/linter clean on the touched region.
+- [x] Formatter/linter clean on the touched region.

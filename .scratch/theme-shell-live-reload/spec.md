@@ -1,6 +1,6 @@
 # Spec: Already-open shells re-theme live (fzf and bat)
 
-Status: implemented
+Status: done
 
 ## Problem Statement
 

@@ -11,17 +11,17 @@ and `fp` receive the file; the cost is that pasting into Thunar is not supported
 
 **Blocked by:** None, can start immediately
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] Script exists at `.local/scripts/fy` and is executable
-- [ ] Accepts exactly one file argument; errors with clear message on 0 or >1
+- [x] Script exists at `.local/scripts/fy` and is executable
+- [x] Accepts exactly one file argument; errors with clear message on 0 or >1
       args
-- [ ] Resolves the file to an absolute path via `realpath`
-- [ ] Percent-encodes the path so it round-trips through fp's decoder (`%`
+- [x] Resolves the file to an absolute path via `realpath`
+- [x] Percent-encodes the path so it round-trips through fp's decoder (`%`
       first, then space and other non-unreserved bytes)
-- [ ] Emits only `text/uri-list` with payload `file://<encoded abs path>\r\n`
+- [x] Emits only `text/uri-list` with payload `file://<encoded abs path>\r\n`
       via `wl-copy`
-- [ ] Outputs tilde-collapsed path on stdout
-- [ ] Errors with clear message to stderr if the file doesn't exist
-- [ ] Errors with clear message to stderr if `wl-copy` is unavailable or fails
-- [ ] Follows repo shell style: `set -euo pipefail`, no unnecessary subshells
+- [x] Outputs tilde-collapsed path on stdout
+- [x] Errors with clear message to stderr if the file doesn't exist
+- [x] Errors with clear message to stderr if `wl-copy` is unavailable or fails
+- [x] Follows repo shell style: `set -euo pipefail`, no unnecessary subshells

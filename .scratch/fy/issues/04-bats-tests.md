@@ -8,23 +8,23 @@ stub records its args and stdin to files on disk so assertions survive the
 
 **Blocked by:** 01, Core fy Script
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] Test files exist at `.local/scripts/tests/fy.bats` and
+- [x] Test files exist at `.local/scripts/tests/fy.bats` and
       `.local/scripts/tests/fp.bats`
-- [ ] fy success: one-arg copy writes `text/uri-list` with payload
+- [x] fy success: one-arg copy writes `text/uri-list` with payload
       `file://<encoded abs path>\r\n`
-- [ ] fy success: filename with a space is percent-encoded (`%20`)
-- [ ] fy success: stdout is the tilde-collapsed path
-- [ ] fy error: zero args
-- [ ] fy error: more than one arg
-- [ ] fy error: non-existent file
-- [ ] fy error: `wl-copy` unavailable (absent from PATH)
-- [ ] fy error: `wl-copy` fails (stub returns non-zero)
-- [ ] fp: reconstructs a file from a `x-special/gnome-copied-files` reference
+- [x] fy success: filename with a space is percent-encoded (`%20`)
+- [x] fy success: stdout is the tilde-collapsed path
+- [x] fy error: zero args
+- [x] fy error: more than one arg
+- [x] fy error: non-existent file
+- [x] fy error: `wl-copy` unavailable (absent from PATH)
+- [x] fy error: `wl-copy` fails (stub returns non-zero)
+- [x] fp: reconstructs a file from a `x-special/gnome-copied-files` reference
       (still valid for real file managers)
-- [ ] fp: decodes a percent-encoded space in that reference
-- [ ] Roundtrip: fy's `text/uri-list` payload feeds fp's stubbed `wl-paste` and
+- [x] fp: decodes a percent-encoded space in that reference
+- [x] Roundtrip: fy's `text/uri-list` payload feeds fp's stubbed `wl-paste` and
       reproduces the file (space in name) by checksum
-- [ ] Stubbing pattern consistent with `bootstrap.bats`
-- [ ] All tests pass with `bats .local/scripts/tests/`
+- [x] Stubbing pattern consistent with `bootstrap.bats`
+- [x] All tests pass with `bats .local/scripts/tests/`

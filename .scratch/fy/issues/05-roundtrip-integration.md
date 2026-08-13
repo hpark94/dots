@@ -7,15 +7,15 @@ must be checked manually.
 
 **Blocked by:** 01, Core fy Script, 04, BATS Test Suite
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] Automated stub roundtrip: `fy` writes its `text/uri-list` payload, the
+- [x] Automated stub roundtrip: `fy` writes its `text/uri-list` payload, the
       captured payload feeds `fp`'s stubbed `wl-paste`, and the reconstructed
       file matches by checksum (in `fp.bats`)
-- [ ] Automated roundtrip covers a filename with a space to prove encode/decode
-- [ ] Manual (live compositor): `fy` a file, then `fp` in a different directory
+- [x] Automated roundtrip covers a filename with a space to prove encode/decode
+- [x] Manual (live compositor): `fy` a file, then `fp` in a different directory
       reproduces it, checksum matches
-- [ ] Manual (live compositor): `fy` a file, then paste into a Chromium-based
+- [x] Manual (live compositor): `fy` a file, then paste into a Chromium-based
       web chat (Claude web) attaches the file
 
 ## Manual verification notes

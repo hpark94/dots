@@ -1,6 +1,6 @@
 # Spec: FLAC paths derived from tags
 
-Status: ready-for-agent
+Status: done
 
 ## Problem Statement
 
