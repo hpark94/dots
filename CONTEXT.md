@@ -61,9 +61,9 @@ _Avoid_: runtime config, SSH check (SSH-ness is only a proxy for these, and a
 wrong one)
 
 **Client Terminal**:\
-The terminal emulator that actually draws what a program writes: inside tmux the
-one an attached client runs in, elsewhere the one that owns the tty. There can
-be several at once, because tmux draws a pane on every client attached to its
+The terminal that actually draws what a program writes: inside tmux the one an
+attached client runs in, elsewhere the one that owns the tty. There can be
+several at once, because tmux draws a pane on every client attached to its
 session and those clients need not be the same terminal, so the question has a
 list for an answer: `tmux list-clients -t "$TMUX_PANE" -F '#{client_termtype}'`,
 one self-report per client, targeted so that clients of other sessions on the

@@ -20,6 +20,13 @@ if [[ ! "${workspace}" =~ ^[1-9][0-9]*$ ]]; then
     exit 1
 fi
 
+# An empty app_id passes the argument count and matches no window sway will ever
+# report, so without this the app is started and then waited for in vain.
+if [[ -z "${app_id}" ]]; then
+    echo "sway-start-on-workspace: app_id must not be empty" >&2
+    exit 1
+fi
+
 if ! command -v swaymsg >/dev/null 2>&1; then
     echo "sway-start-on-workspace: swaymsg not available. Is sway running?" >&2
     exit 1
@@ -38,13 +45,43 @@ fi
 # Subscribe before launching, so a window that maps fast cannot be missed. The
 # subscription never ends on its own, so the timeout is what stops a window that
 # never appears from hanging this script forever.
-exec 3< <(timeout 60 swaymsg -t subscribe -m '["window"]')
+exec 3< <(timeout 60 swaymsg -t subscribe -m '["window","tick"]')
+subscriber=$!
 
-# sway 1.11 prints no acknowledgement for `-t subscribe -m`, so there is no line
-# to read as a sync point; this pause is what lets the subscription reach sway.
-sleep 0.5
+# Nothing else reads that pipe, so once this script is done with it swaymsg would
+# sit out the rest of its timeout unnoticed.
+cleanup_subscriber() {
+    exec 3<&-
+    # Already gone is the ordinary case: the timeout may have fired, or swaymsg
+    # may have ended the subscription itself.
+    kill "${subscriber}" 2>/dev/null || :
+    wait "${subscriber}" 2>/dev/null || :
+}
+trap cleanup_subscriber EXIT
 
-"${@:3}" &
+# sway acknowledges a `["window"]` subscription with nothing, which is why a
+# fixed pause once stood in for a sync point. Subscribing to tick as well buys
+# the real barrier: sway answers a new tick subscription with
+# {"first":true,"payload":""} immediately and ahead of any further event, so
+# reading that line proves the subscription is live before the app is launched.
+# A tick can never be taken for a window event afterwards, because the filter
+# below demands a `change` field that no tick carries.
+subscribed=false
+while IFS= read -r event <&3; do
+    if [[ "$(printf '%s' "${event}" | jq -r 'has("payload")')" == true ]]; then
+        subscribed=true
+        break
+    fi
+done
+
+if [[ "${subscribed}" != true ]]; then
+    echo "sway-start-on-workspace: the sway subscription ended before it was acknowledged." >&2
+    exit 1
+fi
+
+# Without closing fd 3 the app would hold the read end of the subscription open
+# for its whole lifetime, and swaymsg would never see the pipe go away.
+"${@:3}" 3<&- &
 
 con_id=""
 while IFS= read -r event <&3; do
