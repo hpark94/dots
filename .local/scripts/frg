@@ -7,7 +7,7 @@ set -euo pipefail
 
 main() {
     local cmd
-    for cmd in rg fzf; do
+    for cmd in rg fzf nvim fzf-preview; do
         if ! command -v "${cmd}" >/dev/null 2>&1; then
             echo "frg: ${cmd} not available. Is ${cmd} installed?" >&2
             exit 1
@@ -26,11 +26,28 @@ else
     nvim +cw -q {+f}
 fi'
 
+    # `become` replaces fzf with the opener through execve, so on the enter path
+    # the status this script sees is nvim's own and not fzf's. An nvim exiting 1
+    # or 130 would then be indistinguishable from fzf's "no match" and "abort",
+    # which are not failures, and a failed open would be reported as an empty
+    # pick. The opener moves just those two collisions onto 121 and 122 and the
+    # case below puts them back, so an open that really failed stays a failure
+    # with its own status. The price is that 121 and 122 are spent: an nvim that
+    # exits with one of them of its own accord is reported as 1 or 130, because
+    # execve leaves one status and nothing beside it to tell the two apart.
+    # ctrl-o needs none of this: `execute` returns to the picker, and what it ran
+    # never reaches this script's status.
+    # The variable is not named `s` because fzf would expand `${s}` in a
+    # `become` string as its own {s} placeholder and substitute the current line
+    # into the test.
+    # shellcheck disable=SC2016
+    local remap='; rc=$?; [ "${rc}" -eq 1 ] && exit 121; [ "${rc}" -eq 130 ] && exit 122; exit "${rc}"'
+
     local keybinds=(
         --bind "esc:abort"
         --bind "start:${reload}"
         --bind "change:${reload}"
-        --bind "enter:become:${opener}"
+        --bind "enter:become:${opener}${remap}"
         --bind "ctrl-o:execute:${opener}"
         --bind "alt-a:select-all"
         --bind "alt-d:deselect-all"
@@ -54,12 +71,15 @@ fi'
     local status=0
     fzf "${fzf_opts[@]}" "${keybinds[@]}" || status=$?
 
-    # fzf exits 1 on no match and 130 when the user aborts; neither is a failure
-    # of this script, while anything else is a real fzf error.
-    if [[ "${status}" -eq 1 || "${status}" -eq 130 ]]; then
-        return 0
-    fi
-    return "${status}"
+    case "${status}" in
+        # fzf's own: 1 on no match, 130 when the user aborts. On both the opener
+        # never ran, so neither is a failure of this script.
+        1 | 130) return 0 ;;
+        # The two statuses the opener remapped, put back as nvim's own.
+        121) return 1 ;;
+        122) return 130 ;;
+        *) return "${status}" ;;
+    esac
 }
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then

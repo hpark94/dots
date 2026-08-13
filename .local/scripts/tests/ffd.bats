@@ -30,6 +30,11 @@ printf 'a.txt\nb.txt\n'
 STUB_EOF
     chmod +x "${STUB_BIN}/fd"
 
+    # ffd only checks that the Previewer is on PATH; running it is fzf's job,
+    # and fzf is stubbed here.
+    printf '#!/usr/bin/env bash\nexit 0\n' >"${STUB_BIN}/fzf-preview"
+    chmod +x "${STUB_BIN}/fzf-preview"
+
     make_fzf_stub 0
 }
 
@@ -89,6 +94,16 @@ STUB_EOF
     chmod +x "${dir}/$1"
 }
 
+# Tool stub that only exits with the given status, standing in for a tool whose
+# own failure has to survive fzf replacing itself with it.
+make_failing_tool_stub() {
+    cat >"${STUB_BIN}/$1" <<STUB_EOF
+#!/usr/bin/env bash
+exit $2
+STUB_EOF
+    chmod +x "${STUB_BIN}/$1"
+}
+
 # setsid stub: record the invocation, then run what it was asked to run so the
 # tool's own record still lands in the log.
 make_setsid_stub() {
@@ -120,6 +135,18 @@ STUB_EOF
     [ ! -e "${FD_ARGS}" ]
 }
 
+@test "a missing fzf-preview fails loudly" {
+    local dir="${BATS_TEST_TMPDIR}/no-previewer"
+    mkdir -p "${dir}"
+    ln -s "${STUB_BIN}/fd" "${dir}/fd"
+    ln -s "${STUB_BIN}/fzf" "${dir}/fzf"
+
+    run env PATH="${dir}" "${BASH}" "${SCRIPT}"
+    [ "${status}" -ne 0 ]
+    [[ "${output}" == *"fzf-preview not available"* ]]
+    [ ! -e "${FD_ARGS}" ]
+}
+
 @test "a tool that is not on PATH fails loudly" {
     run "${SCRIPT}" no-such-tool
     [ "${status}" -ne 0 ]
@@ -148,11 +175,14 @@ STUB_EOF
     cat >"${STUB_BIN}/fd" <<'STUB_EOF'
 #!/usr/bin/env bash
 echo "fd: broken glob" >&2
+exit 1
 STUB_EOF
     chmod +x "${STUB_BIN}/fd"
 
     run "${SCRIPT}"
+    [ "${status}" -eq 1 ]
     [[ "${output}" == *"fd: broken glob"* ]]
+    [[ "${output}" == *"fd exited 1, the file list was incomplete"* ]]
 }
 
 @test "fd dying on SIGPIPE is not a failure of this script" {
@@ -234,6 +264,7 @@ STUB_EOF
     local dir="${BATS_TEST_TMPDIR}/no-setsid"
     ln -s "${STUB_BIN}/fd" "${dir}/fd"
     ln -s "${STUB_BIN}/fzf" "${dir}/fzf"
+    ln -s "${STUB_BIN}/fzf-preview" "${dir}/fzf-preview"
     ln -s "${STUB_BIN}/mytool" "${dir}/mytool"
 
     run env PATH="${dir}" "${BASH}" "${SCRIPT}" -b mytool
@@ -281,6 +312,7 @@ STUB_EOF
     # that went missing fails the test instead of running the real thing.
     ln -s "${STUB_BIN}/fd" "${dir}/fd"
     ln -s "${STUB_BIN}/fzf" "${dir}/fzf"
+    ln -s "${STUB_BIN}/fzf-preview" "${dir}/fzf-preview"
     ln -s "${BASH}" "${dir}/bash"
     ln -s "$(command -v sh)" "${dir}/sh"
 
@@ -293,6 +325,43 @@ STUB_EOF
     [ "${lines[2]}" = "a.txt" ]
     [ "${lines[3]}" = "b.txt" ]
     [ "${#lines[@]}" -eq 4 ]
+}
+
+@test "only the enter binding remaps the tool's status" {
+    run "${SCRIPT}"
+    [ "${status}" -eq 0 ]
+    local args
+    args=$(cat "${FZF_ARGS}")
+    [[ "${args}" == *'enter:become:nvim {+}; rc=$?;'* ]]
+    # ctrl-o uses execute, whose status never reaches this script, so it is left
+    # as the bare opener.
+    [[ "${args}" != *'ctrl-o:execute:nvim {+}; rc=$?;'* ]]
+    # `${s}` would reach fzf as its own {s} placeholder, not as a variable.
+    [[ "${args}" != *'{s}'* ]]
+}
+
+@test "a tool exiting 1 is a failure, not an empty pick" {
+    make_failing_tool_stub mytool 1
+    make_fzf_runner "a.txt"
+
+    run "${SCRIPT}" mytool
+    [ "${status}" -eq 1 ]
+}
+
+@test "a tool exiting 130 is a failure, not an abort" {
+    make_failing_tool_stub mytool 130
+    make_fzf_runner "a.txt"
+
+    run "${SCRIPT}" mytool
+    [ "${status}" -eq 130 ]
+}
+
+@test "a tool exiting 2 keeps its status" {
+    make_failing_tool_stub mytool 2
+    make_fzf_runner "a.txt"
+
+    run "${SCRIPT}" mytool
+    [ "${status}" -eq 2 ]
 }
 
 @test "an fzf abort is not an error" {
