@@ -4,6 +4,7 @@ set $fileManager thunar
 set $menu fuzzel
 set $terminal ghostty
 set $wallpaper ~/Sync/.pictures/wallpaper/frieren.jpg
+set $screenshots ~/Sync/.pictures/screens
 set $lockcmd swaylock -f -i $wallpaper
 set $polkit lxpolkit
 set $monitor "Iiyama North America PL2530H 1154384704254"
@@ -28,7 +29,7 @@ exec swaync
 exec_always ~/.local/scripts/autotiling
 exec sh -c "pkill -x -f 'wl-paste --watch cliphist store'; wl-paste --watch cliphist store"
 exec ~/.local/scripts/sway-start-on-workspace 10 org.keepassxc.KeePassXC keepassxc
-exec sh -c 'for i in $(seq 60); do nmcli -t -f DEVICE,STATE device status | grep -qx proton0:connected && break; sleep 1; done; exec ~/.local/scripts/sway-start-on-workspace 9 org.mozilla.thunderbird flatpak run org.mozilla.thunderbird'
+exec ~/.local/scripts/wait-for-vpn ~/.local/scripts/sway-start-on-workspace 9 org.mozilla.thunderbird flatpak run org.mozilla.thunderbird
 exec ~/.local/scripts/sway-start-on-workspace 8 md.obsidian.Obsidian flatpak run md.obsidian.Obsidian
 
 input "type:keyboard" {
@@ -119,7 +120,7 @@ bindgesture swipe:right exec ~/.config/sway/scripts/swipe-workspace-dec.sh
 bindgesture swipe:left exec ~/.config/sway/scripts/swipe-workspace-inc.sh
 
 bindsym $mainMod+Shift+S exec grim -o $(swaymsg -t get_outputs | jq -r '.[] | select(.focused) | .name') - | satty -f -
-bindsym Control+Alt+S exec grim -o $(swaymsg -t get_outputs | jq -r '.[] | select(.focused) | .name') ~/Bilder/Screenshots/screenshot-$(date +'%Y%m%d-%H%M%S').png && notify-send "Screenshot" "Gespeichert in ~/Bilder/Screenshots/"
+bindsym Control+Alt+S exec grim -o $(swaymsg -t get_outputs | jq -r '.[] | select(.focused) | .name') $screenshots/screenshot-$(date +'%Y%m%d-%H%M%S').png && notify-send "Screenshot" "Gespeichert in $screenshots/"
 
 output eDP-1 pos 0 0
 output $monitor pos 1920 0
@@ -130,11 +131,11 @@ workspace 2 output eDP-1
 workspace 3 output eDP-1
 workspace 4 output eDP-1
 workspace 5 output eDP-1
-workspace 6 output $monitor
-workspace 7 output $monitor
-workspace 8 output $monitor
-workspace 9 output $monitor
-workspace 10 output $monitor
+workspace 6 output $monitor eDP-1
+workspace 7 output $monitor eDP-1
+workspace 8 output $monitor eDP-1
+workspace 9 output $monitor eDP-1
+workspace 10 output $monitor eDP-1
 
 for_window [app_id="mpv"] floating enable, move position center
 for_window [app_id="com.gabm.satty"] floating enable, move position center

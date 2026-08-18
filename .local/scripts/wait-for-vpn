@@ -1,0 +1,49 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Gates a command on the VPN being up, then replaces itself with it: protonvpn
+# connects several seconds after login and rewrites DNS and the default route
+# under whatever is already running, which is what makes Thunderbird's OAuth2
+# token refresh fail. Anything needing the network can be wrapped in this,
+# windowed or not.
+#
+# The probe is whether protonvpn is installed at all, so a machine without it
+# pays nothing. The connection profile cannot answer that: it exists only while
+# connected and its name carries the server it picked ("ProtonVPN DE#905"),
+# while the proton0 device name is stable.
+
+device=proton0
+timeout=60
+
+if [[ $# -lt 1 ]]; then
+    echo "wait-for-vpn: usage: wait-for-vpn <command> [args...]" >&2
+    exit 1
+fi
+
+if ! command -v "$1" >/dev/null 2>&1; then
+    echo "wait-for-vpn: command not found: $1" >&2
+    exit 1
+fi
+
+# Past this point the command always runs. A launcher that refuses on a degraded
+# network turns a slow VPN into a missing mail client, so what remains is
+# reported on stderr and then fallen through.
+if ! command -v protonvpn >/dev/null 2>&1; then
+    exec "$@"
+fi
+
+if ! command -v nmcli >/dev/null 2>&1; then
+    echo "wait-for-vpn: nmcli not available, starting $1 without waiting for ${device}." >&2
+    exec "$@"
+fi
+
+for ((i = 0; i < timeout; i++)); do
+    status=$(nmcli -t -f DEVICE,STATE device status) || status=""
+    if grep -Fqx "${device}:connected" <<<"${status}"; then
+        exec "$@"
+    fi
+    sleep 1
+done
+
+echo "wait-for-vpn: ${device} did not connect within ${timeout}s, starting $1 anyway." >&2
+exec "$@"
