@@ -60,6 +60,10 @@ teardown() {
     if [[ -s "${SUBSCRIBER_PID}" ]]; then
         kill "$(cat "${SUBSCRIBER_PID}")" 2>/dev/null || :
     fi
+    # An app stub that has to outlive its test is this test file's to reap.
+    if [[ -s "${BATS_TEST_TMPDIR}/app.pid" ]]; then
+        kill "$(cat "${BATS_TEST_TMPDIR}/app.pid")" 2>/dev/null || :
+    fi
 }
 
 # swaymsg stub: the subscription has to be the one this script depends on, so
@@ -280,4 +284,125 @@ STUB_EOF
     run "${SCRIPT}" 10 org.keepassxc.KeePassXC fake-app
     [ "${status}" -ne 0 ]
     [[ "${output}" == *"failed to move org.keepassxc.KeePassXC window 42 to workspace 10"* ]]
+}
+
+# A launch that dies is only observable through the tick the script sends itself,
+# so these tests need a subscription that keeps running and carries events back:
+# the fifo is held read-write, which is what stops a writer's close from ending
+# the subscription the way a real one only ends on the compositor's terms.
+make_reactive_swaymsg_stub() {
+    FEED="${BATS_TEST_TMPDIR}/feed"
+    mkfifo "${FEED}"
+    cat >"${STUB_BIN}/swaymsg" <<STUB_EOF
+#!/usr/bin/env bash
+exec 3>&-
+if [[ "\$1" == "-t" && "\$2" == "subscribe" ]]; then
+    printf '%s\n' "\$\$" >"${SUBSCRIBER_PID}"
+    : >"${SUBSCRIBED}"
+    printf '%s\n' '{"first":true,"payload":""}'
+    exec 4<>"${FEED}"
+    # exec, so the pid recorded above is the one holding the fifo and the
+    # script's reaping leaves nothing behind.
+    exec cat <&4
+fi
+if [[ "\$1" == "-t" && "\$2" == "send_tick" ]]; then
+    printf '{"first":false,"payload":"%s"}\n' "\$3" >"${FEED}"
+    exit 0
+fi
+printf '%s\n' "\$*" >>"${MOVE_LOG}"
+STUB_EOF
+    chmod +x "${STUB_BIN}/swaymsg"
+}
+
+@test "a command that dies before mapping a window is launched once more" {
+    make_reactive_swaymsg_stub
+
+    cat >"${STUB_BIN}/flaky-app" <<STUB_EOF
+#!/usr/bin/env bash
+printf '%s\n' "\$*" >>"${LAUNCHED}"
+if [[ ! -e "${BATS_TEST_TMPDIR}/failed-once" ]]; then
+    : >"${BATS_TEST_TMPDIR}/failed-once"
+    exit 1
+fi
+printf '%s\n' '{"change":"new","container":{"id":42,"app_id":"org.keepassxc.KeePassXC"}}' >"${FEED}"
+STUB_EOF
+    chmod +x "${STUB_BIN}/flaky-app"
+
+    run "${SCRIPT}" 10 org.keepassxc.KeePassXC flaky-app --start
+    [ "${status}" -eq 0 ]
+    [ "$(wc -l <"${LAUNCHED}")" -eq 2 ]
+    [ "$(cat "${MOVE_LOG}")" = "[con_id=42] move container to workspace number 10" ]
+}
+
+@test "a command that dies twice fails loudly" {
+    make_reactive_swaymsg_stub
+
+    cat >"${STUB_BIN}/failing-app" <<STUB_EOF
+#!/usr/bin/env bash
+printf '%s\n' "\$*" >>"${LAUNCHED}"
+exit 1
+STUB_EOF
+    chmod +x "${STUB_BIN}/failing-app"
+
+    run "${SCRIPT}" 10 org.keepassxc.KeePassXC failing-app
+    [ "${status}" -ne 0 ]
+    [[ "${output}" == *"failing-app died twice without mapping a org.keepassxc.KeePassXC window"* ]]
+    [ "$(wc -l <"${LAUNCHED}")" -eq 2 ]
+    [ ! -e "${MOVE_LOG}" ]
+}
+
+@test "a failure tick from another instance does not relaunch" {
+    cat >"${EVENTS}" <<'EVENTS_EOF'
+{"first":false,"payload":"sway-start-on-workspace: launch failed: 999999"}
+{"change":"new","container":{"id":42,"app_id":"org.keepassxc.KeePassXC"}}
+EVENTS_EOF
+
+    run "${SCRIPT}" 10 org.keepassxc.KeePassXC fake-app
+    [ "${status}" -eq 0 ]
+    [ "$(wc -l <"${LAUNCHED}")" -eq 1 ]
+    [ "$(cat "${MOVE_LOG}")" = "[con_id=42] move container to workspace number 10" ]
+}
+
+@test "the launch wrapper is not left behind to report the app's exit" {
+    make_reactive_swaymsg_stub
+
+    cat >"${STUB_BIN}/staying-app" <<STUB_EOF
+#!/usr/bin/env bash
+printf '%s\n' "\$PPID" >"${BATS_TEST_TMPDIR}/wrapper.pid"
+printf '%s\n' "\$\$" >"${BATS_TEST_TMPDIR}/app.pid"
+printf '%s\n' '{"change":"new","container":{"id":42,"app_id":"org.keepassxc.KeePassXC"}}' >"${FEED}"
+# An app that outlives its placement, the way every real one does. Its output
+# goes nowhere, because bats reads the run's output until the last holder of
+# that pipe is gone and would otherwise wait this app out.
+exec sleep 30 >/dev/null 2>&1
+STUB_EOF
+    chmod +x "${STUB_BIN}/staying-app"
+
+    run "${SCRIPT}" 10 org.keepassxc.KeePassXC staying-app
+    [ "${status}" -eq 0 ]
+    [ "$(cat "${MOVE_LOG}")" = "[con_id=42] move container to workspace number 10" ]
+    # The script waits for the wrapper before exiting, so this is settled here.
+    run ! kill -0 "$(cat "${BATS_TEST_TMPDIR}/wrapper.pid")"
+    # Reaping the wrapper must not take the app with it.
+    kill -0 "$(cat "${BATS_TEST_TMPDIR}/app.pid")"
+}
+
+@test "a launcher that hands off and exits cleanly is not started a second time" {
+    make_reactive_swaymsg_stub
+
+    cat >"${STUB_BIN}/handoff-app" <<STUB_EOF
+#!/usr/bin/env bash
+printf '%s\n' "\$*" >>"${LAUNCHED}"
+# The window arrives after the launcher is gone, the way a hand-off works.
+{
+    sleep 0.2
+    printf '%s\n' '{"change":"new","container":{"id":42,"app_id":"org.keepassxc.KeePassXC"}}' >"${FEED}"
+} >/dev/null 2>&1 &
+STUB_EOF
+    chmod +x "${STUB_BIN}/handoff-app"
+
+    run "${SCRIPT}" 10 org.keepassxc.KeePassXC handoff-app
+    [ "${status}" -eq 0 ]
+    [ "$(wc -l <"${LAUNCHED}")" -eq 1 ]
+    [ "$(cat "${MOVE_LOG}")" = "[con_id=42] move container to workspace number 10" ]
 }

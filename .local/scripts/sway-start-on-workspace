@@ -79,12 +79,39 @@ if [[ "${subscribed}" != true ]]; then
     exit 1
 fi
 
-# Without closing fd 3 the app would hold the read end of the subscription open
-# for its whole lifetime, and swaymsg would never see the pipe go away.
-"${@:3}" 3<&- &
+# flatpak aborts a run when openat2 hits a mount-table race, which the login is
+# full of, so a command that exits non-zero before it ever mapped a window gets
+# one more try. A clean exit is not retried: a launcher that hands off and exits
+# 0 would otherwise be started a second time. The tick is what makes the failure
+# visible: the read below blocks on the subscription and nothing else would wake
+# it. The pid keeps a second instance of this script from taking this one's
+# failure for its own.
+launch_failed_tick="sway-start-on-workspace: launch failed: $$"
+cmd=("${@:3}")
+
+launch() {
+    # Without closing fd 3 the app would hold the read end of the subscription
+    # open for its whole lifetime, and swaymsg would never see the pipe go away.
+    { "${cmd[@]}" 3<&- || swaymsg -t send_tick "${launch_failed_tick}" >/dev/null; } &
+    launcher=$!
+}
+
+launch
+relaunched=false
 
 con_id=""
 while IFS= read -r event <&3; do
+    if [[ "$(printf '%s' "${event}" \
+        | jq -r --arg tick "${launch_failed_tick}" '.payload == $tick')" == true ]]; then
+        if [[ "${relaunched}" == true ]]; then
+            echo "sway-start-on-workspace: ${cmd[0]} died twice without mapping a ${app_id} window." >&2
+            exit 1
+        fi
+        relaunched=true
+        launch
+        continue
+    fi
+
     con_id=$(printf '%s' "${event}" \
         | jq -r --arg app_id "${app_id}" \
             'select(.change == "new" and .container.app_id == $app_id) | .container.id')
@@ -92,6 +119,15 @@ while IFS= read -r event <&3; do
         break
     fi
 done
+
+# The wrapper outlives this script, so left alone it would still report the app's
+# eventual exit as a failed launch, long after nobody is listening for one. Only
+# a wrapper this shell still owns may be signalled: one that handed off and
+# exited has given its pid back, and the kernel is free to have passed it on.
+if jobs -pr | grep -qx "${launcher}"; then
+    kill "${launcher}" 2>/dev/null || :
+    wait "${launcher}" 2>/dev/null || :
+fi
 
 if [[ -z "${con_id}" ]]; then
     echo "sway-start-on-workspace: no new ${app_id} window appeared before the subscription ended." >&2
