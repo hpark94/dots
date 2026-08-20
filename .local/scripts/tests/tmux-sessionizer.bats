@@ -1,5 +1,7 @@
 #!/usr/bin/env bats
 
+bats_require_minimum_version 1.5.0
+
 # `TMUX` and `pgrep` are pinned by stubs, so the session dispatch under test does
 # not depend on whether bats itself runs inside a tmux session.
 
@@ -12,13 +14,16 @@ setup() {
     STUB_BIN="${BATS_TEST_TMPDIR}/stub-bin"
     mkdir -p "${STUB_BIN}"
     export FZF_LOG="${BATS_TEST_TMPDIR}/fzf.log"
+    export CANDIDATE_LOG="${BATS_TEST_TMPDIR}/candidates.log"
     export TMUX_LOG="${BATS_TEST_TMPDIR}/tmux.log"
     : >"${FZF_LOG}"
+    : >"${CANDIDATE_LOG}"
     : >"${TMUX_LOG}"
-    # Records the options it was given and aborts the way Esc does, exit 130.
+    # Records the candidates and the options it was given, then aborts the way
+    # Esc does, exit 130.
     cat >"${STUB_BIN}/fzf" <<'STUB_EOF'
 #!/usr/bin/env bash
-cat >/dev/null
+cat >"${CANDIDATE_LOG}"
 printf '%s\n' "${FZF_DEFAULT_OPTS}" >>"${FZF_LOG}"
 exit 130
 STUB_EOF
@@ -98,6 +103,15 @@ STUB_EOF
     run "${SCRIPT}"
     [ "${status}" -eq 0 ]
     [ "$(cat "${TMUX_LOG}")" = "new-session -s lib_core -c ${BATS_TEST_TMPDIR}/lib:core" ]
+}
+
+@test "a hidden directory such as Syncthing's .stfolder is not offered as a session" {
+    mkdir -p "${HOME}/projects/vault" "${HOME}/projects/.stfolder"
+
+    run "${SCRIPT}"
+    [ "${status}" -eq 0 ]
+    grep -qx "${HOME}/projects/vault" "${CANDIDATE_LOG}"
+    run ! grep -q "\.stfolder" "${CANDIDATE_LOG}"
 }
 
 @test "a second argument is rejected instead of silently opening the picker" {
