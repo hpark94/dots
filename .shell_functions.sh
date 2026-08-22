@@ -29,13 +29,6 @@ tmux_start() {
     fi
 }
 
-function tmux_sessionizer_wrapper() {
-    if [[ -z ${BUFFER} ]]; then
-        BUFFER="tmux-sessionizer"
-        zle accept-line
-    fi
-}
-
 zupdate() {
     zinit self-update
     zinit update --all

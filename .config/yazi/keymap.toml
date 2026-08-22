@@ -1,4 +1,0 @@
-[mgr]
-prepend_keymap = [
-    { on = "<C-f>", run = "shell --block tmux-sessionizer", desc = "TMUX-Sessionizer" },
-]

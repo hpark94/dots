@@ -1,6 +1,6 @@
 # Spec: The sessionizer key becomes a Root Binding
 
-Status: ready-for-agent
+Status: done
 
 ## Problem Statement
 
@@ -233,3 +233,39 @@ servers on their own sockets, never against the live setup:
 - The repo's real tmux config loads in an isolated server with no plugin manager
   present, and `list-keys` reports the new binding in `root` and nothing in
   `off`.
+
+## Comments
+
+**Amended during implementation, on the owner's decision: the key is a prefix
+binding, not a Root Binding.**
+`bind-key C-f display-popup -EE -w 70% -h 70% tmux-sessionizer` lives in the
+prefix table, so the sessionizer opens with `C-b C-f` rather than a bare `C-f`.
+
+The reasoning is in ADR-0010 and rests on two measurements made while
+implementing. `C-b C-f` costs no extra hand movement, because the two keystrokes
+are the bytes `0x02` and `0x06` and neither records whether Ctrl was released,
+so tmux cannot distinguish a held Ctrl from a released one; verified with a real
+pty client against an isolated server. And `C-f` is free in the prefix table
+among the 81 keys bound there with plugins loaded, so `C-b f` keeps tmux' own
+`find-window`.
+
+What this changes against the text above:
+
+- The cost this spec accepted is no longer paid. `C-f` keeps paging in `less`
+  and `man`, keeps `forward-char` in non-zsh shells, and keeps nvim's
+  insert-mode `<C-f>` for `note.paste_img()`, which this spec did not mention
+  and which a Root Binding would have shadowed.
+- The three application mappings are still deleted, but as a deliberate choice
+  of one definition over four rather than as removal of unreachable code. They
+  were reachable under a prefix binding.
+- Nested tmux needs no rule at all, not even F12: `C-b C-b C-f` reaches the
+  inner server through the `send-prefix` binding tmux already ships, measured
+  with two servers on two sockets, with the outer server untouched.
+- The test asserts the `prefix` table instead of the `root` table. The second
+  assertion, absence from the `off` table, is unchanged.
+- **Root Binding** still enters the glossary, because F12 and the navigator keys
+  are real root bindings in this repo; the entry now also says why the
+  sessionizer is deliberately not one.
+
+The unverified tmux version risk is unchanged and still open: `ubuntu-server`
+was unreachable during implementation too.

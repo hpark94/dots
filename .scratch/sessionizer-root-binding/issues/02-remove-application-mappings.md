@@ -26,14 +26,27 @@ nothing when the command line was non-empty.
 **Blocked by:** 01. Removing them before the Root Binding exists would leave the
 key dead in every program.
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] The nvim mapping for the key is gone
-- [ ] The yazi keymap entry for the key is gone
-- [ ] The zsh binding, its widget registration, and the shell function it
+- [x] The nvim mapping for the key is gone
+- [x] The yazi keymap entry for the key is gone
+- [x] The zsh binding, its widget registration, and the shell function it
       wrapped are all gone
-- [ ] No reference to the removed shell function survives anywhere in the repo
-- [ ] Any config block left empty by the removal is cleaned up rather than left
+- [x] No reference to the removed shell function survives anywhere in the repo
+- [x] Any config block left empty by the removal is cleaned up rather than left
       as an empty stub
-- [ ] `C-f` still opens the sessionizer from a pane, unchanged from ticket 01
-- [ ] The existing test suite still passes
+- [x] `C-f` still opens the sessionizer from a pane, unchanged from ticket 01
+- [x] The existing test suite still passes
+
+## Comments
+
+The removals happened as written, but the reason above does not hold: under a
+prefix binding the three mappings stayed reachable, so this was the owner's
+deliberate choice of one definition over four rather than the deletion of
+unreachable code. See the spec's comment and ADR-0010.
+
+Two notes on what was and was not touched. nvim's insert-mode `<C-f>`, bound to
+`note.paste_img()`, is a different feature and stays; the prefix binding is what
+lets it keep working. And the comment in `tmux-sessionizer` naming `tmux neww`
+as the launch route was stale after the deletion, so it now names the popup; the
+reason it gives is unchanged, because a popup also runs through the tmux server.

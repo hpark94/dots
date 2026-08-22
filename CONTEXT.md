@@ -123,6 +123,24 @@ docker and libvirt sockets are probed rather than Role-branched for exactly this
 reason.\
 _Avoid_: feature detection
 
+**Root Binding**:\
+A key tmux takes for itself in its `root` key table, before the program in the
+pane ever sees it. It needs no prefix, which makes it global inside tmux and
+absent outside it. The program in the pane receives the key only where the
+binding's own command hands it back, so a mapping there is never a second
+opinion tmux might defer to: it fires at the root binding's discretion or not at
+all. The opposite arrangement is the prefix binding, which costs a leading `C-b`
+and leaves the bare key with the pane's program; that is where the sessionizer
+sits, precisely so `C-f` keeps meaning what it meant in nvim, `less` and every
+REPL (see ADR-0010). This repo has a root binding of each kind: F12 keeps the
+key whatever is running and flips the server into its passive key table, while
+the navigator keys ask what occupies the pane and `send-keys` the key on when it
+is nvim or fzf. The table decides who is asked first, never who ends up with the
+key.\
+_Avoid_: global binding (it is global only inside tmux), prefix-less binding
+(names what it lacks instead of the table it lives in), `-n` (the spelling of
+the flag, not the concept)
+
 ### Theming
 
 **Theme Mode**:\

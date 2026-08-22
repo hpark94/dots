@@ -44,7 +44,7 @@ else
         options+=("${line}")
     done < <(find "${search_paths[@]}" -mindepth 1 -maxdepth 1 ! -name '.*' \( -type d -o -xtype d \) 2>/dev/null)
 
-    # Launched via `tmux neww` (nvim's <C-f>), this inherits the tmux server's
+    # Launched from a tmux popup, this inherits the tmux server's
     # frozen environment, so the theme vars have to come off disk instead.
     theme_env="${XDG_STATE_HOME:-${HOME}/.local/state}/theme/shell-env.sh"
     # shellcheck disable=SC1090

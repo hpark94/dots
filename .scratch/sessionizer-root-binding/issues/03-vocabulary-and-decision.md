@@ -33,14 +33,23 @@ the decision, the flags, and the measurements live in the ADR.
 **Blocked by:** 01, 02. The ADR describes what actually shipped, including the
 removals, so it is written once both are real.
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] The glossary defines **Root Binding**, with the terms to avoid
-- [ ] The definition contrasts it with a prefix binding and with a conditional
+- [x] The glossary defines **Root Binding**, with the terms to avoid
+- [x] The definition contrasts it with a prefix binding and with a conditional
       root table key
-- [ ] An ADR records the decision, following the numbering and format the
+- [x] An ADR records the decision, following the numbering and format the
       existing ADRs use
-- [ ] The ADR names the rejected alternatives with the reason each was rejected
-- [ ] The ADR records the unverified tmux version requirement on Headless
+- [x] The ADR names the rejected alternatives with the reason each was rejected
+- [x] The ADR records the unverified tmux version requirement on Headless
       machines as an open risk
-- [ ] No implementation detail leaks into the glossary entry
+- [x] No implementation detail leaks into the glossary entry
+
+## Comments
+
+**Root Binding** entered the glossary as planned, but describing what this repo
+has rather than what the sessionizer is: F12 and the navigator keys are its root
+bindings, and the entry says why the sessionizer deliberately is not one. The
+ADR is `0010-the-sessionizer-key-is-a-prefix-binding.md`, and the Root Binding
+is recorded there as the rejected alternative rather than the chosen one. See
+the spec's comment.

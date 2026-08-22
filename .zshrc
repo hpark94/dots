@@ -84,8 +84,6 @@ bindkey "^n" history-search-forward
 bindkey "^[[A" history-search-backward
 bindkey "^[[B" history-search-forward
 
-zle -N tmux_sessionizer_wrapper
-bindkey '^f' tmux_sessionizer_wrapper
 bindkey '^ ' autosuggest-accept
 
 # Disable highlight of pasted text

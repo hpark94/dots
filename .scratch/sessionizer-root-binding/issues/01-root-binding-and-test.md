@@ -41,17 +41,31 @@ needed.
 
 **Blocked by:** None, can start immediately.
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] `C-f` opens the sessionizer popup from a pane running a program that has
+- [x] `C-f` opens the sessionizer popup from a pane running a program that has
       no keymap of its own
-- [ ] The popup closes on a normal abort without an extra keystroke
-- [ ] A failing sessionizer leaves its stderr message visible in the popup
-- [ ] fzf inside the popup still receives `C-f` itself
-- [ ] A test asserts the key is bound in the `root` table to a popup running
+- [x] The popup closes on a normal abort without an extra keystroke
+- [x] A failing sessionizer leaves its stderr message visible in the popup
+- [x] fzf inside the popup still receives `C-f` itself
+- [x] A test asserts the key is bound in the `root` table to a popup running
       `tmux-sessionizer`
-- [ ] A test asserts the key is absent from the `off` table
-- [ ] The new test file is listed among the repo's documented test commands
-- [ ] The theme system is untouched: the popup follows Theme Mode through the
+- [x] A test asserts the key is absent from the `off` table
+- [x] The new test file is listed among the repo's documented test commands
+- [x] The theme system is untouched: the popup follows Theme Mode through the
       terminal's own default colors
-- [ ] `tmux-sessionizer` itself is unchanged
+- [x] `tmux-sessionizer` itself is unchanged
+
+## Comments
+
+Built as a prefix binding rather than a Root Binding, on the owner's decision;
+see the spec's comment and ADR-0010. Two acceptance criteria above are therefore
+met in an amended form: the key is bound in the `prefix` table, not `root`, and
+the popup opens with `C-b C-f`. Everything else stands as written, including the
+`-EE` flags, the percentage geometry, the `off` table assertion, and
+`tmux-sessionizer` being unchanged.
+
+One detail the ticket could not anticipate: `list-keys -T <table>` reports
+through the message log rather than stdout on a server with no attached client,
+confirmed via `show-messages`. The test therefore reads the unfiltered
+`list-keys` output and matches the table in the line.
