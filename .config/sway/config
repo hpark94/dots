@@ -67,7 +67,8 @@ bindsym Control+Alt+q kill
 bindsym Control+Alt+c exec ~/.local/scripts/caffeine
 bindsym Control+Alt+d exec ~/.local/scripts/theme-switch toggle
 bindsym Control+Alt+l exec $lockcmd
-bindsym Control+Alt+o output eDP-1 power toggle
+bindsym Control+Alt+o output eDP-1 power off
+bindsym Control+Alt+O output eDP-1 power on
 bindsym Control+Alt+f floating toggle
 bindsym Control+Alt+m fullscreen toggle
 bindsym Control+Alt+p exec sudo battery-threshold-toggle
