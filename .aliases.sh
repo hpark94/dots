@@ -1,6 +1,6 @@
 _has() { command -v "$1" >/dev/null 2>&1; }
 if _has eza; then
-    alias ll="eza --color=always --icons=always --sort=type -alF"
+    alias ll="eza --color=always --icons=always --sort=type -la --classify=auto"
 else
     alias ll="ls -laF"
 fi
