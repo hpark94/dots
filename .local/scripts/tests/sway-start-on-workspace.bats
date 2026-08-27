@@ -105,6 +105,14 @@ STUB_EOF
     [ "$(cat "${MOVE_LOG}")" = "[con_id=42] move container to workspace number 10" ]
 }
 
+@test "a pipe-separated app_id list matches any of its members" {
+    printf '%s\n' '{"change":"new","container":{"id":7,"app_id":"obsidian"}}' >"${EVENTS}"
+
+    run "${SCRIPT}" 8 "md.obsidian.Obsidian|obsidian" fake-app
+    [ "${status}" -eq 0 ]
+    [ "$(cat "${MOVE_LOG}")" = "[con_id=7] move container to workspace number 8" ]
+}
+
 @test "other app_ids and non-new changes are skipped, a later match still wins" {
     cat >"${EVENTS}" <<'EVENTS_EOF'
 {"change":"new","container":{"id":11,"app_id":"org.mozilla.thunderbird"}}
@@ -217,6 +225,22 @@ STUB_EOF
     run "${SCRIPT}" 10 "" fake-app
     [ "${status}" -ne 0 ]
     [[ "${output}" == *"app_id must not be empty"* ]]
+    [ ! -e "${LAUNCHED}" ]
+    [ ! -e "${SUBSCRIBED}" ]
+}
+
+@test "an app_id list with an empty entry fails loudly" {
+    run "${SCRIPT}" 10 "org.keepassxc.KeePassXC||obsidian" fake-app
+    [ "${status}" -ne 0 ]
+    [[ "${output}" == *"app_id must not contain empty entries"* ]]
+    [ ! -e "${LAUNCHED}" ]
+    [ ! -e "${SUBSCRIBED}" ]
+}
+
+@test "an app_id list with a trailing pipe fails loudly" {
+    run "${SCRIPT}" 10 "org.keepassxc.KeePassXC|" fake-app
+    [ "${status}" -ne 0 ]
+    [[ "${output}" == *"app_id must not contain empty entries"* ]]
     [ ! -e "${LAUNCHED}" ]
     [ ! -e "${SUBSCRIBED}" ]
 }

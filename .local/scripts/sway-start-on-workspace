@@ -7,8 +7,11 @@ set -euo pipefail
 # no assign criterion can tell them apart and the password prompt gets dragged
 # away from the browser that asked for it.
 
+# app_id may be a `|`-separated list: the same Obsidian flatpak reports
+# md.obsidian.Obsidian on one machine and obsidian on another, and this is one
+# launch line shared between them via the dotfiles.
 if [[ $# -lt 3 ]]; then
-    echo "sway-start-on-workspace: usage: sway-start-on-workspace <workspace-number> <app_id> <command> [args...]" >&2
+    echo "sway-start-on-workspace: usage: sway-start-on-workspace <workspace-number> <app_id>[|<app_id>...] <command> [args...]" >&2
     exit 1
 fi
 
@@ -41,6 +44,17 @@ if ! command -v "$3" >/dev/null 2>&1; then
     echo "sway-start-on-workspace: command not found: $3" >&2
     exit 1
 fi
+
+# Checked on the raw string, not the split result: `read -a` silently drops a
+# trailing empty field, so splitting first would let "foo|" slip past a
+# per-candidate emptiness check.
+if [[ "${app_id}" == '|'* || "${app_id}" == *'|' || "${app_id}" == *'||'* ]]; then
+    echo "sway-start-on-workspace: app_id must not contain empty entries, got: ${app_id}" >&2
+    exit 1
+fi
+
+IFS='|' read -ra app_ids <<<"${app_id}"
+app_ids_json=$(jq -n '$ARGS.positional' --args -- "${app_ids[@]}")
 
 # Subscribe before launching, so a window that maps fast cannot be missed. The
 # subscription never ends on its own, so the timeout is what stops a window that
@@ -113,8 +127,8 @@ while IFS= read -r event <&3; do
     fi
 
     con_id=$(printf '%s' "${event}" \
-        | jq -r --arg app_id "${app_id}" \
-            'select(.change == "new" and .container.app_id == $app_id) | .container.id')
+        | jq -r --argjson app_ids "${app_ids_json}" \
+            'select(.change == "new" and (.container.app_id as $a | $app_ids | index($a) != null)) | .container.id')
     if [[ -n "${con_id}" ]]; then
         break
     fi
