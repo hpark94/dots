@@ -197,6 +197,18 @@ stub_externals() {
     [ "${status}" -eq 0 ]
 }
 
+@test "apply_swaync gives up on a swaync-client that never answers" {
+    local bin="${BATS_TEST_TMPDIR}/stub-bin" start
+    mkdir -p "${bin}"
+    printf '#!/usr/bin/env bash\nsleep 30\n' >"${bin}/swaync-client"
+    chmod +x "${bin}/swaync-client"
+
+    start=${SECONDS}
+    PATH="${bin}:${PATH}" run apply_swaync
+    [ "${status}" -eq 0 ]
+    [ $((SECONDS - start)) -lt 10 ]
+}
+
 @test "apply_ghostty does not error when no ghostty process is running" {
     run apply_ghostty dark
     [ "${status}" -eq 0 ]

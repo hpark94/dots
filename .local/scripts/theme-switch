@@ -404,9 +404,12 @@ apply_gtk() {
     fi
 }
 
+# swaync-client waits for its bus name with no deadline of its own, so in any
+# session that runs no swaync (a GNOME one on the same machine) it hangs the
+# whole switch. The reload gets a deadline instead.
 apply_swaync() {
     if command -v swaync-client >/dev/null 2>&1; then
-        swaync-client -rs >/dev/null 2>&1 || true
+        timeout 2 swaync-client -rs >/dev/null 2>&1 || true
     fi
 }
 
