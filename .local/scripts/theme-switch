@@ -96,15 +96,19 @@ foot_colors_block() {
     )
 }
 
+# foot holds exactly two themes, the primary [colors] section (which it treats as
+# the dark one) and [colors2], and picks between them by number. The numbers are
+# the same ones behind the USR1/USR2 signals apply_foot sends.
 generate_foot() {
-    local mode=$1 out_dir=$2
+    local mode=$1 out_dir=$2 theme=2
+    [[ "${mode}" == "dark" ]] && theme=1
     mkdir -p "${out_dir}"
     {
-        printf 'initial-color-theme=%s\n\n' "${mode}"
-        printf '[colors-light]\n'
-        foot_colors_block "$(theme_palette_file light)"
-        printf '\n[colors-dark]\n'
+        printf 'initial-color-theme=%s\n\n' "${theme}"
+        printf '[colors]\n'
         foot_colors_block "$(theme_palette_file dark)"
+        printf '\n[colors2]\n'
+        foot_colors_block "$(theme_palette_file light)"
     } >"${out_dir}/foot-colors.ini"
 }
 

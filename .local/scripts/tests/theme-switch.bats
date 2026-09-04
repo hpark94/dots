@@ -108,30 +108,38 @@ stub_externals() {
     [ "$(cat "${XDG_STATE_HOME}/theme/mode")" = "light" ]
 }
 
-@test "generate_foot sets initial-color-theme to the requested mode" {
+@test "generate_foot numbers the theme the way foot's signals do" {
     generate_foot dark "${BATS_TEST_TMPDIR}/out"
-    grep -qx "initial-color-theme=dark" "${BATS_TEST_TMPDIR}/out/foot-colors.ini"
+    grep -qx "initial-color-theme=1" "${BATS_TEST_TMPDIR}/out/foot-colors.ini"
 
     generate_foot light "${BATS_TEST_TMPDIR}/out"
-    grep -qx "initial-color-theme=light" "${BATS_TEST_TMPDIR}/out/foot-colors.ini"
+    grep -qx "initial-color-theme=2" "${BATS_TEST_TMPDIR}/out/foot-colors.ini"
 }
 
-@test "generate_foot writes both colors-light and colors-dark blocks with # stripped, regardless of mode" {
+@test "generate_foot writes the dark palette as [colors] and the light one as [colors2], with # stripped" {
     generate_foot dark "${BATS_TEST_TMPDIR}/out"
-    run cat "${BATS_TEST_TMPDIR}/out/foot-colors.ini"
+    local ini="${BATS_TEST_TMPDIR}/out/foot-colors.ini"
 
-    [[ "${output}" == *"[colors-light]"* ]]
+    run awk '/^\[colors\]$/ { s = 1; next } /^\[colors2\]$/ { s = 2; next } s == 1' "${ini}"
+    [[ "${output}" == *"background=d00001"* ]]
+    [[ "${output}" == *"regular3=100003"* ]]
+    [[ "${output}" == *"bright0=100008"* ]]
+
+    run awk '/^\[colors2\]$/ { s = 2; next } s == 2' "${ini}"
     [[ "${output}" == *"background=f00001"* ]]
     [[ "${output}" == *"foreground=f00002"* ]]
     [[ "${output}" == *"regular0=000000"* ]]
     [[ "${output}" == *"bright7=00000f"* ]]
     [[ "${output}" == *"selection-foreground=f00004"* ]]
     [[ "${output}" == *"selection-background=f00003"* ]]
+}
 
-    [[ "${output}" == *"[colors-dark]"* ]]
-    [[ "${output}" == *"background=d00001"* ]]
-    [[ "${output}" == *"regular3=100003"* ]]
-    [[ "${output}" == *"bright0=100008"* ]]
+@test "generate_foot writes the same two palettes whichever mode is rendered" {
+    generate_foot dark "${BATS_TEST_TMPDIR}/dark"
+    generate_foot light "${BATS_TEST_TMPDIR}/light"
+
+    diff <(sed 1d "${BATS_TEST_TMPDIR}/dark/foot-colors.ini") \
+        <(sed 1d "${BATS_TEST_TMPDIR}/light/foot-colors.ini")
 }
 
 @test "generate_sway writes client.focused/focused_inactive from the light palette" {

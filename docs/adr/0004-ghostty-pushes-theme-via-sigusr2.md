@@ -15,10 +15,10 @@ reload re-reads the freshly written fragment.
 
 ## Considered Options
 
-**One signal (chosen) over foot's two.** foot preloads both palettes as
-`[colors-light]`/`[colors-dark]` blocks and selects between them with a per-mode
-signal (`SIGUSR1` for dark, `SIGUSR2` for light), so `apply_foot` must pick the
-signal from the mode. ghostty does not preload both modes: `generate_ghostty`
+**One signal (chosen) over foot's two.** foot preloads both palettes as its
+`[colors]`/`[colors2]` blocks and selects between them with a per-mode signal
+(`SIGUSR1` for dark, `SIGUSR2` for light), so `apply_foot` must pick the signal
+from the mode. ghostty does not preload both modes: `generate_ghostty`
 regenerates the single current-mode fragment on every render, so a single
 mode-independent `SIGUSR2` that tells ghostty to re-read its config is enough.
 `apply_ghostty` therefore takes `mode` only for call-site symmetry with the
