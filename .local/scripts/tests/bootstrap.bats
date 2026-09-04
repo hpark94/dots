@@ -5,6 +5,7 @@ setup() {
     export HOME="${BATS_TEST_TMPDIR}/home"
     export XDG_CONFIG_HOME="${BATS_TEST_TMPDIR}/config"
     export XDG_STATE_HOME="${BATS_TEST_TMPDIR}/state"
+    export XDG_RUNTIME_DIR="${BATS_TEST_TMPDIR}/run"
     mkdir -p "${HOME}"
     source "${SCRIPT}"
 }
@@ -40,6 +41,25 @@ failing_stubs() {
     [ -d "${HOME}/.config" ]
     [ -d "${HOME}/.local" ]
     [ -d "${HOME}/.local/bin" ]
+}
+
+@test "mask_wm_units masks the units sway starts on its own" {
+    mask_wm_units
+    [ "$(readlink "${HOME}/.config/systemd/user/swaync.service")" = /dev/null ]
+    [ "$(readlink "${HOME}/.config/systemd/user/waybar.service")" = /dev/null ]
+}
+
+@test "mask_wm_units is a no-op on a second run" {
+    mask_wm_units
+    run mask_wm_units
+    [ "${status}" -eq 0 ]
+    [ "$(readlink "${HOME}/.config/systemd/user/waybar.service")" = /dev/null ]
+}
+
+@test "mask_wm_units never reaches the user manager when no session is running" {
+    failing_stubs systemctl
+    PATH="${BATS_TEST_TMPDIR}/stub-bin:${PATH}" run mask_wm_units
+    [ "${status}" -eq 0 ]
 }
 
 @test "backup_skel backs up a real skel file" {

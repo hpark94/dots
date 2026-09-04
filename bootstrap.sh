@@ -78,6 +78,24 @@ run_stow() {
     (cd "${REPO_DIR}" && stow .)
 }
 
+# 3b. swaync and waybar ship enabled in graphical-session.target.wants, yet sway
+#     starts both from its own config, so the units only race that process here,
+#     and under a foreign compositor (a GNOME session on the same machine) they
+#     fail outright. Masking them is a symlink to /dev/null, which stow refuses
+#     to carry as package content, so bootstrap writes it. A manager that is
+#     already running has the old definitions loaded, so it is told to re-read
+#     them; a bootstrap run without a session (headless over ssh) has none.
+mask_wm_units() {
+    local unit
+    mkdir -p "${HOME}/.config/systemd/user"
+    for unit in swaync.service waybar.service; do
+        ln -sfn /dev/null "${HOME}/.config/systemd/user/${unit}"
+    done
+    if [[ -S "${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/systemd/private" ]]; then
+        systemctl --user daemon-reload
+    fi
+}
+
 # 4. Write the Role Marker from the argument, but never clobber an existing one
 #    (a retrofit or recovery run keeps the Role already decided on this machine).
 write_role_marker() {
@@ -224,6 +242,7 @@ main() {
     precreate_dirs
     backup_skel
     run_stow
+    mask_wm_units
     write_role_marker "${role}"
     write_gitconfig_stub
     install_mise
