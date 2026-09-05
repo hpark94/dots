@@ -53,7 +53,21 @@ specs. Nothing is built here.
 
 <!-- one line per resolved ticket: gist plus link. Zoom the link for detail. -->
 
-Empty. The map has just been charted.
+- [Program roster and package availability survey](issues/02-package-availability-survey.md):
+  the roster is derived from the tracked files and priced on both distros in
+  [the survey](research/02-package-availability.md). The `imv` case is a class,
+  not a quirk: **27 rows where the package name does not name the binary or the
+  two distros disagree**, which is the whole difficulty of
+  [08](issues/08-completeness-check.md) in one table. `satty` has **no
+  repository route on either distro**, Flathub included. `texlab` and `ghostty`
+  reverse the map's premise by being in Ubuntu's universe and in no Fedora
+  repository, so on Fedora the terminal itself is a third-party source. Fedora's
+  `zathura` installs **without a PDF backend** because the backend is a Suggests
+  there and a Depends on Ubuntu. Ubuntu's `thunderbird` is a snap transition
+  stub, which the Flatpak-never-snap rule rules out by construction. Found in
+  passing: `slurp` is invoked nowhere in the repo, and `jq` is called from the
+  login session while mise owns it, which moved to
+  [06](issues/06-config-assumptions.md) as a `PATH` assumption.
 
 ## Not yet specified
 

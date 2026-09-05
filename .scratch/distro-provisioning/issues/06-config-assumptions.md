@@ -29,6 +29,15 @@ The known cases, all found while charting, on the Ubuntu machine:
   contradicts itself: one file assumes the program, another handles its absence.
 - **`fcitx5 -d`**, **`lxpolkit`**, **`swaybg`**, **`cliphist`** are likewise
   exec'd unconditionally.
+- **`jq` is mise-managed but called from the login session**, by
+  `.config/sway/config`, both `.config/sway/scripts/*.sh` and
+  `sway-start-on-workspace`, none of which has run `mise activate`. Found by
+  [02](02-package-availability-survey.md), which excluded it as a packaging
+  question precisely because it is a `PATH` assumption.
+- **`chafa`, `kitten`, `metaflac` and `texlab`** are configured for and absent
+  on the Ubuntu machine. `fzf-preview` degrades quietly to `bat` for every
+  image, `organize_flac` aborts at its guard, nvim enables an LSP that never
+  starts: three different answers to the same situation, in one repo.
 - **`$monitor`** is an Iiyama serial number, and
   [`machine-independent-sway`](../../machine-independent-sway/spec.md) already
   decided that pointing at absent hardware is harmless. That precedent is the
