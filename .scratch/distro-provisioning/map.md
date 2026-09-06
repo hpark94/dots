@@ -69,6 +69,23 @@ specs. Nothing is built here.
   login session while mise owns it, which moved to
   [06](issues/06-config-assumptions.md) as a `PATH` assumption.
 
+- [Name the distro divergence](issues/01-name-the-distro-divergence.md): a
+  Fedora-versus-Ubuntu difference is a **Distro Fact**, the far end of the
+  spectrum the other three terms sit on: it **never reaches a deployed file**.
+  The seam has **two places and not three**: how a program gets onto the machine
+  is absorbed before deployment into the package sets and the documented steps,
+  and where deployed code has to adapt to what is on the machine afterwards it
+  uses a **Capability Probe**. The third candidate, "tolerate the absence", is a
+  judgment about what a failure costs and belongs to
+  [06](issues/06-config-assumptions.md) rather than a place. Nothing reads
+  `/etc/os-release`, confirmed by grep and now a rule; the ban ends at what stow
+  deploys, so install artifacts are distro-keyed but **a human selects them**,
+  and reading `os-release` inside one was refused too. **No Distro Marker**,
+  explicitly, because unlike the Role a distribution is discoverable and the
+  copy would have no reader. The `CONTEXT.md` entry and **ADR-0011
+  `the-deployed-tree-never-reads-the-distro`** are specified here and written
+  with the build.
+
 ## Not yet specified
 
 In scope, but not yet sharp enough to ticket. Graduates as the frontier
