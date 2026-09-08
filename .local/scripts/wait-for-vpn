@@ -1,16 +1,27 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Gates a command on the VPN being up, then replaces itself with it: protonvpn
-# connects several seconds after login and rewrites DNS and the default route
-# under whatever is already running, which is what makes Thunderbird's OAuth2
-# token refresh fail. Anything needing the network can be wrapped in this,
+# Gates a command on the network being usable, then replaces itself with it:
+# protonvpn connects several seconds after login and rewrites DNS and the default
+# route under whatever is already running, which is what makes Thunderbird's
+# OAuth2 token refresh fail. Anything needing the network can be wrapped in this,
 # windowed or not.
 #
-# The probe is whether protonvpn is installed at all, so a machine without it
-# pays nothing. The connection profile cannot answer that: it exists only while
-# connected and its name carries the server it picked ("ProtonVPN DE#905"),
-# while the proton0 device name is stable.
+# The probe is whether protonvpn is installed at all, and it decides what the
+# gate watches. Where the VPN exists the gate is the proton0 device, because what
+# is being waited for is the route rewrite and not mere reachability. The
+# connection profile cannot answer that: it exists only while connected and its
+# name carries the server it picked ("ProtonVPN DE#905"), while the proton0
+# device name is stable. Everywhere else the gate is NetworkManager's
+# connectivity verdict, which probes a check URL instead of reading link states:
+# a device list cannot stand in for it, because protonvpn's permanent kill switch
+# alone puts a dummy device there that reports connected with nothing behind it.
+#
+# A gate that never opens refuses the launch. A mail client without a network is
+# a window of connection errors and nothing else, so the cost of holding it back,
+# starting it by hand once the network is there, is the smaller one. The stderr
+# message goes to the sway log that nobody reads; the notification is what
+# actually reaches the desktop.
 
 device=proton0
 timeout=60
@@ -25,25 +36,38 @@ if ! command -v "$1" >/dev/null 2>&1; then
     exit 1
 fi
 
-# Past this point the command always runs. A launcher that refuses on a degraded
-# network turns a slow VPN into a missing mail client, so what remains is
-# reported on stderr and then fallen through.
-if ! command -v protonvpn >/dev/null 2>&1; then
+# Without nmcli there is no verdict to wait for, and refusing on a missing tool
+# would turn an unrelated gap into a missing mail client.
+if ! command -v nmcli >/dev/null 2>&1; then
+    echo "wait-for-vpn: nmcli not available, starting $1 without checking the network." >&2
     exec "$@"
 fi
 
-if ! command -v nmcli >/dev/null 2>&1; then
-    echo "wait-for-vpn: nmcli not available, starting $1 without waiting for ${device}." >&2
-    exec "$@"
+if command -v protonvpn >/dev/null 2>&1; then
+    gate_open() {
+        local devices
+        devices=$(nmcli -t -f DEVICE,STATE device status) || return 1
+        grep -Fqx "${device}:connected" <<<"${devices}"
+    }
+    gate_missed="${device} did not connect within ${timeout}s"
+else
+    gate_open() {
+        local connectivity
+        connectivity=$(nmcli -t -f CONNECTIVITY general) || return 1
+        [[ "${connectivity}" == full ]]
+    }
+    gate_missed="the network was not usable within ${timeout}s"
 fi
 
 for ((i = 0; i < timeout; i++)); do
-    status=$(nmcli -t -f DEVICE,STATE device status) || status=""
-    if grep -Fqx "${device}:connected" <<<"${status}"; then
+    if gate_open; then
         exec "$@"
     fi
     sleep 1
 done
 
-echo "wait-for-vpn: ${device} did not connect within ${timeout}s, starting $1 anyway." >&2
-exec "$@"
+echo "wait-for-vpn: ${gate_missed}, not starting $1." >&2
+if command -v notify-send >/dev/null 2>&1; then
+    notify-send "wait-for-vpn" "${gate_missed}, $1 not started." || true
+fi
+exit 1

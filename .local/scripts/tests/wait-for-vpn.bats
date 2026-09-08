@@ -17,10 +17,12 @@ setup() {
 
     NMCLI_LOG="${BATS_TEST_TMPDIR}/nmcli.log"
     SLEEP_LOG="${BATS_TEST_TMPDIR}/sleep.log"
+    NOTIFY_LOG="${BATS_TEST_TMPDIR}/notify.log"
     RAN="${BATS_TEST_TMPDIR}/ran"
     POLLS_AT_LAUNCH="${BATS_TEST_TMPDIR}/polls-at-launch"
     : >"${NMCLI_LOG}"
     : >"${SLEEP_LOG}"
+    : >"${NOTIFY_LOG}"
 
     local cmd
     for cmd in bash grep; do
@@ -37,6 +39,11 @@ STUB_EOF
 printf '%s\n' "\$*" >>"${SLEEP_LOG}"
 STUB_EOF
 
+    cat >"${STUB_BIN}/notify-send" <<STUB_EOF
+#!/usr/bin/env bash
+printf '%s\n' "\$*" >>"${NOTIFY_LOG}"
+STUB_EOF
+
     # The command being gated records what it saw, one argument per line, so an
     # argument containing a space is distinguishable from two arguments. It also
     # appends how many polls had already happened, which pins down both that it
@@ -48,17 +55,28 @@ mapfile -t seen <"${NMCLI_LOG}"
 printf '%s\n' "\${#seen[@]}" >>"${POLLS_AT_LAUNCH}"
 STUB_EOF
 
-    chmod +x "${STUB_BIN}"/protonvpn "${STUB_BIN}"/sleep "${STUB_BIN}"/fake-app
+    chmod +x "${STUB_BIN}"/protonvpn "${STUB_BIN}"/sleep "${STUB_BIN}"/notify-send \
+        "${STUB_BIN}"/fake-app
 
     make_nmcli_stub 0
 }
 
-# $1 = how many polls report a state other than connected before it connects.
+# $1 = how many polls report an unusable network before the gate opens. Both
+# gates are served, so the same counter drives the vpn device and the
+# connectivity verdict, whichever of the two the script picked.
 make_nmcli_stub() {
     cat >"${STUB_BIN}/nmcli" <<STUB_EOF
 #!/usr/bin/env bash
 printf '%s\n' "\$*" >>"${NMCLI_LOG}"
 mapfile -t calls <"${NMCLI_LOG}"
+if [[ "\$*" == *CONNECTIVITY* ]]; then
+    if ((\${#calls[@]} > $1)); then
+        printf 'full\n'
+    else
+        printf 'none\n'
+    fi
+    exit 0
+fi
 printf 'wlo1:connected\n'
 if ((\${#calls[@]} > $1)); then
     printf 'proton0:connected\n'
@@ -89,15 +107,21 @@ naps() {
     printf '%s\n' "${#lines[@]}"
 }
 
-@test "a machine without protonvpn runs the command without consulting the network" {
+notifications() {
+    cat "${NOTIFY_LOG}"
+}
+
+@test "a machine without protonvpn waits on the connectivity verdict instead" {
     rm "${STUB_BIN}/protonvpn"
+    make_nmcli_stub 2
 
     run_gated fake-app
     [ "${status}" -eq 0 ]
     [ -f "${RAN}" ]
-    [ "$(polls)" -eq 0 ]
-    [ "$(naps)" -eq 0 ]
-    [ "$(launched_after)" -eq 0 ]
+    [ "$(polls)" -eq 3 ]
+    [ "$(naps)" -eq 2 ]
+    [ "$(launched_after)" -eq 3 ]
+    [[ "$(cat "${NMCLI_LOG}")" == *"CONNECTIVITY general"* ]]
 }
 
 @test "an already connected vpn runs the command after a single poll" {
@@ -120,19 +144,41 @@ naps() {
     [ "$(launched_after)" -eq 4 ]
 }
 
-@test "a vpn that never connects still gets the command started, loudly" {
+@test "a vpn that never connects refuses the launch, loudly and visibly" {
     make_nmcli_stub 999
 
     run_gated fake-app
-    [ "${status}" -eq 0 ]
-    [ -f "${RAN}" ]
+    [ "${status}" -eq 1 ]
+    [ ! -f "${RAN}" ]
     [ "$(polls)" -eq 60 ]
-    [ "$(launched_after)" -eq 60 ]
     [[ "${stderr}" == *"proton0 did not connect within 60s"* ]]
-    [[ "${stderr}" == *"starting fake-app anyway"* ]]
+    [[ "${stderr}" == *"not starting fake-app"* ]]
+    [[ "$(notifications)" == *"proton0 did not connect within 60s, fake-app not started"* ]]
 }
 
-@test "protonvpn without nmcli reports why it cannot wait and starts anyway" {
+@test "a network that never becomes usable refuses the launch too" {
+    rm "${STUB_BIN}/protonvpn"
+    make_nmcli_stub 999
+
+    run_gated fake-app
+    [ "${status}" -eq 1 ]
+    [ ! -f "${RAN}" ]
+    [ "$(polls)" -eq 60 ]
+    [[ "${stderr}" == *"the network was not usable within 60s"* ]]
+    [[ "$(notifications)" == *"fake-app not started"* ]]
+}
+
+@test "a refusal without notify-send is still a refusal" {
+    rm "${STUB_BIN}/notify-send"
+    make_nmcli_stub 999
+
+    run_gated fake-app
+    [ "${status}" -eq 1 ]
+    [ ! -f "${RAN}" ]
+    [[ "${stderr}" == *"not starting fake-app"* ]]
+}
+
+@test "no nmcli reports why the network cannot be judged and starts anyway" {
     rm "${STUB_BIN}/nmcli"
 
     run_gated fake-app

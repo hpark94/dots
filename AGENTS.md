@@ -32,8 +32,9 @@ it before adding a file to the repo root.
 - `fp [dir]`: Paste file from Wayland clipboard to directory.
 - `sway-start-on-workspace <workspace> <app_id> <command> [args...]`: Launch a
   command and move the first window it maps to that workspace, once.
-- `wait-for-vpn <command> [args...]`: Run a command once the VPN is up, or at
-  once on a machine without protonvpn.
+- `wait-for-vpn <command> [args...]`: Run a command once the VPN is up, or once
+  NetworkManager reports a usable network on a machine without protonvpn; refuse
+  to run it at all when neither arrives within a minute.
 - `ffd [-b] [tool] [flags...]`: Pick files with fzf and hand every selection to
   one invocation of the tool (`nvim` by default); `-b` detaches it.
 - `frg [query...]`: Live ripgrep through fzf, opening the match in nvim at its
