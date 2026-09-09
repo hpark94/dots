@@ -22,7 +22,7 @@ indent_style = space
 
 # The path separator anchors the whole section to this file's directory, so the
 # filename patterns need an explicit **/ to keep matching at any depth.
-[{**/*.sh,**/.bashrc,.local/scripts/*}]
+[{**/*.sh,**/.bashrc,.local/scripts/*,.config/sway/scripts/*}]
 indent_style = space
 indent_size = 4
 shell_variant = bash

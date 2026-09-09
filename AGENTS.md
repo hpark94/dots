@@ -17,11 +17,11 @@ it before adding a file to the repo root.
 - `bootstrap.sh <desktop|headless>`: Stow, mise, plugins, theme. Idempotent;
   safe to re-run.
 - `mise install`: Sync toolchain from `.config/mise/config.toml`.
-- `bats .local/scripts/tests/` or `bats .local/scripts/tests/<test-file>.bats`:
-  Run tests for bootstrap.sh, theme-switch, envs, fy, fp, delta-auto,
-  tmux-sessionizer, caffeine, cltex, font-install, organize_flac,
-  sway-start-on-workspace, wait-for-vpn, ffd, frg, fzf-preview, and the tmux
-  config.
+- `bats .local/scripts/tests/ .config/sway/scripts/tests/` or
+  `bats <tests-dir>/<test-file>.bats`: Run tests for bootstrap.sh, theme-switch,
+  envs, fy, fp, delta-auto, tmux-sessionizer, caffeine, cltex, font-install,
+  organize_flac, sway-start-on-workspace, wait-for-vpn, ffd, frg, fzf-preview,
+  and the tmux config.
 - `nvim --headless '+Lazy! sync' +qa`: Force nvim plugin sync.
 - `theme-switch dark|light|toggle`: Desktop-only; decides and applies Theme
   Mode.
@@ -30,11 +30,6 @@ it before adding a file to the repo root.
 - `fy <file>`: Copy a file reference (`file://` URI in `text/uri-list`) to the
   Wayland clipboard; pasteable via `fp`, in terminals, and into browser chats.
 - `fp [dir]`: Paste file from Wayland clipboard to directory.
-- `sway-start-on-workspace <workspace> <app_id> <command> [args...]`: Launch a
-  command and move the first window it maps to that workspace, once.
-- `wait-for-vpn <command> [args...]`: Run a command once the VPN is up, or once
-  NetworkManager reports a usable network on a machine without protonvpn; refuse
-  to run it at all when neither arrives within a minute.
 - `ffd [-b] [tool] [flags...]`: Pick files with fzf and hand every selection to
   one invocation of the tool (`nvim` by default); `-b` detaches it.
 - `frg [query...]`: Live ripgrep through fzf, opening the match in nvim at its
@@ -42,6 +37,19 @@ it before adding a file to the repo root.
 - `fzf-preview <path> [line]`: The Previewer behind every fzf preview window
   whose candidates are paths: eza for a directory, the image Render Ladder for
   an image, bat otherwise.
+
+### Sway session scripts
+
+`.config/sway/scripts/` holds what only the sway config starts, by path and
+never by name. It is deliberately off the PATH: none of it is meant to be typed.
+`autotiling` is vendored third-party code; the other two are this repo's own and
+carry bats suites under `.config/sway/scripts/tests/`.
+
+- `sway-start-on-workspace <workspace> <app_id> <command> [args...]`: Launch a
+  command and move the first window it maps to that workspace, once.
+- `wait-for-vpn <command> [args...]`: Run a command once the VPN is up, or once
+  NetworkManager reports a usable network on a machine without protonvpn; refuse
+  to run it at all when neither arrives within a minute.
 
 ## Style
 
