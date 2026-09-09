@@ -109,6 +109,16 @@ naps() {
     printf '%s\n' "${#lines[@]}"
 }
 
+# Counting the naps is not enough: a sleep of two would keep the count and
+# quietly double the sixty seconds the gate is supposed to take.
+naps_are_one_second() {
+    mapfile -t lines <"${SLEEP_LOG}"
+    local line
+    for line in "${lines[@]}"; do
+        [ "${line}" = "1" ] || return 1
+    done
+}
+
 notifications() {
     cat "${NOTIFY_LOG}"
 }
@@ -122,6 +132,7 @@ notifications() {
     [ -f "${RAN}" ]
     [ "$(polls)" -eq 3 ]
     [ "$(naps)" -eq 2 ]
+    naps_are_one_second
     [ "$(launched_after)" -eq 3 ]
     [[ "$(cat "${NMCLI_LOG}")" == *"CONNECTIVITY general"* ]]
 }
@@ -143,6 +154,7 @@ notifications() {
     [ -f "${RAN}" ]
     [ "$(polls)" -eq 4 ]
     [ "$(naps)" -eq 3 ]
+    naps_are_one_second
     [ "$(launched_after)" -eq 4 ]
 }
 
@@ -155,6 +167,8 @@ notifications() {
     # Sixty polls of the device, then the one connectivity verdict that decides
     # between starting without the vpn and refusing outright.
     [ "$(polls)" -eq 61 ]
+    [ "$(naps)" -eq 60 ]
+    naps_are_one_second
     [[ "${stderr}" == *"proton0 did not connect within 60s"* ]]
     [[ "${stderr}" == *"not starting fake-app"* ]]
     [[ "$(notifications)" == *"proton0 did not connect within 60s, fake-app not started"* ]]
@@ -167,6 +181,8 @@ notifications() {
     [ "${status}" -eq 0 ]
     [ -f "${RAN}" ]
     [ "$(polls)" -eq 61 ]
+    [ "$(naps)" -eq 60 ]
+    naps_are_one_second
     [ "$(launched_after)" -eq 61 ]
     [[ "${stderr}" == *"proton0 did not connect within 60s"* ]]
     [[ "${stderr}" == *"starting fake-app without it"* ]]
@@ -181,6 +197,8 @@ notifications() {
     [ "${status}" -eq 1 ]
     [ ! -f "${RAN}" ]
     [ "$(polls)" -eq 60 ]
+    [ "$(naps)" -eq 60 ]
+    naps_are_one_second
     [[ "${stderr}" == *"the network was not usable within 60s"* ]]
     [[ "$(notifications)" == *"fake-app not started"* ]]
 }
@@ -192,6 +210,8 @@ notifications() {
     run_gated fake-app
     [ "${status}" -eq 1 ]
     [ ! -f "${RAN}" ]
+    [ "$(naps)" -eq 60 ]
+    naps_are_one_second
     [[ "${stderr}" == *"not starting fake-app"* ]]
 }
 
