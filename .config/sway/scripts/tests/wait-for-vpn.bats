@@ -63,14 +63,16 @@ STUB_EOF
 
 # $1 = how many polls report an unusable network before the gate opens. Both
 # gates are served, so the same counter drives the vpn device and the
-# connectivity verdict, whichever of the two the script picked.
+# connectivity verdict, whichever of the two the script picked. $2 gives the
+# connectivity verdict a counter of its own, which is what separates a vpn that
+# failed on a working network from a network that is down.
 make_nmcli_stub() {
     cat >"${STUB_BIN}/nmcli" <<STUB_EOF
 #!/usr/bin/env bash
 printf '%s\n' "\$*" >>"${NMCLI_LOG}"
 mapfile -t calls <"${NMCLI_LOG}"
 if [[ "\$*" == *CONNECTIVITY* ]]; then
-    if ((\${#calls[@]} > $1)); then
+    if ((\${#calls[@]} > ${2:-$1})); then
         printf 'full\n'
     else
         printf 'none\n'
@@ -150,10 +152,25 @@ notifications() {
     run_gated fake-app
     [ "${status}" -eq 1 ]
     [ ! -f "${RAN}" ]
-    [ "$(polls)" -eq 60 ]
+    # Sixty polls of the device, then the one connectivity verdict that decides
+    # between starting without the vpn and refusing outright.
+    [ "$(polls)" -eq 61 ]
     [[ "${stderr}" == *"proton0 did not connect within 60s"* ]]
     [[ "${stderr}" == *"not starting fake-app"* ]]
     [[ "$(notifications)" == *"proton0 did not connect within 60s, fake-app not started"* ]]
+}
+
+@test "a vpn that never connects still starts the command on a usable network" {
+    make_nmcli_stub 999 0
+
+    run_gated fake-app
+    [ "${status}" -eq 0 ]
+    [ -f "${RAN}" ]
+    [ "$(polls)" -eq 61 ]
+    [ "$(launched_after)" -eq 61 ]
+    [[ "${stderr}" == *"proton0 did not connect within 60s"* ]]
+    [[ "${stderr}" == *"starting fake-app without it"* ]]
+    [ -z "$(notifications)" ]
 }
 
 @test "a network that never becomes usable refuses the launch too" {

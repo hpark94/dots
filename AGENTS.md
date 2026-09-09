@@ -20,8 +20,8 @@ it before adding a file to the repo root.
 - `bats .local/scripts/tests/ .config/sway/scripts/tests/` or
   `bats <tests-dir>/<test-file>.bats`: Run tests for bootstrap.sh, theme-switch,
   envs, fy, fp, delta-auto, tmux-sessionizer, caffeine, cltex, font-install,
-  organize_flac, sway-start-on-workspace, wait-for-vpn, ffd, frg, fzf-preview,
-  and the tmux config.
+  organize_flac, sway-start-on-workspace, wait-for-clock, wait-for-vpn, ffd,
+  frg, fzf-preview, and the tmux config.
 - `nvim --headless '+Lazy! sync' +qa`: Force nvim plugin sync.
 - `theme-switch dark|light|toggle`: Desktop-only; decides and applies Theme
   Mode.
@@ -42,14 +42,19 @@ it before adding a file to the repo root.
 
 `.config/sway/scripts/` holds what only the sway config starts, by path and
 never by name. It is deliberately off the PATH: none of it is meant to be typed.
-`autotiling` is vendored third-party code; the other two are this repo's own and
+`autotiling` is vendored third-party code; the others are this repo's own and
 carry bats suites under `.config/sway/scripts/tests/`.
 
 - `sway-start-on-workspace <workspace> <app_id> <command> [args...]`: Launch a
   command and move the first window it maps to that workspace, once.
+- `wait-for-clock <command> [args...]`: Run a command once the system clock is
+  synchronised, and after a minute either way. Guards `protonvpn connect`
+  against a hardware clock that drifted while the machine was off, which makes a
+  freshly issued certificate look not yet valid.
 - `wait-for-vpn <command> [args...]`: Run a command once the VPN is up, or once
-  NetworkManager reports a usable network on a machine without protonvpn; refuse
-  to run it at all when neither arrives within a minute.
+  NetworkManager reports a usable network on a machine without protonvpn. A VPN
+  that never arrives falls back on that same verdict: the command still runs on
+  a usable network, and is refused only when the network is down as well.
 
 ## Style
 

@@ -1,0 +1,48 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Gates a command on the system clock being synchronised, then replaces itself
+# with it. A machine whose hardware clock drifted while it was off boots with the
+# wrong time and keeps it until timesyncd has reached a time server, which is
+# seconds into the session and can be after the autostarts have already run.
+# Anything checking a validity window in between reads it against the wrong
+# clock: protonvpn fetches a fresh WireGuard certificate on every connect, and a
+# clock running behind rejects it as NotYetValidCertificate, which ends the
+# attempt and leaves the session without a VPN, because protonvpn connect does
+# not try a second time.
+#
+# Unlike wait-for-vpn, a missed gate does not refuse the launch. An attempt made
+# under a wrong clock may fail, while one never made fails for certain, and the
+# cost of the failure is a command that has to be repeated by hand rather than a
+# mail client filling up with per-account errors.
+
+timeout=60
+
+if [[ $# -lt 1 ]]; then
+    echo "wait-for-clock: usage: wait-for-clock <command> [args...]" >&2
+    exit 1
+fi
+
+if ! command -v "$1" >/dev/null 2>&1; then
+    echo "wait-for-clock: command not found: $1" >&2
+    exit 1
+fi
+
+# Without timedatectl there is no verdict to wait for, and holding the command
+# back over a missing tool would cost more than the wrong clock it guards
+# against.
+if ! command -v timedatectl >/dev/null 2>&1; then
+    echo "wait-for-clock: timedatectl not available, starting $1 without checking the clock." >&2
+    exec "$@"
+fi
+
+for ((i = 0; i < timeout; i++)); do
+    synchronised=$(timedatectl show -p NTPSynchronized --value) || synchronised=""
+    if [[ "${synchronised}" == yes ]]; then
+        exec "$@"
+    fi
+    sleep 1
+done
+
+echo "wait-for-clock: the clock was not synchronised within ${timeout}s, starting $1 anyway." >&2
+exec "$@"
