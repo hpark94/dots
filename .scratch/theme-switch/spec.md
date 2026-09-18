@@ -176,7 +176,10 @@ self-syncs to the terminal's background via its own native `auto` theme setting.
   `theme-switch toggle`.
 - Live-vs-next-launch behavior per app is fixed as designed in ADR-0001
   (foot/tmux/sway live; ghostty/nvim/bat/fzf next-launch), not
-  user-configurable.
+  user-configurable. **Reopened after this spec shipped.** ADR-0004 takes
+  ghostty live via SIGUSR2 and ADR-0003 has the shell pull its fragment, which
+  carries fzf and bat along, so of those four only nvim is still Next-launch.
+  This line stands as the record of what this spec shipped.
 - **GTK**: new `apply_gtk(mode)` function, invoked from `main()` alongside the
   other apply steps. Runs **both**
   `gsettings set org.gnome.desktop.interface gtk-theme Adwaita-dark|Adwaita-light`
@@ -240,7 +243,9 @@ self-syncs to the terminal's background via its own native `auto` theme setting.
   a one-time manual setting, not a script integration point.
 - **`CONTEXT.md` vocabulary update**: GTK is added to the **Next-launch app**
   list (not Live-switchable, corrected per the discovery above) alongside
-  ghostty/nvim/bat/fzf.
+  ghostty/nvim/bat/fzf. **Reopened after this spec shipped.** GTK's
+  classification holds, the company it is listed in does not: ADR-0003 and
+  ADR-0004 moved ghostty, fzf and bat to Live-switchable.
 - **Qt app theming (qt6ct, Kvantum, and direct `kdeglobals`/`KColorScheme`
   editing) was attempted and abandoned.** All three independent,
   well-established mechanisms were implemented and verified correct at the
@@ -307,7 +312,10 @@ self-syncs to the terminal's background via its own native `auto` theme setting.
 - Live-switching already-open ghostty windows, already-running nvim sessions,
   already-open shells' `FZF_DEFAULT_OPTS`/`BAT_THEME`, or already-running GTK
   apps, explicitly deferred per the next-launch decision (GTK confirmed
-  Next-launch during implementation; see Implementation Decisions).
+  Next-launch during implementation; see Implementation Decisions). **Reopened
+  after this spec shipped.** ADR-0004 took ghostty live and ADR-0003 took the
+  shells live, fzf and bat with them; already-running nvim sessions and GTK apps
+  stay deferred. This line stands as the record of what this spec deferred.
 - Any new palette roles beyond the existing 16 ANSI colors + bg/fg/selection,
   the tmux/sway bespoke values are dropped rather than preserved as new roles
   (e.g. no `accent_muted` or `mode_bg`).

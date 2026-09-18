@@ -45,3 +45,8 @@ on every prompt.
       path, if smoke-tested, is exercised on the ubuntu-server host per the
       SSH-testing scope.
 - [x] Formatter/linter clean on the touched regions.
+
+**Superseded 2026-09-18:** the twin reason above is stale, the conclusion is
+not. ADR-0005 collapsed the twin convention ADR-0002 introduced into one
+`AGENTS.md`, and ADR-0008 superseded that by splitting the files along their
+audience. The hook is still authored once per shell, directly in each init file.

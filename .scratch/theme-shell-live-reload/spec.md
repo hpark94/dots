@@ -180,6 +180,13 @@ script contributes no new code to make it happen.
   convention mirrors the supervisor-instruction files (`CLAUDE.md` and
   `AGENTS.md`) only, so there is no second copy of the zsh/bash init to keep in
   sync. The same hook is authored once per shell, directly in each init file.
+  **Superseded 2026-09-18:** the reason is stale, the conclusion is not. The
+  twin convention ADR-0002 introduced was collapsed into one `AGENTS.md` by
+  ADR-0005, and ADR-0008 superseded that in turn by splitting the files along
+  their audience: `CLAUDE.md` carries how we work together and imports
+  `AGENTS.md`, which carries what the code is held to, so neither is a copy of
+  the other. The hook is still authored once per shell, directly in each init
+  file.
 - The decision and its rejected alternative are recorded in
   `docs/adr/0003-shells-pull-theme-via-prompt-hook.md`; the glossary in
   `CONTEXT.md` now lists the shell as a Pull Live-switchable app and no longer
