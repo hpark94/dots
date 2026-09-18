@@ -242,9 +242,11 @@ The four threads are not independent. The split cuts through each of the others:
   without touching live state. **No shared library is placed by install**,
   closing the question [13](issues/13-role-marker-reader.md) parked and
   graduating the script-conventions fog to
-  [14](issues/14-script-conventions.md). README shrinks to three lines. tpm was
-  the one outright gap (nothing cloned it, so `.tmux.conf:58` was inert on every
-  fresh box).
+  [14](issues/14-script-conventions.md). README shrinks to three lines.
+  **Superseded 2026-09-18:** four, since the token gate put a `GITHUB_TOKEN`
+  export between the clone and `bootstrap.sh`; `README.md:28-39` is
+  authoritative. tpm was the one outright gap (nothing cloned it, so
+  `.tmux.conf:58` was inert on every fresh box).
 
 - [Who owns `~/.ssh/config`](issues/12-ssh-config-ownership.md): the five `Host`
   entries never get tracked, forever, full stop, a straight public-repo call,

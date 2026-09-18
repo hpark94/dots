@@ -113,6 +113,11 @@ Left edge is immediately after `git clone <repo> ~/dots` (the clone cannot live
 inside the repo it clones). README shrinks to three lines: install `git`/`stow`,
 clone, `~/dots/bootstrap.sh <role>`.
 
+**Superseded 2026-09-18:** the README is four steps. The token gate put a
+`GITHUB_TOKEN` export between the clone and `bootstrap.sh`, without which it
+aborts before installing the pinned toolchain. Only the README count changes,
+the sequence below is untouched; `README.md:28-39` is authoritative.
+
 1. **Pre-create real container dirs**: `mkdir -p ~/.config ~/.local`
    (defensively `~/.local/bin` too). This is load-bearing, not hygiene. If
    `~/.local` does not exist, `stow .` **folds** the whole namespace into a

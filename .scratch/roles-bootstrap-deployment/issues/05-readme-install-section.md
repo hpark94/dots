@@ -21,5 +21,10 @@ prose is untouched.
       everything else happens inside `bootstrap.sh`.
 - [x] The rest of the README's existing descriptive content is left untouched.
 
+**Superseded 2026-09-18:** the README states four steps now. The token gate put
+a `GITHUB_TOKEN` export between the clone and `bootstrap.sh`, so the three
+criteria above record what shipped then and `README.md:28-39` is authoritative
+now.
+
 **Further Notes:** See `.scratch/roles-bootstrap-deployment/spec.md`, Solution
 and Implementation Decisions → "README shrinks to three lines."

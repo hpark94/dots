@@ -288,6 +288,13 @@ beyond an install procedure (the descriptive "Key Highlights" prose) is
 untouched by this spec, only the install story changes, from nothing documented
 to three lines that are actually true.
 
+**Superseded 2026-09-18:** the README is four steps, not three. The token gate
+put a `GITHUB_TOKEN` export between the clone and `bootstrap.sh`, because the
+pinned toolchain pulls dozens of GitHub-hosted releases and the unauthenticated
+ceiling of 60 requests per hour runs out partway through, so `bootstrap.sh`
+aborts without one. `README.md:28-39` is authoritative for the procedure; this
+section stands as the decision that the README documents the install at all.
+
 ## Testing Decisions
 
 - `bootstrap.sh` gets a bats file under the same coverage bar already
