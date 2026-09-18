@@ -41,12 +41,11 @@ _Avoid_: `DOTFILES_ROLE`, role env var
 
 **Role Fact**:\
 Something true of the machine however you reached it, so it branches on the Role
-Marker: whether Theme Mode may be changed here, whether the note vault exists.
-The entire repo ships to both Roles, so a Role Fact is expressed as a branch
-inside a shared file, never by withholding the file. Kept deliberately narrow:
-only code a human explicitly invokes reads the Marker, never anything on the
-login path, so that a machine without a Marker fails at a command rather than on
-every shell.\
+Marker: whether Theme Mode may be changed here. The entire repo ships to both
+Roles, so a Role Fact is expressed as a branch inside a shared file, never by
+withholding the file. Kept deliberately narrow: only code a human explicitly
+invokes reads the Marker, never anything on the login path, so that a machine
+without a Marker fails at a command rather than on every shell.\
 _Avoid_: host-only, deploy-time config
 
 **Distro Fact**:\
