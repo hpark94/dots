@@ -69,7 +69,7 @@ surveyed. Excluded by that rule, in the order the file lists them: `ast-grep`,
 `direnv`, `delta`, `bats`, `claude`, `codex`, `lazygit`, `neovim` (`nvim`),
 `tmux`, `yazi`, `go`, `java`, `node`, `rust`, `bun`, `cmake`, `maven`, `ninja`,
 `uv`, `biome`, `lua-language-server`, `marksman`, `shellcheck`, `shfmt`,
-`stylua`, `bash-language-server`, `prettier`, `typescript-language-server`,
+`stylua`, `bash-language-server`, `prettier`, `typescript`,
 `yaml-language-server`, `black`, `pyright`, `ruff`.
 
 `mise` itself is also excluded: `bootstrap.sh` installs it with
