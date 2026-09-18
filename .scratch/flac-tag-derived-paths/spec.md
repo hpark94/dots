@@ -353,4 +353,7 @@ work.
   named in this spec so that the absence of a change is a recorded decision
   rather than an oversight.
 - Work proceeds under this repo's agent roles: a Builder implements and writes
-  the tests, then a fresh Reviewer reads the diff.
+  the tests, then a fresh Reviewer reads the diff. **Superseded 2026-09-18:**
+  ADR-0009 removed the Builder, so the session that plans the work now builds it
+  and writes its tests itself. The Reviewer remains, outside Claude: ADR-0008
+  put it on Codex, reading the working tree read-only.
