@@ -236,16 +236,20 @@ _Avoid_: hot reload
 **Next-launch app**:\
 An app that only picks up a Theme Mode change in new instances/sessions, because
 it has no live-reload hook without fragile extra infra: nvim (colorscheme picked
-at startup), GTK, and the git pager delta. delta has no persistent instance at
-all: git spawns it fresh on every invocation, so it reads its generated
-`~/.local/state/theme/delta.gitconfig` fragment (included by the tracked
-`.gitconfig.shared`) current each time. GTK apps split into two consumer
-categories, both handled by `apply_gtk` setting both gsettings keys together:
-classic GTK3/GTK4 apps without portal integration (evince, xarchiver,
-pavucontrol) read `gsettings set org.gnome.desktop.interface gtk-theme`, via
-`GtkSettings` at each app's own startup; portal-aware apps (Librewolf/Firefox,
-confirmed via `org.freedesktop.appearance`/`org.freedesktop.portal.Settings`
-strings compiled into `libxul.so`, and any future libadwaita app) instead read
+at startup), GTK, the git pager delta, and fuzzel. delta has no persistent
+instance at all: git spawns it fresh on every invocation, so it reads its
+generated `~/.local/state/theme/delta.gitconfig` fragment (included by the
+tracked `.gitconfig.shared`) current each time. fuzzel is the same shape: sway
+spawns it fresh for every launcher invocation, so the
+`include=~/.local/state/theme/fuzzel-colors.ini` line in the tracked
+`fuzzel.ini` is read current each time and no apply step exists for it. GTK apps
+split into two consumer categories, both handled by `apply_gtk` setting both
+gsettings keys together: classic GTK3/GTK4 apps without portal integration
+(evince, xarchiver, pavucontrol) read
+`gsettings set org.gnome.desktop.interface gtk-theme`, via `GtkSettings` at each
+app's own startup; portal-aware apps (Librewolf/Firefox, confirmed via
+`org.freedesktop.appearance`/`org.freedesktop.portal.Settings` strings compiled
+into `libxul.so`, and any future libadwaita app) instead read
 `gsettings set org.gnome.desktop.interface color-scheme`. Confirmed via manual
 testing that an already-running GTK3/GTK4 app does not re-theme live on this
 system (neither links libadwaita, and no gnome-settings-daemon runs under sway
