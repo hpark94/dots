@@ -6,7 +6,7 @@ vim.lsp.enable({
     "pyright",
     "rust_analyzer",
     "texlab",
-    "ts_ls",
+    "tsc",
 })
 
 vim.diagnostic.config({
