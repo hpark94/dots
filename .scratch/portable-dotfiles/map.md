@@ -328,21 +328,21 @@ redrawn, and then as a fresh effort.
   [12](issues/12-ssh-config-ownership.md), folded in because its only consumer
   is this work, is now written up as
   [`.scratch/theme-switch-expansion/spec.md`](../theme-switch-expansion/spec.md)
-  (`ready-for-agent`), same caveat.
+  (`done`), same caveat.
 - **Migrating the vault data itself.**
   [10](issues/10-vault-flattening-migration.md) decided the operator does this
   by hand; no code in this repo touches `~/Sync/vault`.
 - **The clipboard tunnel's deletion**, decided by
   [09](issues/09-clipboard-backend-signal.md), is now written up as
-  [`.scratch/clipboard-rewire/spec.md`](../clipboard-rewire/spec.md)
-  (`ready-for-agent`); stopping the live `clipboard-tunnel.service` and editing
-  the real `~/.ssh/config` stay operator-run, per that spec.
+  [`.scratch/clipboard-rewire/spec.md`](../clipboard-rewire/spec.md) (`done`);
+  stopping the live `clipboard-tunnel.service` and editing the real
+  `~/.ssh/config` stay operator-run, per that spec.
 - **The deployment mechanism, bootstrap sequence, and env/secrets scope**,
   decided by [02](issues/02-deployment-mechanism-survey.md),
   [05](issues/05-choose-deployment-mechanism.md),
   [11](issues/11-bootstrap-sequence.md) and
   [15](issues/15-env-secrets-scope.md), is now written up as
   [`.scratch/roles-bootstrap-deployment/spec.md`](../roles-bootstrap-deployment/spec.md)
-  (`ready-for-agent`). This is the last of the four specs this map's destination
-  called for; with it written, every decision on this map is either implemented,
-  in a ticketed spec, or explicitly out of scope.
+  (`done`). This is the last of the four specs this map's destination called
+  for; with it written, every decision on this map is either implemented, in a
+  ticketed spec, or explicitly out of scope.
