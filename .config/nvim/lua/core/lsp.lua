@@ -4,6 +4,7 @@ vim.lsp.enable({
     "lua_ls",
     "marksman",
     "pyright",
+    "rust_analyzer",
     "texlab",
     "ts_ls",
 })
