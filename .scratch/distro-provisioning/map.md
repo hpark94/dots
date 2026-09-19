@@ -53,6 +53,18 @@ specs. Nothing is built here.
 
 <!-- one line per resolved ticket: gist plus link. Zoom the link for detail. -->
 
+- [What the Fedora reference machine actually has](issues/03-fedora-reference-inventory.md):
+  the inventory, taken on the ZenBook itself, so the ticket's premise that the
+  machine is unreachable is gone. Four things in it change what the open tickets
+  face: only `dnf history` separates the live ISO's packages from this machine's
+  own, **Terra** is a fifth source the survey never queried and is where `satty`
+  and `ghostty` come from, `clangd` and `texlab` come from no package at all
+  here, and the battery threshold is four artifacts rather than one. Read it
+  before [04](issues/04-package-set-form.md),
+  [05](issues/05-install-route-and-manual-steps.md),
+  [06](issues/06-config-assumptions.md) or
+  [07](issues/07-battery-threshold-keybind.md).
+
 - [Program roster and package availability survey](issues/02-package-availability-survey.md):
   the roster is derived from the tracked files and priced on both distros in
   [the survey](research/02-package-availability.md). The `imv` case is a class,
