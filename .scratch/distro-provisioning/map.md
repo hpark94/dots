@@ -53,6 +53,25 @@ specs. Nothing is built here.
 
 <!-- one line per resolved ticket: gist plus link. Zoom the link for detail. -->
 
+- [The install route and where the manual steps are written](issues/05-install-route-and-manual-steps.md):
+  one file, `docs/install.md`, shared steps once and the two distros as command
+  blocks inside the step that differs. The route is **three phases cut by what
+  each one needs**, and the ticket's own rough shape was out of order: **the
+  clone comes first**, because the install line reads `packages/roster.md` and
+  the source steps live in the same tree, and **nothing precedes it**, `git`
+  being assumed and written down nowhere. A foreign source is **a link plus
+  three facts and no command**, which costs the copy-paste and buys one rule
+  instead of one exception per vendor. Two steps existed nowhere before:
+  **`chsh`**, because the login shell is set by no tracked file, and logging in
+  to Sway, which turns out to be load-bearing rather than cosmetic because it is
+  what puts mise's toolchain on the `PATH` for the texlab build after it.
+  `font-install` runs in phase 2 and `bootstrap.sh` does not call it, on
+  [04](issues/04-package-set-form.md)'s Role argument rather than a new one;
+  Flatpaks are system wide, and satty on Ubuntu is a pinned tarball. `README.md`
+  keeps its four steps, re-scoped to a machine that already has its packages.
+  **No checklist**: rot is [08](issues/08-completeness-check.md)'s job alone,
+  and section 10 says what that now obliges it to cover.
+
 - [Where the package sets live and in what form](issues/04-package-set-form.md):
   the artifact is `packages/roster.md`, one flat Markdown table of
   `binary | fedora | ubuntu`, beside `packages/flatpak.txt` for application ids,
