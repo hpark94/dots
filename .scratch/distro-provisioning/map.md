@@ -53,6 +53,41 @@ specs. Nothing is built here.
 
 <!-- one line per resolved ticket: gist plus link. Zoom the link for detail. -->
 
+- [What the configs must stop assuming](issues/06-config-assumptions.md): the
+  rule has **two stages, and the first one ignores the case**: what
+  `packages/roster.md` promises is never probed away, because a probe around a
+  promised program hides the packaging hole
+  [08](issues/08-completeness-check.md) exists to find. Only for the rest does
+  the second stage ask, and it asks **whether the absence is mistakable for
+  success** rather than what it costs. A **Role clause** bounds stage one: the
+  roster promises a Desktop, so everything under `.local/scripts/` stays outside
+  it and answers to stage two instead, which is why the Render Ladder survives
+  untouched and why nvim's missing `texlab` is left to stand. `CONTEXT.md` is
+  two terms short, which is why the repo looked self-contradictory: a
+  **Capability Probe adapts**, a **precondition check refuses**, and `AGENTS.md`
+  mandates the second everywhere. The roster promises the whole documented
+  route, and its **one optional entry, `protonvpn`, moves to
+  `packages/optional.md`** rather than to a second table, because 04's install
+  line reads every row of `roster.md` and would install it anyway: a correction
+  to [05](issues/05-install-route-and-manual-steps.md), whose phase 1 source
+  step is marked optional. Measured: the Sway session is started by SDDM through
+  `zsh --login`, never reads `.zshrc`, and runs on
+  `/usr/local/bin:/usr/bin:/usr/local/sbin:/usr/sbin`, so it sees neither mise
+  nor `~/.local/scripts`; `jq` works on the reference machine only as a
+  dependency of `clevis`, `dracut-network` and `grimshot`. No `~/.zprofile` is
+  added, absolute paths become the stated answer, and `jq` gets a roster row
+  while keeping its mise entry for the shell and for Headless. The **screenshot
+  bindings become a tracked script** under `.config/sway/scripts/`, refusing on
+  a missing roster program and saying so with `notify-send`, because a keystroke
+  is a human waiting: the one place where the journal is not enough. `clangd`
+  and `clang-format` move into mise (`github:clangd/clangd`,
+  `pypi:clang-format`), rootless, **224 MB against the 12 GB LLVM tarball**,
+  proven end to end in a scratch directory; the catch is that the roster's
+  `gcc-c++` and `glibc-devel` rows are what supply the C++ standard library
+  clangd needs, and the reference machine has neither. Quiet conclusion: **the
+  repo already obeys the rule**, so it works forward, and `imv` leaves the
+  ticket for 08 because nothing invokes it.
+
 - [The install route and where the manual steps are written](issues/05-install-route-and-manual-steps.md):
   one file, `docs/install.md`, shared steps once and the two distros as command
   blocks inside the step that differs. The route is **three phases cut by what
