@@ -53,6 +53,25 @@ specs. Nothing is built here.
 
 <!-- one line per resolved ticket: gist plus link. Zoom the link for detail. -->
 
+- [Where the package sets live and in what form](issues/04-package-set-form.md):
+  the artifact is `packages/roster.md`, one flat Markdown table of
+  `binary | fedora | ubuntu`, beside `packages/flatpak.txt` for application ids,
+  both repo-local behind a new `^/packages` line in `.stow-local-ignore`. The
+  set lists the **roster and not the machine**, plus a second clause for what
+  the toolchain needs to build: four rows, where Fedora's `development-tools`
+  turns out to hold no compiler at all and `c-development` is the real
+  counterpart to `build-essential`. The boundary rule has **two sides and the
+  split is the verb**: enabling a source is
+  [05](issues/05-install-route-and-manual-steps.md)'s, installing out of it is
+  the set's, and anything that is not a plain package install is a manual step.
+  A third side, "mise owns it", was dropped when its only candidate left:
+  **`texlab` is a pinned `cargo install --git ... --tag` that runs after
+  `bootstrap.sh`**, chosen over the `github:` backend, which pins just as well,
+  and over `cargo:texlab`, which is stale at 4.3.2. `bootstrap.sh` installs no
+  Flatpaks either, so packaging stays in front of it without exception. Measured
+  in passing: the ZenBook has no `g++`, and its only C++ compiler is the
+  untracked LLVM tarball that also supplies clangd.
+
 - [What the Fedora reference machine actually has](issues/03-fedora-reference-inventory.md):
   the inventory, taken on the ZenBook itself, so the ticket's premise that the
   machine is unreachable is gone. Four things in it change what the open tickets
