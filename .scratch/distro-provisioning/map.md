@@ -21,7 +21,10 @@ specs. Nothing is built here.
   that one stopped: it never asked which distro the machine runs.
 - **Planning only.** Tickets resolve decisions; the building happens afterwards
   through the normal `.scratch/<feature>/spec.md` + `issues/` flow. Deciding
-  what a document must say is planning; writing that document is not.
+  what a document must say is planning; writing that document is not. The one
+  exception is [09](issues/09-spec-and-build-tickets.md), which writes that spec
+  and those build tickets and nothing else: it is the handoff, and it is the
+  last ticket on this map.
 - **Fedora is the reference.** The ZenBook is the machine that works; the
   EliteBook is the copy with holes. Where the two disagree about what a complete
   machine has, Fedora is right until a ticket says otherwise.
