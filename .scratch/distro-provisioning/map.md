@@ -56,6 +56,24 @@ specs. Nothing is built here.
 
 <!-- one line per resolved ticket: gist plus link. Zoom the link for detail. -->
 
+- [The battery threshold keybind and its missing script](issues/07-battery-threshold-keybind.md):
+  the keybind stays and **the repo's only `sudo` is deleted rather than
+  replaced**, because UPower's polkit action already lets an ordinary session
+  move the charge limit, measured. A tracked script made the old route
+  impossible rather than merely ugly, a stow symlink being user-writable. The
+  four artifacts [03](issues/03-fedora-reference-inventory.md) found are **two
+  features**: the cap that survives a reboot becomes one manual hwdb file, and
+  the keystroke becomes `.config/sway/scripts/battery-charge-limit`, tracked and
+  tested, with `toggle` and `restore` as required verbs. **No new vocabulary**:
+  reading the capability off D-Bus and then declining is a **precondition
+  check** in 06's sense, not a Capability Probe. TLP, asusctl and a udev `chmod`
+  all fall; **`hp-wmi` exposes no threshold at all**, so the EliteBook gets a
+  paragraph in `docs/install.md` rather than a ticket that would bind
+  [09](issues/09-spec-and-build-tickets.md) to a business trip. Corrections
+  outward: the roster gains an **`upower`** row,
+  [05](issues/05-install-route-and-manual-steps.md) gains two manual steps, and
+  [08](issues/08-completeness-check.md) gains a candidate.
+
 - [What the configs must stop assuming](issues/06-config-assumptions.md): the
   rule has **two stages, and the first one ignores the case**: what
   `packages/roster.md` promises is never probed away, because a probe around a
