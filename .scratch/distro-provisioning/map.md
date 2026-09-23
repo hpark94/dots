@@ -56,6 +56,43 @@ specs. Nothing is built here.
 
 <!-- one line per resolved ticket: gist plus link. Zoom the link for detail. -->
 
+- [A completeness check for a machine](issues/08-completeness-check.md):
+  `completeness-check.sh` at the repo root, run by path out of the clone like
+  `bootstrap.sh` and never stowed, because the `packages/` it reads is not
+  deployed. It asserts **presence and never correctness** across three sections,
+  the roster, the Flatpaks, and the manual steps
+  [05](issues/05-install-route-and-manual-steps.md) left without a checklist.
+  The first two take their membership from 04's package set, every row and every
+  id, loud absence or not; the third had none, because 05 deleted the checklist,
+  and gets the rule **nothing else on this machine would notice**, which puts
+  every output of `bootstrap.sh` outside it: that script guards each step and is
+  safe to re-run, so re-running it is the cheaper check of its own work. For a
+  path a second half applies, **a tracked file names it**, which drops the
+  KeePassXC database, named nowhere in the tree, and keeps the wallpaper, whose
+  presence is the nearest an assertion about presence may come to Syncthing
+  having paired. [04](issues/04-package-set-form.md)'s `-` in the first column
+  turns out to be the per-row key the mixture needed, so **its cost to 04 is
+  zero**, and a `-` in a package column never causes a skip on its own: only
+  `sway-systemd` on Ubuntu carries both, which is why the Ubuntu satty tarball
+  needs nothing added for it. The package manager is picked by a **Capability
+  Probe** on `rpm` and `dpkg`, leaving ADR-0011 intact. Report on stdout either
+  way, the missing named and the present counted **with the sum going out**, so
+  a row nobody looked at cannot hide behind a green line; exit 1 on a miss, exit
+  2 on four refusals, no Role Marker, a Headless machine, two package managers
+  or none, and no `busctl`, a tool the check needs being its own precondition
+  rather than a finding. **`texlab` is checked nowhere**: it gets no roster row,
+  which is a correction to 04's first clause visible in neither 04 nor 05, and
+  it fails the membership rule too, because
+  [06](issues/06-config-assumptions.md) established that a missing language
+  server is something nvim itself notices. 07's battery threshold is taken as
+  the **hwdb file's presence**, guarded by `ChargeThresholdSupported` so a
+  correct EliteBook is not reported incomplete; UPower is read for the
+  capability and never for the value, which survives the file's removal through
+  UPower's own persisted state. All of it **without a third marker in 04's
+  table**: that machine and section one's skipped row share one per-entry
+  classification, which the report counts so that the sum goes out.
+  `bootstrap.sh` does not call it, on the Role argument for the third time.
+
 - [The battery threshold keybind and its missing script](issues/07-battery-threshold-keybind.md):
   the keybind stays and **the repo's only `sudo` is deleted rather than
   replaced**, because UPower's polkit action already lets an ordinary session
@@ -207,6 +244,13 @@ graduated into [08](issues/08-completeness-check.md).
 Beyond the destination. Never graduates; returns only if the destination is
 redrawn, and then as a fresh effort.
 
+- **A lint of the repo against its own roster.** The reverse rot, a tracked file
+  gaining a call whose `packages/roster.md` row is forgotten, leaves
+  [08](issues/08-completeness-check.md) honestly green, because 08 asks whether
+  this machine has what the roster promises. Whether the roster promises
+  everything the repo calls is a question about the repo instead, and answering
+  it would mean telling a command invocation from a word in shell, Lua and
+  sway's config syntax.
 - **Arch.** Named in the opening idea, ruled out while naming the destination:
   no Arch machine exists to verify anything against, so every Arch decision
   would be a guess. Decisions here should not actively block a third distro, but
