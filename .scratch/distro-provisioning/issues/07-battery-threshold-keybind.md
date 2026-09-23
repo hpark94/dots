@@ -119,7 +119,7 @@ battery:*:*:dmi:*
 ```
 
 followed by `systemd-hwdb update` and
-`udevadm trigger -v -p /sys/class/power_supply/BAT0`. The route is documented by
+`udevadm trigger -v /sys/class/power_supply/BAT0`. The route is documented by
 UPower itself, in the header of the `60-upower-battery.hwdb` it ships, and the
 `_,60` form sets the end threshold alone, which matches
 `ChargeThresholdSettingsSupported = 2` as read from the running daemon. Without
@@ -151,7 +151,10 @@ bindsym Control+Alt+p exec ~/.config/sway/scripts/battery-charge-limit toggle
 exec ~/.config/sway/scripts/battery-charge-limit restore
 ```
 
-- `toggle` flips `EnableChargeThreshold` and notifies either way.
+- `toggle` reads the `ChargeThresholdEnabled` property and calls the
+  `EnableChargeThreshold` method with its inverse, then notifies either way. The
+  two names are not the same thing: the property is the readable state, the
+  method is the only way to set it, and there is no method that flips it.
 - `restore` sets it true at session start, so a forgotten full-charge state is
   undone at the next login rather than persisting indefinitely.
 

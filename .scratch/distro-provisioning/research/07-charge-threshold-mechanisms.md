@@ -461,15 +461,23 @@ ls /sys/class/firmware-attributes/*/attributes/ | grep -iE 'batt|charg|health'
 #   cat /sys/class/firmware-attributes/hp-bioscfg/attributes/<name>/possible_values
 
 # 5. What does UPower see? (no root; see section 6)
-upower -i /org/freedesktop/UPower/devices/battery_BAT0
-gdbus introspect --system --dest org.freedesktop.UPower \
-  --object-path /org/freedesktop/UPower/devices/battery_BAT0 | grep -i charge
+# The object is discovered, never named: an HP battery need not be BAT0, which
+# is the same reason ticket 07's script enumerates instead of hard-coding.
+for dev in $(busctl --system call org.freedesktop.UPower /org/freedesktop/UPower \
+      org.freedesktop.UPower EnumerateDevices | tr ' ' '\n' | grep '^"/' | tr -d '"'); do
+  printf '%s ' "${dev}"
+  busctl --system get-property org.freedesktop.UPower "${dev}" \
+    org.freedesktop.UPower.Device ChargeThresholdSupported
+done
+upower -d | grep -iE 'native-path|charge'
 
 # 6. What does TLP's own probe say? (needs tlp installed; see section 4)
 sudo tlp-stat -b
 
 # 7. Are the RFC's firmware methods even present? (root, read-only)
-sudo cp /sys/firmware/acpi/tables/DSDT /tmp/DSDT.dat
+# cp would give the copy the source table's root-only mode, so redirect into a
+# file this user already owns instead.
+sudo cat /sys/firmware/acpi/tables/DSDT > /tmp/DSDT.dat
 iasl -d /tmp/DSDT.dat            # package: acpica-tools
 grep -nE 'SBCC|SBCO|GBCC|GBCO|WHCM' /tmp/DSDT.dsl
 ```
