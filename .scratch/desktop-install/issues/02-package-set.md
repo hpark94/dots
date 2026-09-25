@@ -7,30 +7,30 @@ next to it. None of it is deployed into `${HOME}`.
 
 **Blocked by:** None, can start immediately.
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] `packages/roster.md` is one flat Markdown table
+- [x] `packages/roster.md` is one flat Markdown table
       `binary | fedora | ubuntu`, sorted by the first column, with the four
       header statements the spec names.
-- [ ] Its rows are what the tracked files invoke, taken from
+- [x] Its rows are what the tracked files invoke, taken from
       [the survey](../../distro-provisioning/research/02-package-availability.md),
       plus the four toolchain rows, with the spec's corrections applied: `jq`,
       `upower` and `imv-wayland | imv | imv` are in; `texlab`, `protonvpn`, the
       clang tools, `slurp` and `battery-threshold-toggle` are out.
-- [ ] `-` rows and `-` cells as the spec lists them: `sway-systemd`, the two
+- [x] `-` rows and `-` cells as the spec lists them: `sway-systemd`, the two
       portals, the fcitx5 IM modules, `python3-i3ipc`, the zathura PDF backend
       and `glibc-devel` have `-` in the first column; `ffmpeg` on Fedora and
       `satty` on Ubuntu have `-` in their package column.
-- [ ] Every name the survey leaves unclear (for example the fcitx5 config tool's
+- [x] Every name the survey leaves unclear (for example the fcitx5 config tool's
       binary on each side) is checked against the distro's own package metadata,
       not guessed.
-- [ ] `packages/optional.md` holds the one row
+- [x] `packages/optional.md` holds the one row
       `protonvpn | proton-vpn-cli | proton-vpn-cli` in the same three columns,
       and a header saying that nothing promises what it lists.
-- [ ] `packages/flatpak.txt` holds `org.mozilla.thunderbird` and
+- [x] `packages/flatpak.txt` holds `org.mozilla.thunderbird` and
       `md.obsidian.Obsidian`, one per line.
-- [ ] `.stow-local-ignore` has `^/packages`.
-- [ ] After `prettier -w`, the spec's Fedora and Ubuntu install lines, and the
+- [x] `.stow-local-ignore` has `^/packages`.
+- [x] After `prettier -w`, the spec's Fedora and Ubuntu install lines, and the
       same `awk` pointed at `packages/optional.md`, print exactly the expected
       package names: no header, no separator, no `-`, duplicates collapsed.
 

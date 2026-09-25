@@ -28,6 +28,7 @@ _darcs
 ^/CONTEXT.md
 ^/AGENTS.md
 ^/docs
+^/packages
 ^/templates
 
 # Accidental nvim runtime state (logs/shada/plugin cache) that leaked into
