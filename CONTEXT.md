@@ -49,6 +49,23 @@ login path, so that a machine without a Marker fails at a command rather than on
 every shell.\
 _Avoid_: host-only, deploy-time config
 
+**Distro Fact**:\
+A difference between the distributions in how a program is obtained: the package
+name (`bind-utils` versus `bind9-dnsutils`), the repository it comes from,
+whether it needs a third-party source, or whether it can be had at all. Answered
+once, when a machine is installed, against whatever the archives hold that day,
+and the one kind of divergence that never reaches a deployed file: it is
+absorbed at install time into the package sets and the documented steps, both of
+which live outside what stow deploys, and a human picks which of them applies.
+Nothing reads `/etc/os-release`, and there is no Distro Marker: unlike the Role,
+a distribution is discoverable, so a written copy would be a second answer to a
+question that already has one, with no reader. What the machine ends up having
+as a result is not a Distro Fact: `imv-wayland` in place of `imv`, or a missing
+`chafa`, is a Capability Probe's question, indistinguishable from a program you
+simply did not install.\
+_Avoid_: Package Route (`satty` is in neither archive and is a Distro Fact all
+the same), Install Fact, distro detection, `ID_LIKE`
+
 **Session Fact**:\
 Something true only of the current connection, which no install-time value can
 answer and which is therefore probed at runtime: whether a display is attached
@@ -120,8 +137,14 @@ on both Roles unmodified. Preferred over a Role branch wherever it can answer
 the same question, because it stays correct when the Role Marker is missing or
 wrong, and because it keeps the Marker out of code that runs unbidden: the
 docker and libvirt sockets are probed rather than Role-branched for exactly this
-reason.\
-_Avoid_: feature detection
+reason. A Probe adapts: the code carries on and produces a different result. A
+check that prints and exits is a precondition check, which `AGENTS.md` requires
+of every script and which this term does not name. Where the roster promises the
+program, only the precondition check is allowed: a Probe there would hide a
+packaging hole that the completeness check exists to find.\
+_Avoid_: feature detection, the distro's name (a proxy for presence, and a wrong
+one), a `command -v` that exits (that is a precondition check, which `AGENTS.md`
+requires of every script)
 
 **Root Binding**:\
 A key tmux takes for itself in its `root` key table, before the program in the

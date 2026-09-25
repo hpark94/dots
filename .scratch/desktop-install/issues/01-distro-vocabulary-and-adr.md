@@ -8,21 +8,21 @@ an absence of code that nobody can explain.
 
 **Blocked by:** None, can start immediately.
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] `CONTEXT.md` has the **Distro Fact** entry under Deployment, next to Role
+- [x] `CONTEXT.md` has the **Distro Fact** entry under Deployment, next to Role
       Fact, verbatim from the spec section "Nothing deployed reads the distro".
-- [ ] The **Capability Probe** entry ends with the two sentences from the spec
+- [x] The **Capability Probe** entry ends with the two sentences from the spec
       section "A probe adapts, a precondition check refuses", and its `_Avoid_`
       line reads as given there, with both additions: the distro's name, and a
       `command -v` that exits.
-- [ ] `docs/adr/0011-the-deployed-tree-never-reads-the-distro.md` exists in the
+- [x] `docs/adr/0011-the-deployed-tree-never-reads-the-distro.md` exists in the
       form of the other ADRs. It records the decision, the two refused
       alternatives (reading `os-release` in deployed code, and inside an install
       artifact), that there is no Distro Marker and why, and that a vendor
       command quoted in a documented step is not a violation. Its content is 01
       sections 2 to 5, which specified it without writing it.
-- [ ] `grep -rn "os-release\|ID_LIKE"` over the tracked tree, excluding
+- [x] `grep -rn "os-release\|ID_LIKE"` over the tracked tree, excluding
       `.scratch`, finds only prose, so the ADR describes the repo as it stands.
 
 **Further Notes:** Spec: `.scratch/desktop-install/spec.md`, sections "Nothing
