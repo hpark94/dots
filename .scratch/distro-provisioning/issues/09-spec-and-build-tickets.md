@@ -2,7 +2,7 @@
 
 **Type:** `task` (the handoff, and the last ticket on this map)
 
-**Status:** open
+**Status:** resolved
 
 **Blocked by:**
 [07 The battery threshold keybind and its missing script](07-battery-threshold-keybind.md),
@@ -69,3 +69,52 @@ builds nothing.
 With the paths of the spec and its build tickets, and nothing built. The map is
 then done: there is nothing left to decide before someone goes and does the
 thing.
+
+## Answer
+
+The handoff is written: [the spec](../../desktop-install/spec.md) and eight
+build tickets under `.scratch/desktop-install/issues/`. Nothing is built.
+
+### The slicing
+
+| Ticket                                                                                                                   | Blocked by | Kind              |
+| ------------------------------------------------------------------------------------------------------------------------ | ---------- | ----------------- |
+| [01 Distro Fact, a sharper Capability Probe, and ADR-0011](../../desktop-install/issues/01-distro-vocabulary-and-adr.md) | none       | `ready-for-agent` |
+| [02 The package set](../../desktop-install/issues/02-package-set.md)                                                     | none       | `ready-for-agent` |
+| [03 Screenshot keybinds become a tested script](../../desktop-install/issues/03-screenshot-script.md)                    | none       | `ready-for-agent` |
+| [04 `battery-charge-limit`, the charge limit without sudo](../../desktop-install/issues/04-battery-charge-limit.md)      | none       | `ready-for-agent` |
+| [05 clangd, clang-format and clang-tidy from mise](../../desktop-install/issues/05-clang-tools-from-mise.md)             | none       | `ready-for-agent` |
+| [06 `completeness-check.sh`](../../desktop-install/issues/06-completeness-check.md)                                      | 01, 02     | `ready-for-agent` |
+| [07 `docs/install.md`, and README points at it](../../desktop-install/issues/07-install-document.md)                     | 02, 06     | `ready-for-agent` |
+| [08 Retire the ZenBook's hand-built pieces](../../desktop-install/issues/08-zenbook-migration.md)                        | 04, 05, 07 | `ready-for-human` |
+
+The order follows from what reads what: the check and the install document both
+read `packages/roster.md`, the document names the check in its last line, and
+the migration removes what the other seven replace. The untracked steps
+(`~/.local/llvm` and `~/.env`, the four legacy battery artifacts) are one
+`ready-for-human` ticket rather than lines in `docs/install.md`, because they
+apply once to one machine and a bare install has nothing to remove.
+
+`README.md` has no ticket of its own: its two sentences from 05 section 9 ride
+with the install document in 07.
+
+### Two gaps closed here, with the operator
+
+- **`clang-tidy`** was the third tool from the LLVM tarball: `nvim-lint.lua:15`
+  runs it, and 06 moved only clangd and clang-format. It goes to mise as
+  `"pypi:clang-tidy" = "22.1.8"`, on 06's own argument (rootless, both Roles).
+  The version was read from `mise ls-remote pypi:clang-tidy`.
+- **`imv`** was handed from 06 to 08, and 08 did not take it. It gets the row
+  `imv-wayland | imv | imv`: 04's first clause takes the survey's derivation,
+  which includes config-only packages, and `imv-wayland` is the command both
+  distributions ship, so 08's check does not report a false miss on Ubuntu.
+
+### Where the corrections landed
+
+Each correction that 09's question listed as visible in only one place is now a
+requirement in the spec: the `jq`, `upower` and `imv` rows,
+`packages/optional.md` and ProtonVPN as an optional step, no `texlab` row, and
+the three glossary texts, verbatim. ADR-0011 has no text to carry: 01 specified
+its content, and the spec points the build at 01 sections 2 to 5. The untracked
+one-off steps are in the spec's "Manual steps on the reference machine" and in
+ticket 08.

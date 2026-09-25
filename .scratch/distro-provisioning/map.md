@@ -56,6 +56,16 @@ specs. Nothing is built here.
 
 <!-- one line per resolved ticket: gist plus link. Zoom the link for detail. -->
 
+- [Turn the decisions into a spec and build tickets](issues/09-spec-and-build-tickets.md):
+  the handoff is [`desktop-install`](../desktop-install/spec.md), a spec and
+  **eight build tickets**, five of them takeable at once. The package set comes
+  before the completeness check and the install document, because both read it,
+  and a `ready-for-human` ZenBook migration comes last, because it removes what
+  the rest replaces. Two gaps were closed with the operator: **`clang-tidy`**,
+  the tarball's third tool, joins clangd and clang-format in mise, and **`imv`**
+  gets the row `imv-wayland | imv | imv`. **The map is done**: nothing is left
+  to decide before the build.
+
 - [A completeness check for a machine](issues/08-completeness-check.md):
   `completeness-check.sh` at the repo root, run by path out of the clone like
   `bootstrap.sh` and never stowed, because the `packages/` it reads is not
