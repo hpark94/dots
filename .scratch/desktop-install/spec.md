@@ -195,11 +195,11 @@ sections 4 to 6.
   from the sway config by absolute path.
 - The two screenshot bindings (`.config/sway/config:124` and `:125`) become one
   tracked script under `.config/sway/scripts/` with a bats suite in
-  `.config/sway/scripts/tests/`. One argument selects the destination: satty, or
-  a timestamped PNG in a directory the sway config passes (its `$screenshots`),
-  with a success notification as today. The name follows the pattern 07 set for
+  `.config/sway/scripts/tests/`. The name follows the pattern 07 set for
   `battery-charge-limit`: the noun names the file, the verb is a required
-  argument.
+  argument. Two verbs: `edit` hands the focused output to satty, and
+  `save <dir>` writes it as a timestamped PNG into `<dir>`, which the sway
+  config passes as its `$screenshots`, with a success notification as today.
 - It refuses rather than adapts when a roster program (`swaymsg`, `jq`, `grim`,
   `satty`) is missing: precondition checks at the top, message on stderr,
   `notify-send`, non-zero exit. A keystroke is a human waiting, so a refusal
@@ -375,7 +375,9 @@ Untracked and one-off: they touch no file in this repo, apply to the ZenBook
 only, and are not part of `docs/install.md`, because a bare install has nothing
 to remove.
 
-- `~/.local/llvm` is removed and its two `PATH` lines leave `~/.env`, once mise
+- `~/.local/llvm` is removed, and both `PATH` lines leave `~/.env`: the one
+  prepending `~/.local/llvm/LLVM-22.1.3-Linux-X64/bin` and the one prepending
+  `~/.opencode/bin` (03 section 7, 06 section 8). This happens once mise
   supplies clangd, clang-format and clang-tidy (06 section 7).
 - The four legacy charge-limit artifacts are removed by hand once the hwdb file
   is in place: `/usr/local/bin/battery-threshold-toggle`, its sudoers rule,

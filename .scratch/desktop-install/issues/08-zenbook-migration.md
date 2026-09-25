@@ -27,8 +27,10 @@ running it.
       first), and `/etc/battery-threshold-mode`.
 - [ ] `Control+Alt+p` toggles the limit with a notification and no password.
       After a new login, `restore` has turned it back on.
-- [ ] `~/.local/llvm` is removed and its `PATH` lines have left `~/.env`. In a
-      new shell, `command -v clangd clang-format clang-tidy` resolves into mise;
+- [ ] `~/.local/llvm` is removed, and both `PATH` lines have left `~/.env`: the
+      one for `~/.local/llvm/LLVM-22.1.3-Linux-X64/bin` and the one for
+      `~/.opencode/bin`, which restores the file to secrets only. In a new
+      shell, `command -v clangd clang-format clang-tidy` resolves into mise;
       nvim attaches clangd to a `cpp` buffer, formats it, and lints it.
 - [ ] `./completeness-check.sh` exits 0. Anything it reported missing was
       installed along the route in `docs/install.md`.
