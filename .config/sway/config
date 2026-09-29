@@ -71,7 +71,8 @@ bindsym Control+Alt+o output eDP-1 power off
 bindsym Control+Alt+Shift+O output eDP-1 power on
 bindsym Control+Alt+f floating toggle
 bindsym Control+Alt+m fullscreen toggle
-bindsym Control+Alt+p exec sudo battery-threshold-toggle
+bindsym Control+Alt+p exec ~/.config/sway/scripts/battery-charge-limit toggle
+exec ~/.config/sway/scripts/battery-charge-limit restore
 bindsym Control+Alt+w exec pkill -USR1 waybar
 
 bindsym Control+Alt+h splith

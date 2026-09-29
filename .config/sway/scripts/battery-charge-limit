@@ -1,0 +1,80 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Turns the battery charge limit on and off through UPower, whose shipped polkit
+# policy lets an active local session do so without a password. The percentage
+# lives in a manual hwdb file and not here. restore runs at session start, so a
+# forgotten full-charge state lasts until the next login at most, and it says
+# nothing on failure because nobody is waiting for it then. toggle is a
+# keystroke, so it notifies either way.
+
+usage="usage: battery-charge-limit toggle | battery-charge-limit restore"
+device_iface=org.freedesktop.UPower.Device
+
+refuse() {
+    echo "battery-charge-limit: $1" >&2
+    if [[ "${verb}" == toggle ]]; then
+        notify-send "Battery charge limit failed" "$1"
+    fi
+    exit 1
+}
+
+property() {
+    busctl --system get-property org.freedesktop.UPower "$1" "${device_iface}" "$2"
+}
+
+enable() {
+    busctl --system call org.freedesktop.UPower "${device}" "${device_iface}" \
+        EnableChargeThreshold b "$1" \
+        || refuse "could not set the charge limit on ${device}"
+}
+
+verb="${1:-}"
+if [[ $# -ne 1 || ("${verb}" != toggle && "${verb}" != restore) ]]; then
+    refuse "${usage}"
+fi
+if [[ "${verb}" == toggle ]] && ! command -v notify-send >/dev/null 2>&1; then
+    echo "battery-charge-limit: command not found: notify-send" >&2
+    exit 1
+fi
+command -v busctl >/dev/null 2>&1 || refuse "command not found: busctl"
+
+# The battery is found by what it supports, never by name: a laptop may call it
+# something other than BAT0, and other devices, a stylus among them, carry a
+# cell of their own.
+devices=$(busctl --system call org.freedesktop.UPower /org/freedesktop/UPower \
+    org.freedesktop.UPower EnumerateDevices) \
+    || refuse "could not enumerate UPower devices"
+read -ra words <<<"${devices}"
+device=""
+for word in "${words[@]:2}"; do
+    path="${word//\"/}"
+    supported=$(property "${path}" ChargeThresholdSupported) \
+        || refuse "could not read ChargeThresholdSupported of ${path}"
+    if [[ "${supported}" == "b true" ]]; then
+        device="${path}"
+        break
+    fi
+done
+[[ -n "${device}" ]] || refuse "no UPower device supports a charge limit"
+
+if [[ "${verb}" == restore ]]; then
+    enable true
+    exit 0
+fi
+
+enabled=$(property "${device}" ChargeThresholdEnabled) \
+    || refuse "could not read ChargeThresholdEnabled of ${device}"
+case "${enabled}" in
+    "b true")
+        enable false
+        notify-send "Battery charge limit" "Off: the battery charges to full"
+        ;;
+    "b false")
+        enable true
+        notify-send "Battery charge limit" "On"
+        ;;
+    *)
+        refuse "unexpected ChargeThresholdEnabled: ${enabled}"
+        ;;
+esac

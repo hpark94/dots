@@ -20,8 +20,8 @@ it before adding a file to the repo root.
 - `bats .local/scripts/tests/ .config/sway/scripts/tests/` or
   `bats <tests-dir>/<test-file>.bats`: Run tests for bootstrap.sh, theme-switch,
   envs, fy, fp, delta-auto, tmux-sessionizer, caffeine, cltex, font-install,
-  organize_flac, screenshot, sway-start-on-workspace, wait-for-clock,
-  wait-for-vpn, ffd, frg, fzf-preview, and the tmux config.
+  organize_flac, battery-charge-limit, screenshot, sway-start-on-workspace,
+  wait-for-clock, wait-for-vpn, ffd, frg, fzf-preview, and the tmux config.
 - `nvim --headless '+Lazy! sync' +qa`: Force nvim plugin sync.
 - `theme-switch dark|light|toggle`: Desktop-only; decides and applies Theme
   Mode.
@@ -45,6 +45,10 @@ never by name. It is deliberately off the PATH: none of it is meant to be typed.
 `autotiling` is vendored third-party code; the others are this repo's own and
 carry bats suites under `.config/sway/scripts/tests/`.
 
+- `battery-charge-limit toggle|restore`: Turn the battery charge limit on or off
+  through UPower, without sudo. `toggle` is the keybind and notifies; `restore`
+  runs at session start and says nothing, so a forgotten full charge lasts until
+  the next login at most.
 - `screenshot edit | screenshot save <dir>`: Capture the focused output, into
   satty or as a timestamped PNG in `<dir>`. A missing program is refused with a
   notification, because a keystroke is a human waiting.

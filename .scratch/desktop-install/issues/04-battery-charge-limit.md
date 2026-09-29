@@ -7,25 +7,25 @@ login at most. The repo no longer has a `sudo` in it.
 
 **Blocked by:** None, can start immediately.
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] `.config/sway/scripts/battery-charge-limit` takes a required verb,
+- [x] `.config/sway/scripts/battery-charge-limit` takes a required verb,
       `toggle` or `restore`, and refuses anything else.
-- [ ] The device is found with UPower's `EnumerateDevices`, as the one whose
+- [x] The device is found with UPower's `EnumerateDevices`, as the one whose
       `ChargeThresholdSupported` is true. No device name is hard-coded, and no
       such device is a refusal.
-- [ ] `toggle` reads `ChargeThresholdEnabled`, calls `EnableChargeThreshold`
+- [x] `toggle` reads `ChargeThresholdEnabled`, calls `EnableChargeThreshold`
       with its inverse, and notifies with the new state; a refusal also
       notifies.
-- [ ] `restore` calls `EnableChargeThreshold true` and never notifies.
-- [ ] Both verbs write a refusal to stderr and exit non-zero. `busctl` has a
+- [x] `restore` calls `EnableChargeThreshold true` and never notifies.
+- [x] Both verbs write a refusal to stderr and exit non-zero. `busctl` has a
       precondition check. All strings are English.
-- [ ] `.config/sway/config` has the two lines from the spec, and
+- [x] `.config/sway/config` has the two lines from the spec, and
       `exec sudo battery-threshold-toggle` is gone.
-- [ ] A bats suite in `.config/sway/scripts/tests/` stubs `busctl` on `PATH` and
+- [x] A bats suite in `.config/sway/scripts/tests/` stubs `busctl` on `PATH` and
       covers both verbs in both states, no supported device, a missing `busctl`,
       and a bad verb.
-- [ ] `AGENTS.md` lists the script under "Sway session scripts" and in the
+- [x] `AGENTS.md` lists the script under "Sway session scripts" and in the
       `bats` line of Commands.
 
 **Further Notes:** Spec section "The charge limit without sudo". The mechanism
