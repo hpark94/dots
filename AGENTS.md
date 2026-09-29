@@ -16,12 +16,16 @@ it before adding a file to the repo root.
 
 - `bootstrap.sh <desktop|headless>`: Stow, mise, plugins, theme. Idempotent;
   safe to re-run.
+- `./completeness-check.sh`: Desktop-only, run by path from the clone. Reports
+  what the roster, the Flatpak list and the manual steps promise and this
+  machine lacks; exit 1 if anything is missing. Changes nothing.
 - `mise install`: Sync toolchain from `.config/mise/config.toml`.
 - `bats .local/scripts/tests/ .config/sway/scripts/tests/` or
-  `bats <tests-dir>/<test-file>.bats`: Run tests for bootstrap.sh, theme-switch,
-  envs, fy, fp, delta-auto, tmux-sessionizer, caffeine, cltex, font-install,
-  organize_flac, battery-charge-limit, screenshot, sway-start-on-workspace,
-  wait-for-clock, wait-for-vpn, ffd, frg, fzf-preview, and the tmux config.
+  `bats <tests-dir>/<test-file>.bats`: Run tests for bootstrap.sh,
+  completeness-check, theme-switch, envs, fy, fp, delta-auto, tmux-sessionizer,
+  caffeine, cltex, font-install, organize_flac, battery-charge-limit,
+  screenshot, sway-start-on-workspace, wait-for-clock, wait-for-vpn, ffd, frg,
+  fzf-preview, and the tmux config.
 - `nvim --headless '+Lazy! sync' +qa`: Force nvim plugin sync.
 - `theme-switch dark|light|toggle`: Desktop-only; decides and applies Theme
   Mode.

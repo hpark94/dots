@@ -146,6 +146,24 @@ _Avoid_: feature detection, the distro's name (a proxy for presence, and a wrong
 one), a `command -v` that exits (that is a precondition check, which `AGENTS.md`
 requires of every script)
 
+**Completeness Check**:\
+The answer to "is everything that should be here actually here", asked of one
+machine, by a human, and by nothing else: `completeness-check.sh`, run by path
+out of the clone because the package set it reads is not deployed. It asserts
+**presence and never correctness**, so it reports that `~/Sync` exists and never
+that Syncthing has paired. Its package sections take their membership from the
+package set, every promised name, loud absence or not; its third section, the
+manual steps, has a rule of its own, that nothing else on the machine would
+notice the absence, which is what keeps `bootstrap.sh`'s own output out of it:
+that script guards every step and is safe to re-run, so re-running it is the
+cheaper and more honest check of what it produced. For a path there is a second
+half, that a tracked file names it, which is why the wallpaper is checked and
+the KeePassXC database is not. Deliberately neither a second `bootstrap.sh`,
+since it installs nothing and changes nothing, nor a lint of the repo against
+itself, since a roster missing a row leaves it honestly green.\
+_Avoid_: doctor, health check, audit, verify (each names a habit borrowed from
+another tool rather than the question this one asks)
+
 **Root Binding**:\
 A key tmux takes for itself in its `root` key table, before the program in the
 pane ever sees it. It needs no prefix, which makes it global inside tmux and

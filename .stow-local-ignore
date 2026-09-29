@@ -42,3 +42,7 @@ _darcs
 
 # bootstrap.sh is run by path from the clone root, never symlinked into $HOME.
 ^/bootstrap\.sh$
+
+# completeness-check.sh is run by path from the clone root, never symlinked
+# into $HOME: it reads packages/, which stow does not deploy.
+^/completeness-check\.sh$
