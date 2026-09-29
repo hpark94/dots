@@ -20,7 +20,7 @@ package can carry several commands.
 | -                                    | `sway-systemd`           | -                          |
 | -                                    | `xdg-desktop-portal-gtk` | `xdg-desktop-portal-gtk`   |
 | -                                    | `xdg-desktop-portal-wlr` | `xdg-desktop-portal-wlr`   |
-| -                                    | `zathura-pdf-poppler`    | `zathura-pdf-poppler`      |
+| -                                    | `zathura-pdf-mupdf`      | `zathura-pdf-poppler`      |
 | `blueman-manager`                    | `blueman`                | `blueman`                  |
 | `brightnessctl`                      | `brightnessctl`          | `brightnessctl`            |
 | `chafa`                              | `chafa`                  | `chafa`                    |
