@@ -28,6 +28,10 @@ case "${1:-}" in
         ;;
     save)
         [[ $# -eq 2 ]] || refuse "${usage}"
+        if ! command -v notify-send >/dev/null 2>&1; then
+            echo "screenshot: command not found: notify-send" >&2
+            exit 1
+        fi
         require swaymsg jq grim date
         [[ -d "$2" ]] || refuse "not a directory: $2"
         ;;

@@ -181,3 +181,18 @@ assert_refused() {
     run_screenshot save "${SHOTS}"
     assert_refused "command not found: date"
 }
+
+@test "save without notify-send is refused before anything is captured" {
+    rm "${STUB_BIN}/notify-send"
+    run_screenshot save "${SHOTS}"
+    [ "${status}" -eq 1 ]
+    [[ "${stderr}" == *"command not found: notify-send"* ]]
+    [ -z "$(calls grim)" ]
+}
+
+@test "edit does not need notify-send" {
+    rm "${STUB_BIN}/notify-send"
+    run_screenshot edit
+    [ "${status}" -eq 0 ]
+    [ "$(calls satty)" = "-f|-" ]
+}
