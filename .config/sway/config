@@ -28,6 +28,7 @@ exec waybar -c ~/.config/waybar/sway_config.jsonc
 exec swaync
 exec_always ~/.config/sway/scripts/autotiling
 exec sh -c "pkill -x -f 'wl-paste --watch cliphist store'; wl-paste --watch cliphist store"
+exec ~/.config/sway/scripts/battery-charge-limit restore
 exec ~/.config/sway/scripts/sway-start-on-workspace 10 org.keepassxc.KeePassXC keepassxc
 exec ~/.config/sway/scripts/wait-for-vpn ~/.config/sway/scripts/sway-start-on-workspace 9 org.mozilla.thunderbird flatpak run org.mozilla.thunderbird
 exec ~/.config/sway/scripts/sway-start-on-workspace 8 "md.obsidian.Obsidian|obsidian" flatpak run md.obsidian.Obsidian
@@ -72,7 +73,6 @@ bindsym Control+Alt+Shift+O output eDP-1 power on
 bindsym Control+Alt+f floating toggle
 bindsym Control+Alt+m fullscreen toggle
 bindsym Control+Alt+p exec ~/.config/sway/scripts/battery-charge-limit toggle
-exec ~/.config/sway/scripts/battery-charge-limit restore
 bindsym Control+Alt+w exec pkill -USR1 waybar
 
 bindsym Control+Alt+h splith
