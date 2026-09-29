@@ -7,24 +7,24 @@ lose the screenshot silently.
 
 **Blocked by:** None, can start immediately.
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] One script under `.config/sway/scripts/`, named after the pattern of
+- [x] One script under `.config/sway/scripts/`, named after the pattern of
       `battery-charge-limit` (the noun names the file), with a required verb:
       `edit` hands the focused output to satty, `save <dir>` writes a
       timestamped PNG into `<dir>`. Anything else is refused.
-- [ ] It follows the repo's script conventions (`set -euo pipefail`, validation,
+- [x] It follows the repo's script conventions (`set -euo pipefail`, validation,
       loud failure). Its precondition checks cover `swaymsg`, `jq`, `grim` and
       `satty` where they are needed. A refusal writes to stderr, calls
       `notify-send` and exits non-zero. It never probes a roster program away.
-- [ ] The save variant notifies on success as today, in English.
-- [ ] `.config/sway/config:124` and `:125` call the script by absolute path; the
+- [x] The save variant notifies on success as today, in English.
+- [x] `.config/sway/config:124` and `:125` call the script by absolute path; the
       save binding passes `$screenshots` as `<dir>`. Nothing else in the file
       changes.
-- [ ] A bats suite in `.config/sway/scripts/tests/` stubs the external commands
+- [x] A bats suite in `.config/sway/scripts/tests/` stubs the external commands
       on `PATH` and covers both verbs, a bad or missing argument, and a refusal
       per missing program.
-- [ ] `AGENTS.md` lists the script under "Sway session scripts" and in the
+- [x] `AGENTS.md` lists the script under "Sway session scripts" and in the
       `bats` line of Commands.
 
 **Further Notes:** Spec section "The Sway session sees only the system". The

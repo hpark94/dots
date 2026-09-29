@@ -1,0 +1,47 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Captures the focused output for the two screenshot keybinds: `edit` hands it
+# to satty, `save <dir>` writes it as a timestamped PNG. A keystroke is a human
+# waiting and the journal is not where they look, so every refusal also goes
+# out as a notification rather than losing the screenshot silently.
+
+usage="usage: screenshot edit | screenshot save <dir>"
+
+refuse() {
+    echo "screenshot: $1" >&2
+    notify-send "Screenshot failed" "$1"
+    exit 1
+}
+
+require() {
+    local cmd
+    for cmd in "$@"; do
+        command -v "${cmd}" >/dev/null 2>&1 || refuse "command not found: ${cmd}"
+    done
+}
+
+case "${1:-}" in
+    edit)
+        [[ $# -eq 1 ]] || refuse "${usage}"
+        require swaymsg jq grim satty
+        ;;
+    save)
+        [[ $# -eq 2 ]] || refuse "${usage}"
+        require swaymsg jq grim date
+        [[ -d "$2" ]] || refuse "not a directory: $2"
+        ;;
+    *)
+        refuse "${usage}"
+        ;;
+esac
+
+output=$(swaymsg -t get_outputs | jq -r '.[] | select(.focused) | .name')
+[[ -n "${output}" ]] || refuse "no focused output"
+
+if [[ "$1" == edit ]]; then
+    grim -o "${output}" - | satty -f -
+else
+    grim -o "${output}" "$2/screenshot-$(date +'%Y%m%d-%H%M%S').png"
+    notify-send "Screenshot" "Saved to $2/"
+fi
