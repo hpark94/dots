@@ -137,8 +137,11 @@ In any order, after phase 3.
    CHARGE_LIMIT=_,60
   ```
 
-  then run `sudo systemd-hwdb update` and
-  `sudo udevadm trigger -v /sys/class/power_supply/BAT0`.
+  then run `sudo systemd-hwdb update`,
+  `sudo udevadm trigger -v /sys/class/power_supply/BAT0` and
+  `sudo systemctl restart upower`. UPower reads the limit only when it probes
+  the battery, so without the restart it keeps its default of 75/80 until the
+  next boot.
 
 ### HP machines
 

@@ -43,3 +43,11 @@ section 3 (ProtonVPN optional) and
 sections 3 and 6 (hwdb step, HP paragraph). The HP commands are in
 [the mechanism survey](../../distro-provisioning/research/07-charge-threshold-mechanisms.md).
 The README change is the two sentences of 05 section 9 and nothing more.
+
+## Comments
+
+- 2026-09-30, during [08](08-zenbook-migration.md): the hwdb step gained a third
+  command, `sudo systemctl restart upower`. On the ZenBook, udev reported
+  `CHARGE_LIMIT=_,60` after the two follow-up commands, but UPower stayed at its
+  default 75/80, also after two `EnableChargeThreshold` toggles; only the
+  restart brought the end threshold to 60.
