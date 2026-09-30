@@ -1,4 +1,4 @@
-Status: ready-for-agent
+Status: done
 
 # Desktop install: from a bare Fedora or Ubuntu install to a working Desktop
 
