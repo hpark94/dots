@@ -25,7 +25,9 @@ via SSH or working locally, I want same snappiness and set of tools.
 
 ## Installation
 
-From a bare machine to a fully built one in four steps:
+On a machine whose packages are already in place, deploying takes four steps. A
+bare Fedora or Ubuntu install starts with [docs/install.md](docs/install.md)
+instead.
 
 1. Install `git` and `stow` (stock packages on every target distro).
 2. Clone this repo to `~/dots`: `git clone <repo-url> ~/dots`.

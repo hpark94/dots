@@ -8,28 +8,28 @@ document.
 
 **Blocked by:** [02](02-package-set.md), [06](06-completeness-check.md)
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] `docs/install.md` follows the three phases in the spec's section "The
+- [x] `docs/install.md` follows the three phases in the spec's section "The
       install document", with shared steps once and per-distro command blocks
       only where a step differs.
-- [ ] Phase 1 step 2 names the sources per distro. ProtonVPN is marked optional
+- [x] Phase 1 step 2 names the sources per distro. ProtonVPN is marked optional
       and followed by its own optional install line reading
       `packages/optional.md`.
-- [ ] No source is enabled by a printed command: each gets the vendor's link,
+- [x] No source is enabled by a printed command: each gets the vendor's link,
       the package that comes out of it, and the deviation 05 section 7 records.
-- [ ] The install lines, the ffmpeg swap, the satty tarball command and the
+- [x] The install lines, the ffmpeg swap, the satty tarball command and the
       flathub commands are verbatim from the spec and 05. The satty URL is
       `Satty-org/Satty`.
-- [ ] Phase 3 says why logging in comes before the texlab build.
-- [ ] The per-machine steps include the hwdb charge-limit file with its two
+- [x] Phase 3 says why logging in comes before the texlab build.
+- [x] The per-machine steps include the hwdb charge-limit file with its two
       follow-up commands, for a machine whose UPower reports
       `ChargeThresholdSupported`, and a short HP paragraph carrying the commands
       from the mechanism survey's "Commands to settle it on the EliteBook".
-- [ ] No checklist. The last line names `completeness-check.sh`.
-- [ ] Every path and command the document names exists in the tree as named:
+- [x] No checklist. The last line names `completeness-check.sh`.
+- [x] Every path and command the document names exists in the tree as named:
       `packages/*`, `font-install`, `bootstrap.sh`, `completeness-check.sh`.
-- [ ] `README.md`: intro and Key Highlights unchanged. Installation keeps its
+- [x] `README.md`: intro and Key Highlights unchanged. Installation keeps its
       steps, says they apply to a machine whose packages are in place, and has
       one sentence pointing a bare distro install at `docs/install.md`.
 
