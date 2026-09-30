@@ -1,0 +1,4 @@
+# Deployed as ~/.clang-tidy: the default for C/C++ under ${HOME} that has no
+# config of its own. The analyzer finds bugs, not style, so it stays quiet on
+# code nobody set a style for.
+Checks: "clang-analyzer-*"
