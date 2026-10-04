@@ -606,10 +606,14 @@ STUB_EOF
     [ "${lines[0]}" = "[colors]" ]
     [[ "${output}" == *"background=f00001ff"* ]]
     [[ "${output}" == *"text=f00002ff"* ]]
+    [[ "${output}" == *"prompt=000008ff"* ]]
+    [[ "${output}" == *"placeholder=000008ff"* ]]
+    [[ "${output}" == *"input=f00002ff"* ]]
     [[ "${output}" == *"match=000004ff"* ]]
     [[ "${output}" == *"selection=f00003ff"* ]]
     [[ "${output}" == *"selection-text=f00002ff"* ]]
     [[ "${output}" == *"selection-match=000004ff"* ]]
+    [[ "${output}" == *"counter=000008ff"* ]]
     [[ "${output}" == *"border=00000bff"* ]]
 }
 
@@ -617,6 +621,7 @@ STUB_EOF
     generate_fuzzel dark "${BATS_TEST_TMPDIR}/out"
     run cat "${BATS_TEST_TMPDIR}/out/fuzzel-colors.ini"
     [[ "${output}" == *"background=d00001ff"* ]]
+    [[ "${output}" == *"input=d00002ff"* ]]
     [[ "${output}" == *"border=10000bff"* ]]
 }
 

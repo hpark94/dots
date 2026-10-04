@@ -334,10 +334,14 @@ generate_fuzzel() {
             printf '[colors]\n'
             printf 'background=%sff\n' "${bg#\#}"
             printf 'text=%sff\n' "${fg#\#}"
+            printf 'prompt=%sff\n' "${color8#\#}"
+            printf 'placeholder=%sff\n' "${color8#\#}"
+            printf 'input=%sff\n' "${fg#\#}"
             printf 'match=%sff\n' "${color4#\#}"
             printf 'selection=%sff\n' "${selection_bg#\#}"
             printf 'selection-text=%sff\n' "${fg#\#}"
             printf 'selection-match=%sff\n' "${color4#\#}"
+            printf 'counter=%sff\n' "${color8#\#}"
             printf 'border=%sff\n' "${color11#\#}"
         } >"${out_dir}/fuzzel-colors.ini"
     )
