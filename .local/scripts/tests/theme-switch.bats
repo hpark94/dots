@@ -583,10 +583,13 @@ STUB_EOF
     [[ "${output}" == *'set highlight-color "rgba(16, 0, 6, 0.2)"'* ]]
 }
 
-@test "generate_zathura turns recolor off for light" {
+@test "generate_zathura turns recolor off for light with the dark palette's endpoints" {
     generate_zathura light "${BATS_TEST_TMPDIR}/out"
     run cat "${BATS_TEST_TMPDIR}/out/zathura-colors"
     [[ "${output}" == *'set recolor false'* ]]
+    [[ "${output}" == *'set recolor-lightcolor "#d00001"'* ]]
+    [[ "${output}" == *'set recolor-darkcolor "#d00002"'* ]]
+    [[ "${output}" == *'set default-bg "#f00001"'* ]]
     [[ "${output}" == *'set completion-highlight-fg "#000002"'* ]]
     [[ "${output}" == *'set highlight-color "rgba(0, 0, 6, 0.2)"'* ]]
     [[ "${output}" == *'set highlight-active-color "rgba(0, 0, 1, 0.2)"'* ]]

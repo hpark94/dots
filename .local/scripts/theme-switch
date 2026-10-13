@@ -285,7 +285,9 @@ hex_to_rgb() {
 
 # zathura is a *push* app; the tracked zathurarc includes this fragment by
 # relative path, because zathura's include does not expand ~. Light leaves
-# recolor off so pages keep their true color.
+# recolor off so pages keep their true color. The recolor endpoints come from
+# the dark palette in both modes, so the manual recolor toggle darkens a page
+# the same way whichever mode is active.
 generate_zathura() {
     local mode=$1 out_dir=$2
     mkdir -p "${out_dir}"
@@ -315,6 +317,7 @@ generate_zathura() {
             printf 'set completion-highlight-bg "%s"\n' "${bg}"
             printf 'set completion-highlight-fg "%s"\n' "${color2}"
             printf 'set recolor %s\n' "${recolor}"
+            source "$(theme_palette_file dark)"
             printf 'set recolor-lightcolor "%s"\n' "${bg}"
             printf 'set recolor-darkcolor "%s"\n' "${fg}"
         } >"${out_dir}/zathura-colors"
